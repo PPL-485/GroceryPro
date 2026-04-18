@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->string('password');
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('role', ['admin', 'cashier'])->default('cashier');
             $table->rememberToken();
             $table->timestamps();
         });

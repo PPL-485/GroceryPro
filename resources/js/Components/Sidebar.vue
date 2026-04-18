@@ -7,6 +7,23 @@ const logout = () => {
 
 const page = usePage()
 const user = page.props.auth.user
+
+const menus = [
+    { name: 'Dashboard', href: '/dashboard', icon: 'mdi-view-dashboard-outline', roles: ['admin', 'cashier'] },
+
+    { name: 'Goods/Stock', href: '/goods', icon: 'mdi-package-variant', roles: ['admin'] },
+
+    { name: 'POS', href: '/transactions', icon: 'mdi-cash', roles: ['cashier', 'admin'] },
+
+    { name: 'Report', href: '/report', icon: 'mdi-chart-box-outline', roles: ['admin'] },
+
+    { name: 'User Management', href: '/users', icon: 'mdi-account-group-outline', roles: ['admin'] },
+
+    { name: 'Category Management', href: '/categories', icon: 'mdi-shape-plus-outline', roles: ['admin'] },
+
+    { name: 'Settings', href: '/settings', icon: 'mdi-cog-outline', roles: ['cashier', 'admin'] },
+]
+
 </script>
 
 <template>
@@ -26,15 +43,14 @@ const user = page.props.auth.user
         <v-divider></v-divider>
 
         <v-list density="compact" nav>
-            <v-list-item :component="Link" href="/dashboard" prepend-icon="mdi-view-dashboard-outline" title="Dashboard"></v-list-item>
-            <v-list-item :component="Link" href="/goods" prepend-icon="mdi-package-variant" title="Goods/Stock"></v-list-item>
-            <v-list-item :component="Link" href="/transactions" prepend-icon="mdi-cash" title="Transactions (POS)"></v-list-item>
-            <v-list-item :component="Link" href="/reports" prepend-icon="mdi-chart-box-outline" title="Report"></v-list-item>
-            <v-list-item :component="Link" href="/user-management" prepend-icon="mdi-account-group-outline" title="User Management"></v-list-item>
-            <v-list-item :component="Link" href="/category-management" prepend-icon="mdi-shape-plus-outline" title="Category Management"></v-list-item>
-            <v-list-item :component="Link" href="/settings" prepend-icon="mdi-cog-outline" title="Settings"></v-list-item>
+            <v-list-item
+            v-for="menu in menus.filter(m => m.roles.includes(user.role))"
+            :key="menu.href"
+            :href="menu.href"
+            :title="menu.name"
+            :prepend-icon="menu.icon"
+            />
         </v-list>
-
         <template #append>
             <v-divider></v-divider>
             <v-list density="compact" nav>
