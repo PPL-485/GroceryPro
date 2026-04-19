@@ -1,9 +1,9 @@
 <template>
-  <v-app-bar flat>
+  <v-app-bar flat color="primary">
     <v-app-bar-title>
       <div class="d-flex flex-column">
         <slot name="title">{{ title }}</slot>
-        <div v-if="$slots.description || description" class="text-caption text-medium-emphasis">
+        <div v-if="$slots.description || description">
           <slot name="description" class="text-body-1">qwe s{{ description }}</slot>
         </div>
       </div>
@@ -22,12 +22,11 @@ import { useTheme } from 'vuetify'
 import { computed } from 'vue'
 
 const theme = useTheme()
-const themes = ['dark', 'light', 'brand']
+const themes = ['brand', 'dark']
 
 const themeIcon = computed(() => {
   if (theme.global.name.value === 'dark') return 'mdi-weather-night'
   if (theme.global.name.value === 'brand') return 'mdi-leaf'
-  return 'mdi-weather-sunny'
 })
 
 function toggleTheme () {

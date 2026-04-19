@@ -163,15 +163,17 @@ const checkout = () => {
                      
                     <v-text-field 
                         label="Search" 
-                        prepend-inner-icon="mdi-magnify" 
+                        prepend-inner-icon="mdi-magnify"
                         variant="solo"
-                        class="flex-grow-0 flex-shrink-0 mb-4"
+                        color="primary"
+                        bg-color="surface"
+                        class="flex-grow-0 flex-shrink-0"
                     ></v-text-field>
-                    <v-chip-group v-model="selectedCategory" column mandatory>
+                    <v-chip-group v-model="selectedCategory" column class="mb-4 flex-grow-0 flex-shrink-0" mandatory>
                     <v-chip
                         :value="null"
                         filter
-                        :color="theme.global.name.value === 'brand' ? 'primary' : undefined"
+                        color="primary"
                     >
                         All
                     </v-chip>
@@ -181,7 +183,7 @@ const checkout = () => {
                         :key="cat.id"
                         :value="cat.id"
                         filter
-                        :color="theme.global.name.value === 'brand' ? 'primary' : undefined"
+                        color="primary"
                     >
                         {{ cat.name }}
                     </v-chip>
@@ -192,9 +194,10 @@ const checkout = () => {
                         <v-container fluid class="pa-2">
                         <v-row>
                         <v-col v-for="product in filteredProducts" :key="product.id" cols="12" sm="6" md="4" lg="3">
-                            <v-card @click="addToCart(product)" hover class="h-100 d-flex flex-column rounded-xl" flat>
-                                <div class="d-flex align-center justify-center rounded-t-xl" style="height: 160px;">
-                                    <v-icon size="64">mdi-cart-outline</v-icon>
+                            <v-card @click="addToCart(product)" hover flat class="h-100 d-flex flex-column rounded-xl border">
+                                <div class="d-flex align-center justify-center rounded-t-xl bg-grey-lighten-4 overflow-hidden" style="height: 160px;">
+                                    <v-img v-if="product.image_url" :src="product.image_url" cover height="100%" width="100%"></v-img>
+                                    <v-icon v-else size="64" color="grey-lighten-1">mdi-image-outline</v-icon>
                                 </div>
                                 <v-card-text class="flex-grow-1">
                                     <div class="font-weight-bold mb-1">{{ product.name }}</div>
@@ -218,20 +221,21 @@ const checkout = () => {
                 </v-col>
 
                 <!-- Cart Section -->
-                <v-col cols="12" md="4" class="pa-0 d-flex flex-column border-s" style="height: calc(100vh - 120px);">
-                    <v-toolbar color="transparent" border="b" class="px-4" flat>
-                        <v-icon class="mr-2">mdi-cart-outline</v-icon>
-                        <v-toolbar-title class="text-h6 font-weight-bold pl-0">Current Transaction</v-toolbar-title>
+                <v-col cols="12" md="4" class="pa-0 d-flex flex-column border rounded-xl" style="height: calc(100vh - 120px);">
+                    <v-toolbar title="Current Transactions" flat color="primary" class="border rounded-t-xl">
+                        <template #prepend>
+                            <v-icon class="ms-2">mdi-cart-outline</v-icon>
+                        </template>
                     </v-toolbar>
-
                     <!-- Cart Items -->
                     <div class="flex-grow-1 overflow-y-auto pa-4">
                         <div v-if="cart.length === 0" class="h-100 d-flex flex-column align-center justify-center text-grey">
                             <v-icon size="64" class="mb-4">mdi-cart-remove</v-icon>
                             <div>Cart is empty</div>
                         </div>
-                        <v-list v-else lines="two" class="pa-0">
-                            <v-list-item v-for="(item, index) in cart" :key="index">
+                        <v-list v-else lines="three" color="primary" bg-color="transparent" >
+                            <v-list-item v-for="(item, index) in cart" :key="index" variant="solo-filled" color="primary" class="mb-2 rounded-lg border"
+>
                                 <template v-slot:title>
                                     <div class="text-body-2 font-weight-bold text-wrap mb-1">{{ item.name }}</div>
                                 </template>
@@ -240,11 +244,11 @@ const checkout = () => {
                                 </template>
                                 <template v-slot:append>
                                     <div class="d-flex align-center mt-2">
-                                        <v-btn icon="mdi-minus" size="x-small" variant="tonal" @click="updateQty(item, -1)"></v-btn>
+                                        <v-btn icon="mdi-minus" size="x-small" variant="tonal" color="primary" @click="updateQty(item, -1)"></v-btn>
                                         <span class="mx-3 font-weight-bold">{{ item.qty }}</span>
-                                        <v-btn icon="mdi-plus" size="x-small" variant="tonal" @click="updateQty(item, 1)" :disabled="item.qty >= item.stock_qty"></v-btn>
+                                        <v-btn icon="mdi-plus" size="x-small" variant="tonal" color="primary" @click="updateQty(item, 1)" :disabled="item.qty >= item.stock_qty"></v-btn>
                                     </div>
-                                    <div class="ml-4 font-weight-bold text-right text-body-2" style="min-width: 80px;">
+                                    <div class="ml-4 font-weight-bold text-right text-body-2" color="primary">
                                         {{ formatPrice(item.subtotal) }}
                                     </div>
                                 </template>
@@ -264,29 +268,33 @@ const checkout = () => {
                         </div>
                         <div class="d-flex justify-space-between mb-6">
                             <span class="font-weight-bold text-subtitle-1">Total</span>
-                            <span class="font-weight-bold text-subtitle-1 text-success">{{ formatPrice(total) }}</span>
+                            <span class="font-weight-bold text-subtitle-1">{{ formatPrice(total) }}</span>
                         </div>
 
                         <v-select
+                            v-if="paymentMethod === 'cash'"
                             v-model="paymentMethod"
                             :items="[{title: 'Cash', value: 'cash'}, {title: 'QRIS', value: 'qris'}]"
+                            type="number"
                             label="Payment Method"
-                            density="compact"
+                            variant="outlined"
                         >
                             <template v-slot:prepend-inner>
-                                <v-icon size="small" class="mr-1">{{ paymentMethod === 'cash' ? 'mdi-cash' : 'mdi-qrcode' }}</v-icon>
+                                <v-icon>{{ paymentMethod === 'cash' ? 'mdi-cash' : 'mdi-qrcode' }}</v-icon>
                             </template>
                         </v-select>
-                        <v-text-field
+                        <v-number-input
+                            clearable
                             v-if="paymentMethod === 'cash'"
                             v-model="amountPaid"
                             type="number"
                             label="Amount Paid"
+                            variant="outlined"
                         >
                             <template v-slot:prepend-inner>
                                 <span class="mr-1 mt-1">Rp</span>
                             </template>
-                        </v-text-field>
+                        </v-number-input>
 
                         <v-btn
                             block
@@ -294,6 +302,7 @@ const checkout = () => {
                             @click="checkout"
                             :loading="form.processing"
                             :disabled="cart.length === 0"
+                            color="primary"
                         >
                             Complete Transaction
                         </v-btn>

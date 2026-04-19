@@ -31,6 +31,7 @@ class ProductFactory extends Factory
             'stock_qty'   => fake()->numberBetween(0, 500),
             'min_stock'   => fake()->numberBetween(5, 50),
             'status'      => fake()->randomElement(['active', 'inactive']),
+            'image_url' => 'https://picsum.photos/seed/' . fake()->uuid() . '/300/300',
         ];
     }
 

@@ -31,6 +31,7 @@ const menus = [
         expand-on-hover
         permanent
         rail
+        color="primary"
     >
         <v-list>
             <v-list-item
@@ -49,6 +50,7 @@ const menus = [
             :href="menu.href"
             :title="menu.name"
             :prepend-icon="menu.icon"
+            :active="page.url.startsWith(menu.href)"
             />
         </v-list>
         <template #append>
@@ -57,7 +59,6 @@ const menus = [
                 <v-list-item
                     prepend-icon="mdi-logout"
                     title="Log Out"
-                    base-color="error"
                     @click="logout"
                 ></v-list-item>
             </v-list>
