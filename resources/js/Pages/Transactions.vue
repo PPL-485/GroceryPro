@@ -158,16 +158,16 @@ const checkout = () => {
         <v-container fluid class="pa-0 h-100">
             <v-row class="h-100 ma-0">
                 <!-- Products Section -->
-                <v-col cols="12" md="8" class="pa-4 d-flex flex-column">
+                <v-col cols="12" md="8" class="pa-4 d-flex flex-column" style="height: calc(100vh - 120px);">
                     <!-- Search & Filter -->
                      
                     <v-text-field 
                         label="Search" 
                         prepend-inner-icon="mdi-magnify" 
                         variant="solo"
-                        class="flex-grow-0 mb-4"
+                        class="flex-grow-0 flex-shrink-0 mb-4"
                     ></v-text-field>
-                    <v-chip-group v-model="selectedCategory" column class="mb-4 flex-grow-0">
+                    <v-chip-group v-model="selectedCategory" column mandatory>
                     <v-chip
                         :value="null"
                         filter
@@ -218,7 +218,7 @@ const checkout = () => {
                 </v-col>
 
                 <!-- Cart Section -->
-                <v-col cols="12" md="4" class="pa-0 d-flex flex-column" style="min-height: calc(100vh - 120px);">
+                <v-col cols="12" md="4" class="pa-0 d-flex flex-column border-s" style="height: calc(100vh - 120px);">
                     <v-toolbar color="transparent" border="b" class="px-4" flat>
                         <v-icon class="mr-2">mdi-cart-outline</v-icon>
                         <v-toolbar-title class="text-h6 font-weight-bold pl-0">Current Transaction</v-toolbar-title>
@@ -290,8 +290,6 @@ const checkout = () => {
 
                         <v-btn
                             block
-                            color="grey-darken-1"
-                            class="text-white rounded-lg text-none font-weight-medium"
                             size="large"
                             @click="checkout"
                             :loading="form.processing"
