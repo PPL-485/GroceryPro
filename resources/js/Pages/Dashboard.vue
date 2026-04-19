@@ -7,18 +7,24 @@ import { Head } from '@inertiajs/vue3';
     <Head title="Dashboard" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Dashboard</h2>
-        </template>
-
-        <template #header-description>
-        <p class="text-sm text-gray-500">
-            Overview of your grocery store performance
-        </p>
+        <template #header-title>
+            Dashboard
         </template>
         
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="text-gray-900">You're logged in!</div>
+        <template #header-description>
+            <p class="text-sm text-gray-500">
+                Welcome to your dashboard overview
+            </p>
+        </template>
+        
+        <div class="overflow-hidden shadow-sm sm:rounded-lg">
+            <p class="text-body-1">Ini Dashboard</p>
+            
+            <v-text-field
+  label="Label"
+  prepend-icon="$vuetify"
+  variant="solo-filled"
+></v-text-field>
         </div>
     </AuthenticatedLayout>
 </template>

@@ -34,9 +34,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/transactions', function () {
-        return Inertia::render('Transactions');
-    })->name('transactions');
+    Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
+    Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
 });
 
 require __DIR__.'/auth.php';
