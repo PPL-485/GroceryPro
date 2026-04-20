@@ -1,20 +1,158 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { useTheme } from 'vuetify';
+
+const props = defineProps({
+    categories: Array,
+    products: Array,
+});
+
+const theme = useTheme()
+
+const search = ref('');
+const selectedCategory = ref(null);
+const cart = ref([]);
+const paymentMethod = ref('cash');
+const amountPaid = ref(0);
+const snackbar = ref(false);
+const snackbarMessage = ref('');
+
+// Computed properties
+const filteredProducts = computed(() => {
+    let filtered = props.products;
+    if (selectedCategory.value !== null) {
+        filtered = filtered.filter(p => p.category_id === selectedCategory.value);
+    }
+    if (search.value) {
+        const query = search.value.toLowerCase();
+        filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(query) || 
+            (p.sku && p.sku.toLowerCase().includes(query))
+        );
+    }
+    return filtered;
+});
+
+const subtotal = computed(() => {
+    return cart.value.reduce((sum, item) => sum + (item.unit_price * item.qty), 0);
+});
+
+const tax = computed(() => {
+    return Math.round(subtotal.value * 0.10); // 10% tax
+});
+
+const total = computed(() => {
+    return Math.round(subtotal.value + tax.value);
+});
+
+import { watch } from 'vue';
+watch(paymentMethod, (newVal) => {
+    if (newVal === 'cash' && amountPaid.value === 0) {
+        amountPaid.value = total.value;
+    }
+});
+
+// Methods
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+};
+
+const addToCart = (product) => {
+    if (product.stock_qty <= 0) {
+        snackbarMessage.value = 'Product out of stock!';
+        snackbar.value = true;
+        return;
+    }
+    const existing = cart.value.find(i => i.product_id === product.id);
+    if (existing) {
+        if (existing.qty < product.stock_qty) {
+            existing.qty++;
+            existing.subtotal = existing.qty * existing.unit_price;
+        } else {
+            snackbarMessage.value = 'Cannot add more than available stock!';
+            snackbar.value = true;
+        }
+    } else {
+        cart.value.push({
+            product_id: product.id,
+            name: product.name,
+            unit_price: product.sell_price,
+            qty: 1,
+            subtotal: product.sell_price,
+            stock_qty: product.stock_qty,
+        });
+    }
+};
+
+const updateQty = (item, delta) => {
+    const newQty = item.qty + delta;
+    if (newQty > 0 && newQty <= item.stock_qty) {
+        item.qty = newQty;
+        item.subtotal = item.qty * item.unit_price;
+    } else if (newQty === 0) {
+        cart.value = cart.value.filter(i => i.product_id !== item.product_id);
+    }
+};
+
+const form = useForm({
+    items: [],
+    payment_method: 'cash',
+    total_amount: 0,
+});
+
+const checkout = () => {
+    if (cart.value.length === 0) {
+        snackbarMessage.value = 'Cart is empty!';
+        snackbar.value = true;
+        return;
+    }
+    
+    if (paymentMethod.value === 'cash' && amountPaid.value < total.value) {
+        snackbarMessage.value = 'Amount paid is less than total!';
+        snackbar.value = true;
+        return;
+    }
+
+    form.items = cart.value.map(item => ({
+        product_id: item.product_id,
+        qty: item.qty,
+        unit_price: item.unit_price,
+        subtotal: item.subtotal
+    }));
+    form.payment_method = paymentMethod.value;
+    form.total_amount = total.value; // Store the final total with tax
+
+    form.post(route('transactions.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            cart.value = [];
+            amountPaid.value = 0;
+            snackbarMessage.value = 'Transaction completed successfully!';
+            snackbar.value = true;
+        },
+        onError: (errors) => {
+            console.error(errors);
+            snackbarMessage.value = errors.error || Object.values(errors)[0] || 'An error occurred during checkout.';
+            snackbar.value = true;
+        }
+    });
+};
 </script>
 
 <template>
-    <Head title="Transactions" />
+    <Head title="Point of Sale" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Transactions</h2>
-        </template> 
+        <template #header-title>
+            Point of Sale (POS)
+        </template>
 
         <template #header-description>
-        <p class="text-sm text-gray-500">
-            Search products to add to cart
-        </p>
+            <p class="text-sm">
+                Scan or search products to add to cart
+            </p>
         </template>
 
         <!-- ── Column 3: Transactions Cart Sidebar ── -->
@@ -189,5 +327,26 @@ import { Head } from '@inertiajs/vue3';
                 </v-container>
             </div>
         </div>
+
+        <v-snackbar v-model="snackbar" :timeout="3000" color="success" location="bottom right">
+            {{ snackbarMessage }}
+        </v-snackbar>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+/* Custom scrollbar for cart items */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bdbdbd;
+}
+</style>

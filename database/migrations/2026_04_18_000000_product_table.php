@@ -21,6 +21,9 @@ return new class extends Migration
             $table->integer('stock_qty')->default(0);
             $table->integer('min_stock')->default(0);
             $table->enum('status', ['active', 'inactive'])->default('active');
+
+            $table->string('image_url')->nullable(); // 👈 ini
+
             $table->datetime('created_at')->useCurrent();
             
             $table->index('category_id');
