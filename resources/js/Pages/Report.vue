@@ -4,21 +4,21 @@ import { Head } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Report" />
 
     <AuthenticatedLayout>
         <template #header-title>
-            Dashboard
+            Report
         </template>
         
         <template #header-description>
             <p class="text-sm text-gray-500">
-                Welcome to your dashboard overview
+                Welcome to your Report
             </p>
         </template>
         
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
-            <p class="text-body-1">Ini Dashboard</p>
+            <p class="text-body-1">Ini Report</p>
             
             <v-text-field
   label="Label"
