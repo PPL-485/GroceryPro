@@ -86,4 +86,8 @@ class TransactionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+    public function report()
+    {
+        return Inertia::render('Report');
+    }
 }

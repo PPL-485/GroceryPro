@@ -31,7 +31,7 @@ const menus = [
         expand-on-hover
         permanent
         rail
-        color="primary"
+        class="rounded-b-xl rounded-t-xl"
     >
         <v-list>
             <v-list-item
@@ -51,6 +51,8 @@ const menus = [
             :title="menu.name"
             :prepend-icon="menu.icon"
             :active="page.url.startsWith(menu.href)"
+            color="primary"
+            variant="flat"
             />
         </v-list>
         <template #append>

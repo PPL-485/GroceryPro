@@ -36,6 +36,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
     Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+
+    Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
 });
 
 require __DIR__.'/auth.php';
