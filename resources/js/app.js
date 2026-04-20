@@ -7,6 +7,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import vuetify from './Plugins/vuetify';
 import '@mdi/font/css/materialdesignicons.css';
+import '../css/app.css'
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
