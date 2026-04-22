@@ -38,6 +38,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
 
     Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
+
+    Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
+    Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
 });
 
 require __DIR__.'/auth.php';
