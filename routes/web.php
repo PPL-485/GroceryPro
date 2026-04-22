@@ -26,8 +26,40 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $totalRevenue = \App\Models\Transaction::sum('total_amount');
+    $totalProducts = \App\Models\Product::count();
+    $transactionsToday = \App\Models\Transaction::whereDate('created_at', today())->count();
+    $lowStockItemsCount = \App\Models\Product::whereColumn('stock_qty', '<=', 'min_stock')->count();
+    
+    $recentTransactions = \App\Models\Transaction::with('items')->orderBy('created_at', 'desc')->limit(4)->get()->map(function($trx) {
+        return [
+            'id' => $trx->trx_code,
+            'customer' => 'Customer', // Or from user/customer if exists
+            'items' => $trx->items->sum('qty'),
+            'total' => $trx->total_amount,
+            'payment_type' => $trx->payment_method,
+        ];
+    });
+
+    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->limit(4)->get();
+
+    return Inertia::render('Dashboard', [
+        'stats' => [
+            'totalRevenue' => $totalRevenue,
+            'totalProducts' => $totalProducts,
+            'transactionsToday' => $transactionsToday,
+            'lowStockItemsCount' => $lowStockItemsCount,
+        ],
+        'recentTransactions' => $recentTransactions,
+        'lowStockAlerts' => $lowStockAlerts,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/users', function () {
+    return Inertia::render('User', [
+        'users' => \App\Models\User::all(),
+    ]);
+})->middleware(['auth', 'verified'])->name('users.index');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -41,6 +73,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+    Route::get('/settings', function () {
+        return Inertia::render('Settings');
+    })->name('settings');
+    Route::put('/users/{user}/role', function (\Illuminate\Http\Request $request, \App\Models\User $user) {
+        $request->validate(['role' => 'required|in:admin,cashier']);
+        $user->update(['role' => $request->role]);
+        return back()->with('success', 'User role updated successfully.');
+    })->name('users.update-role');
 });
 
 require __DIR__.'/auth.php';
