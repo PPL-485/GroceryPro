@@ -71,6 +71,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
 
+    Route::get('/settings', function () {
+        return Inertia::render('Settings');
+    })->name('settings');
     Route::put('/users/{user}/role', function (\Illuminate\Http\Request $request, \App\Models\User $user) {
         $request->validate(['role' => 'required|in:admin,cashier']);
         $user->update(['role' => $request->role]);
