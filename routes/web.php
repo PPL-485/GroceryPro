@@ -26,7 +26,33 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $totalRevenue = \App\Models\Transaction::sum('total_amount');
+    $totalProducts = \App\Models\Product::count();
+    $transactionsToday = \App\Models\Transaction::whereDate('created_at', today())->count();
+    $lowStockItemsCount = \App\Models\Product::whereColumn('stock_qty', '<=', 'min_stock')->count();
+    
+    $recentTransactions = \App\Models\Transaction::with('items')->orderBy('created_at', 'desc')->limit(4)->get()->map(function($trx) {
+        return [
+            'id' => $trx->trx_code,
+            'customer' => 'Customer', // Or from user/customer if exists
+            'items' => $trx->items->sum('qty'),
+            'total' => $trx->total_amount,
+            'payment_type' => $trx->payment_method,
+        ];
+    });
+
+    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->limit(4)->get();
+
+    return Inertia::render('Dashboard', [
+        'stats' => [
+            'totalRevenue' => $totalRevenue,
+            'totalProducts' => $totalProducts,
+            'transactionsToday' => $transactionsToday,
+            'lowStockItemsCount' => $lowStockItemsCount,
+        ],
+        'recentTransactions' => $recentTransactions,
+        'lowStockAlerts' => $lowStockAlerts,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/users', function () {
