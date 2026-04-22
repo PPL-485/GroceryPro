@@ -38,6 +38,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
 
     Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
+
+    Route::get('/settings', function () {
+        return Inertia::render('Settings');
+    })->name('settings');
 });
 
 require __DIR__.'/auth.php';
