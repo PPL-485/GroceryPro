@@ -71,6 +71,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
 
+    Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
+    Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
     Route::get('/settings', function () {
         return Inertia::render('Settings');
     })->name('settings');
