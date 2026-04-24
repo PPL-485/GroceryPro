@@ -141,9 +141,6 @@ const submitStock = () => {
                         density="compact"
                         hide-details
                         rounded="lg"
-                        bg-color="white"
-                        class="search-input"
-                        color="grey-darken-3"
                     ></v-text-field>
                 </v-col>
                 <v-spacer></v-spacer>
@@ -160,7 +157,7 @@ const submitStock = () => {
                         Incoming Stock
                     </v-btn>
                     <v-btn 
-                        color="#C87A54" 
+                        color="primary" 
                         rounded="lg" 
                         class="text-none" 
                         height="40"
@@ -173,63 +170,61 @@ const submitStock = () => {
             </v-row>
 
             <!-- Products Table -->
-            <v-card class="rounded-xl mb-6 products-card" elevation="0">
-                <div class="table-container">
-                    <table class="products-table">
-                        <thead>
-                            <tr>
-                                <th>Product ID</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Stock</th>
-                                <th>Buy Price</th>
-                                <th>Sell Price</th>
-                                <th>Status</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="product in filteredProducts" :key="product.id">
-                                <td class="font-weight-medium">{{ product.sku }}</td>
-                                <td>
-                                    <div class="d-flex align-center">
-                                        <v-icon size="small" color="primary" class="mr-2">mdi-package-variant</v-icon>
-                                        {{ product.name }}
-                                    </div>
-                                </td>
-                                <td class="text-grey-darken-1">{{ product.category?.name || '-' }}</td>
-                                <td>{{ product.stock_qty }} {{ product.unit || 'pcs' }}</td>
-                                <td>{{ formatPrice(product.buy_price) }}</td>
-                                <td class="font-weight-medium">{{ formatPrice(product.sell_price) }}</td>
-                                <td>
-                                    <v-chip
-                                        size="small"
-                                        :color="getStatusColor(product)"
-                                        variant="flat"
-                                        class="font-weight-medium"
-                                    >
-                                        {{ getStatusLabel(product) }}
-                                    </v-chip>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-inline-flex align-center ga-1">
-                                        <v-btn icon size="small" variant="text" color="grey-darken-2">
-                                            <v-icon size="18">mdi-square-edit-outline</v-icon>
-                                        </v-btn>
-                                        <v-btn icon size="small" variant="text" color="error">
-                                            <v-icon size="18">mdi-delete-outline</v-icon>
-                                        </v-btn>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredProducts.length === 0">
-                                <td colspan="8" class="text-center py-8 text-grey">
-                                    No products found.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <v-card class="rounded-xl mb-6 border" elevation="0">
+                <v-table hover>
+                    <thead>
+                        <tr>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Product ID</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Name</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Category</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Stock</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Buy Price</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Sell Price</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Status</th>
+                            <th class="text-center font-weight-bold text-grey-darken-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="product in filteredProducts" :key="product.id">
+                            <td class="font-weight-medium">{{ product.sku }}</td>
+                            <td>
+                                <div class="d-flex align-center">
+                                    <v-icon size="small" color="primary" class="mr-2">mdi-package-variant</v-icon>
+                                    {{ product.name }}
+                                </div>
+                            </td>
+                            <td class="text-grey-darken-1">{{ product.category?.name || '-' }}</td>
+                            <td>{{ product.stock_qty }} {{ product.unit || 'pcs' }}</td>
+                            <td>{{ formatPrice(product.buy_price) }}</td>
+                            <td class="font-weight-medium">{{ formatPrice(product.sell_price) }}</td>
+                            <td>
+                                <v-chip
+                                    size="small"
+                                    :color="getStatusColor(product)"
+                                    variant="flat"
+                                    class="font-weight-medium"
+                                >
+                                    {{ getStatusLabel(product) }}
+                                </v-chip>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-inline-flex align-center ga-1">
+                                    <v-btn icon size="small" variant="text" color="grey-darken-2">
+                                        <v-icon size="18">mdi-square-edit-outline</v-icon>
+                                    </v-btn>
+                                    <v-btn icon size="small" variant="text" color="error">
+                                        <v-icon size="18">mdi-delete-outline</v-icon>
+                                    </v-btn>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredProducts.length === 0">
+                            <td colspan="8" class="text-center py-8 text-grey">
+                                No products found.
+                            </td>
+                        </tr>
+                    </tbody>
+                </v-table>
             </v-card>
 
             <!-- Incoming Stock History -->
@@ -238,40 +233,38 @@ const submitStock = () => {
                     Incoming Stock History
                 </v-card-title>
                 <v-divider></v-divider>
-                <div class="table-container">
-                    <table class="products-table">
-                        <thead>
-                            <tr>
-                                <th>Stock ID</th>
-                                <th>Date</th>
-                                <th>Product Name</th>
-                                <th>Quantity</th>
-                                <th>Supplier</th>
-                                <th>Total Cost</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="movement in stockMovements" :key="movement.id">
-                                <td class="font-weight-medium">{{ formatStockId(movement.id) }}</td>
-                                <td>{{ formatDate(movement.created_at) }}</td>
-                                <td>
-                                    <div class="d-flex align-center">
-                                        <v-icon size="small" color="primary" class="mr-2">mdi-package-variant</v-icon>
-                                        {{ movement.product?.name || '-' }}
-                                    </div>
-                                </td>
-                                <td class="text-success font-weight-medium">+{{ movement.qty }} {{ movement.product?.unit || 'pcs' }}</td>
-                                <td>{{ movement.supplier || '-' }}</td>
-                                <td class="font-weight-medium">{{ formatPrice(movement.total_cost || 0) }}</td>
-                            </tr>
-                            <tr v-if="!stockMovements || stockMovements.length === 0">
-                                <td colspan="6" class="text-center py-8 text-grey">
-                                    No incoming stock history.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <v-table hover>
+                    <thead>
+                        <tr>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Stock ID</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Date</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Product Name</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Quantity</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Supplier</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="movement in stockMovements" :key="movement.id">
+                            <td class="font-weight-medium">{{ formatStockId(movement.id) }}</td>
+                            <td>{{ formatDate(movement.created_at) }}</td>
+                            <td>
+                                <div class="d-flex align-center">
+                                    <v-icon size="small" color="primary" class="mr-2">mdi-package-variant</v-icon>
+                                    {{ movement.product?.name || '-' }}
+                                </div>
+                            </td>
+                            <td class="text-success font-weight-medium">+{{ movement.qty }} {{ movement.product?.unit || 'pcs' }}</td>
+                            <td>{{ movement.supplier || '-' }}</td>
+                            <td class="font-weight-medium">{{ formatPrice(movement.total_cost || 0) }}</td>
+                        </tr>
+                        <tr v-if="!stockMovements || stockMovements.length === 0">
+                            <td colspan="6" class="text-center py-8 text-grey">
+                                No incoming stock history.
+                            </td>
+                        </tr>
+                    </tbody>
+                </v-table>
             </v-card>
         </v-container>
 
@@ -514,62 +507,4 @@ const submitStock = () => {
 </template>
 
 <style scoped>
-.search-input :deep(.v-field__outline) {
-    --v-field-border-opacity: 1 !important;
-}
-
-.search-input :deep(.v-field__outline__start),
-.search-input :deep(.v-field__outline__end) {
-    border-color: #757575 !important;
-}
-
-.search-input :deep(.v-field__prepend-inner) {
-    border-right: none !important;
-}
-
-.search-input :deep(.v-field--variant-outlined .v-field__prepend-inner) {
-    opacity: 1;
-}
-
-.search-input :deep(.v-input__prepend-inner::after),
-.search-input :deep(.v-field__prepend-inner::after) {
-    display: none !important;
-}
-
-.search-input :deep(.v-field__outline__notch) {
-    display: none !important;
-}
-
-.table-container {
-    overflow-x: auto;
-}
-
-.products-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.products-table th {
-    text-align: left;
-    padding: 12px 16px;
-    font-weight: 600;
-    color: #666;
-    font-size: 0.8rem;
-    border-bottom: 1px solid #E0E0E0;
-    white-space: nowrap;
-}
-
-.products-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #F5F5F5;
-    font-size: 0.875rem;
-}
-
-.products-table tbody tr:hover {
-    background-color: #FAFAFA;
-}
-
-.products-card {
-    border: 1px solid #BDBDBD !important;
-}
 </style>
