@@ -116,8 +116,8 @@ const getPaymentColor = (type) => {
                                         +12.5% <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
-                                <v-avatar color="grey-lighten-3" size="40" rounded>
-                                    <v-icon color="grey-darken-3">mdi-cart-outline</v-icon>
+                                <v-avatar color="green-lighten-4" size="40" rounded>
+                                    <v-icon color="green-darken-3">mdi-cart-outline</v-icon>
                                 </v-avatar>
                             </div>
                         </v-card-text>
@@ -153,17 +153,17 @@ const getPaymentColor = (type) => {
                 <v-col cols="12" md="8">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
-                            Recent Transactions
+                            Transactions Today
                         </v-card-title>
                         <v-card-text class="px-0">
-                            <v-table density="comfortable" class="bg-transparent">
+                            <v-table hover density="comfortable" class="bg-transparent">
                                 <thead>
                                     <tr>
-                                        <th class="text-left font-weight-medium text-caption text-grey-darken-3 border-bottom">ID</th>
-                                        <th class="text-left font-weight-medium text-caption text-grey-darken-3 border-bottom">Customer</th>
-                                        <th class="text-left font-weight-medium text-caption text-grey-darken-3 border-bottom">Items</th>
-                                        <th class="text-left font-weight-medium text-caption text-grey-darken-3 border-bottom">Total</th>
-                                        <th class="text-left font-weight-medium text-caption text-grey-darken-3 border-bottom">Payment Type</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">ID</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">Customer</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">Items</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">Total</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">Payment Type</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -203,7 +203,7 @@ const getPaymentColor = (type) => {
                             <div class="pie-chart mb-6"></div>
                             
                             <!-- Legend -->
-                            <div class="d-flex flex-wrap justify-center gap-2 mt-4" style="gap: 8px 16px;">
+                            <div class="d-flex flex-wrap justify-center ga-2 mt-4" style="gap: 8px 16px;">
                                 <div v-for="(color, name) in categoryColors" :key="name" class="d-flex align-center">
                                     <div class="color-box mr-2" :style="{ backgroundColor: color }"></div>
                                     <span class="text-caption text-grey-darken-2">{{ name }}</span>
@@ -215,8 +215,8 @@ const getPaymentColor = (type) => {
             </v-row>
 
             <!-- Low Stock Alerts -->
-            <v-card class="rounded-lg elevation-1 mb-4" variant="flat">
-                <v-card-title class="pt-4 px-4 pb-0 text-subtitle-2 font-weight-medium text-grey-darken-2 d-flex align-center">
+            <v-card class="rounded-lg elevation-1 mb-4" color="surface" variant="flat">
+                <v-card-title class="pt-4 px-4 pb-0 text-subtitle-2 font-weight-medium d-flex align-center">
                     <v-icon color="error" size="small" class="mr-2">mdi-alert-circle-outline</v-icon>
                     Low Stock Alert
                 </v-card-title>
@@ -224,15 +224,15 @@ const getPaymentColor = (type) => {
                 <v-card-text class="pt-4">
                     <v-row v-if="lowStockAlerts && lowStockAlerts.length > 0">
                         <v-col cols="12" sm="6" md="3" v-for="item in lowStockAlerts" :key="item.id">
-                            <v-card variant="outlined" :color="item.stock_qty === 0 ? 'error' : 'orange-lighten-4'" class="bg-orange-lighten-5 border-opacity-50">
-                                <v-card-text class="d-flex justify-space-between">
+                            <v-card hover flat  :color="item.stock_qty === 0 ? 'error' : 'surface'">
+                                <v-card-text class="d-flex justify-space-between rounded-xl border">
                                     <div>
-                                        <div class="font-weight-medium text-grey-darken-4 text-body-1">{{ item.name }}</div>
-                                        <div class="text-caption text-grey-darken-1">{{ item.category?.name || 'Category' }}</div>
+                                        <div :class="['font-weight-medium text-body-1', item.stock_qty === 0 ? 'text-white' : 'text-primary']">{{ item.name }}</div>
+                                        <div :class="['text-caption', item.stock_qty === 0 ? 'text-white' : 'text-grey']">{{ item.category?.name || 'Category' }}</div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-weight-bold text-deep-orange-darken-2 text-body-1">{{ item.stock_qty }} units</div>
-                                        <div class="text-caption text-grey">Min: {{ item.min_stock }} units</div>
+                                        <div :class="['font-weight-bold text-body-1', item.stock_qty === 0 ? 'text-white' : 'text-deep-orange-darken-2']">{{ item.stock_qty }} units</div>
+                                        <div :class="['text-caption', item.stock_qty === 0 ? 'text-white' : 'text-grey']">Min: {{ item.min_stock }} units</div>
                                     </div>
                                 </v-card-text>
                             </v-card>
@@ -281,11 +281,4 @@ const getPaymentColor = (type) => {
     border-radius: 2px;
 }
 
-.border-bottom {
-    border-bottom: 1px solid #eeeeee !important;
-}
-
-.gap-2 {
-    gap: 8px;
-}
 </style>

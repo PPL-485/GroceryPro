@@ -4,17 +4,18 @@ import { Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <div>
-            <Link href="/">
-                <ApplicationLogo class="w-20 h-20 fill-current text-gray-500" />
-            </Link>
-        </div>
-
-        <div
-            class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg"
-        >
-            <slot />
-        </div>
-    </div>
+    <v-app style="background-color: #FAF9F6; font-family: 'Inter', sans-serif;">
+        <v-main>
+            <v-container class="fill-height d-flex align-center justify-center position-relative overflow-hidden pa-4" fluid>
+                <!-- Blurred Background Blobs -->
+                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 400px; height: 400px; background: #E8F5E9; top: -100px; left: -100px;"></div>
+                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 350px; height: 350px; background: #FFF3E0; bottom: -50px; right: -50px;"></div>
+                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 300px; height: 300px; background: #F1F8E9; top: 20%; right: 10%;"></div>
+                
+                <div style="position: relative; z-index: 10; width: 100%; max-width: 380px;">
+                    <slot />
+                </div>
+            </v-container>
+        </v-main>
+    </v-app>
 </template>

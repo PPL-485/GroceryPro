@@ -72,13 +72,12 @@ const submit = () => {
                         density="compact"
                         hide-details
                         rounded="lg"
-                        bg-color="white"
                         class="search-input"
                     ></v-text-field>
                 </v-col>
                 <v-spacer></v-spacer>
                 <v-col cols="auto">
-                    <v-btn color="#C87A54" rounded="lg" @click="dialog = true" class="text-none px-6" elevation="0" height="40">
+                    <v-btn color="primary" rounded="lg" @click="dialog = true" class="text-none px-6" elevation="0" height="40">
                         <v-icon start size="small">mdi-plus</v-icon>
                         <span class="font-weight-medium">Add Category</span>
                     </v-btn>
@@ -87,44 +86,51 @@ const submit = () => {
 
             <v-row>
                 <v-col v-for="category in filteredCategories" :key="category.id" cols="12" sm="6" md="4" lg="3">
-                    <v-card class="category-card rounded-xl border pa-5" elevation="0">
-                        <!-- Top Row: Icon & Actions -->
-                        <div class="d-flex justify-space-between align-start mb-4">
-                            <div class="icon-box">
-                                <v-icon color="#2E5A27">mdi-shape-outline</v-icon>
+                    <v-hover v-slot="{ isHovering, props }">
+                        <v-card 
+                            v-bind="props"
+                            class="rounded-xl border pa-5" 
+                            :elevation="isHovering ? 2 : 0"
+                            :style="`!important; transition: all 0.2s ease; ${isHovering ? 'transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;' : ''}`"
+                        >
+                            <!-- Top Row: Icon & Actions -->
+                            <div class="d-flex justify-space-between align-start mb-4">
+                                <v-sheet color="primary" width="48" height="48" rounded="lg" class="d-flex align-center justify-center">
+                                    <v-icon>mdi-shape-outline</v-icon>
+                                </v-sheet>
+                                <div class="d-flex gap-2">
+                                    <v-btn icon size="x-small" variant="text">
+                                        <v-icon size="small">mdi-pencil-outline</v-icon>
+                                    </v-btn>
+                                    <v-btn icon size="x-small" variant="text" color="#C87A54">
+                                        <v-icon size="small">mdi-trash-can-outline</v-icon>
+                                    </v-btn>
+                                </div>
                             </div>
-                            <div class="d-flex gap-2">
-                                <v-btn icon size="x-small" variant="text" color="#2E5A27" class="action-btn">
-                                    <v-icon size="small">mdi-pencil-outline</v-icon>
-                                </v-btn>
-                                <v-btn icon size="x-small" variant="text" color="#C87A54" class="action-btn">
-                                    <v-icon size="small">mdi-trash-can-outline</v-icon>
-                                </v-btn>
+
+                            <!-- Content -->
+                            <div class="text-h6 font-weight-bold mb-2">
+                                {{ category.name }}
                             </div>
-                        </div>
+                            <div class="text-body-2 text-grey-darken-1 mb-4" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px; line-height: 1.4;">
+                                {{ category.description || 'No description provided' }}
+                            </div>
 
-                        <!-- Content -->
-                        <div class="text-h6 font-weight-bold mb-2 text-primary-dark">
-                            {{ category.name }}
-                        </div>
-                        <div class="text-body-2 text-grey-darken-1 mb-4 desc-text">
-                            {{ category.description || 'No description provided' }}
-                        </div>
+                            <!-- Product Count -->
+                            <div class="d-flex align-center text-grey-darken-1 text-body-2 font-weight-medium mb-4">
+                                <v-icon size="small" class="mr-2">mdi-package-variant-closed</v-icon>
+                                {{ category.products_count || 0 }} products
+                            </div>
 
-                        <!-- Product Count -->
-                        <div class="d-flex align-center text-grey-darken-1 text-body-2 font-weight-medium mb-4">
-                            <v-icon size="small" class="mr-2">mdi-package-variant-closed</v-icon>
-                            {{ category.products_count || 0 }} products
-                        </div>
+                            <v-divider class="mb-4" color="#E0E0E0"></v-divider>
 
-                        <v-divider class="mb-4" color="#E0E0E0"></v-divider>
-
-                        <!-- Footer -->
-                        <div>
-                            <div class="text-caption text-grey mb-1">Category ID</div>
-                            <div class="text-subtitle-2 font-weight-bold text-primary-dark">{{ formatId(category.id) }}</div>
-                        </div>
-                    </v-card>
+                            <!-- Footer -->
+                            <div>
+                                <div class="text-caption text-grey mb-1">Category ID</div>
+                                <div class="text-subtitle-2 font-weight-bold">{{ formatId(category.id) }}</div>
+                            </div>
+                        </v-card>
+                    </v-hover>
                 </v-col>
                 
                 <v-col v-if="filteredCategories.length === 0" cols="12" class="text-center py-10">
@@ -171,7 +177,6 @@ const submit = () => {
                     <v-spacer></v-spacer>
                     <v-btn
                         variant="tonal"
-                        color="grey-darken-1"
                         @click="dialog = false"
                         rounded="lg"
                         class="px-4 text-none"
@@ -199,51 +204,3 @@ const submit = () => {
 
     </AuthenticatedLayout>
 </template>
-
-<style scoped>
-.search-input :deep(.v-field__outline__start),
-.search-input :deep(.v-field__outline__end) {
-    border-color: #E0E0E0 !important;
-}
-
-.category-card {
-    transition: all 0.2s ease;
-    border-color: #F0F0F0 !important;
-    background-color: #ffffff;
-}
-.category-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-    transform: translateY(-2px);
-}
-
-.icon-box {
-    background-color: #F1F6F0;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.action-btn {
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.action-btn:hover {
-    opacity: 1;
-}
-
-.desc-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    height: 40px;
-    line-height: 1.4;
-}
-
-.text-primary-dark {
-    color: #1a1a1a;
-}
-</style>
