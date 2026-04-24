@@ -73,6 +73,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+
+    Route::get('/goods', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
+    Route::post('/goods', [\App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
+    Route::post('/goods/add-stock', [\App\Http\Controllers\ProductController::class, 'addStock'])->name('products.add-stock');
+
     Route::get('/settings', function () {
         return Inertia::render('Settings');
     })->name('settings');
