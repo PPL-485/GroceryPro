@@ -44,13 +44,16 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
+            'name' => ['required', 'string', 'max:100', 'unique:products,name', 'regex:/[a-zA-Z]/'],
             'category_id' => 'required|exists:categories,id',
-            'stock_qty' => 'required|integer|min:0',
+            'stock_qty' => 'required|numeric|min:0',
             'unit' => 'nullable|string|max:50',
-            'buy_price' => 'required|integer|min:0',
-            'sell_price' => 'required|integer|min:0',
-            'supplier' => 'nullable|string|max:100',
+            'buy_price' => 'required|numeric|min:0',
+            'sell_price' => 'required|numeric|min:0',
+            'supplier' => ['nullable', 'string', 'max:100', 'regex:/[a-zA-Z]/'],
+        ], [
+            'name.regex' => 'Product name must contain at least one letter.',
+            'supplier.regex' => 'Supplier name must contain at least one letter.',
         ]);
 
         // Generate SKU
@@ -90,10 +93,10 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|integer|min:1',
+            'qty' => 'required|numeric|min:0.01',
             'supplier' => 'nullable|string|max:100',
             'date_received' => 'required|date',
-            'total_cost' => 'required|integer|min:0',
+            'total_cost' => 'required|numeric|min:0',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
