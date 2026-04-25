@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/goods', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
     Route::post('/goods', [\App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
+    Route::put('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
     Route::post('/goods/add-stock', [\App\Http\Controllers\ProductController::class, 'addStock'])->name('products.add-stock');
 
     Route::get('/settings', function () {
