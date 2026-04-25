@@ -12,15 +12,18 @@ const props = defineProps({
 
 const search = ref(props.filters?.search || '');
 const addProductDialog = ref(false);
+const editProductDialog = ref(false);
 const addStockDialog = ref(false);
 const snackbar = ref(false);
 const snackbarMessage = ref('');
+const editingProduct = ref(null);
 
 // Form for adding new product
 const productForm = useForm({
     name: '',
     category_id: null,
     stock_qty: 0,
+    min_stock: 0,
     unit: '',
     buy_price: 0,
     sell_price: 0,
@@ -35,6 +38,53 @@ const stockForm = useForm({
     date_received: new Date().toISOString().split('T')[0],
     total_cost: 0,
 });
+
+// Form for editing product
+const editForm = useForm({
+    name: '',
+    category_id: null,
+    unit: '',
+    buy_price: 0,
+    sell_price: 0,
+    min_stock: 0,
+    stock_qty: 0,
+});
+
+// Display values for edit form
+const editBuyPriceDisplay = ref('0');
+const editSellPriceDisplay = ref('0');
+const editMinStockDisplay = ref('0');
+const editStockQtyDisplay = ref('0');
+const stockQtyDisplay = ref('0');
+const minStockDisplay = ref('0');
+const qtyDisplay = ref('0');
+
+// Real-time validation errors
+const validationErrors = ref({
+    productName: '',
+    productSupplier: '',
+    editName: '',
+    stockSupplier: '',
+});
+
+// Validate name (must contain at least one letter)
+const validateName = (value, field) => {
+    if (!value) {
+        validationErrors.value[field] = '';
+        return;
+    }
+    if (!/[a-zA-Z]/.test(value)) {
+        validationErrors.value[field] = 'Must contain at least one letter, cannot be numbers only.';
+    } else {
+        validationErrors.value[field] = '';
+    }
+};
+
+// Watch for product name changes
+watch(() => productForm.name, (val) => validateName(val, 'productName'));
+watch(() => productForm.supplier, (val) => validateName(val, 'productSupplier'));
+watch(() => editForm.name, (val) => validateName(val, 'editName'));
+watch(() => stockForm.supplier, (val) => validateName(val, 'stockSupplier'));
 
 // Filtered products based on search
 const filteredProducts = computed(() => {
@@ -84,6 +134,91 @@ const onTotalCostInput = (e) => {
     totalCostDisplay.value = formatNumber(raw);
 };
 
+// Handle input for edit buy_price
+const onEditBuyPriceInput = (e) => {
+    const raw = parseNumber(e.target.value);
+    editForm.buy_price = raw;
+    editBuyPriceDisplay.value = formatNumber(raw);
+};
+
+// Handle input for edit sell_price
+const onEditSellPriceInput = (e) => {
+    const raw = parseNumber(e.target.value);
+    editForm.sell_price = raw;
+    editSellPriceDisplay.value = formatNumber(raw);
+};
+
+// Format number with decimal support (for stock quantities)
+const formatNumberDecimal = (num) => {
+    if (!num && num !== 0) return '0';
+    // Check if it has decimal
+    if (num % 1 !== 0) {
+        return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(num);
+    }
+    return new Intl.NumberFormat('id-ID').format(num);
+};
+
+// Parse number that may contain decimal (comma as decimal separator in ID locale)
+const parseNumberDecimal = (str) => {
+    if (!str) return 0;
+    // Remove thousand separator (.) but keep decimal separator (,) and convert to .
+    const cleaned = String(str).replace(/\./g, '').replace(',', '.');
+    return parseFloat(cleaned) || 0;
+};
+
+// Handle input for edit min_stock - supports decimal with thousand separator
+const onEditMinStockInput = (e) => {
+    const raw = parseNumberDecimal(e.target.value);
+    editForm.min_stock = raw;
+    editMinStockDisplay.value = formatNumberDecimal(raw);
+};
+
+// Handle input for min_stock (Add Product) - supports decimal with thousand separator
+const onMinStockInput = (e) => {
+    const raw = parseNumberDecimal(e.target.value);
+    productForm.min_stock = raw;
+    minStockDisplay.value = formatNumberDecimal(raw);
+};
+
+// Handle input for stock_qty (Add Product) - supports decimal with thousand separator
+const onStockQtyInput = (e) => {
+    const raw = parseNumberDecimal(e.target.value);
+    productForm.stock_qty = raw;
+    stockQtyDisplay.value = formatNumberDecimal(raw);
+};
+
+// Handle input for qty (Add Stock) - supports decimal with thousand separator
+const onQtyInput = (e) => {
+    const raw = parseNumberDecimal(e.target.value);
+    stockForm.qty = raw;
+    qtyDisplay.value = formatNumberDecimal(raw);
+};
+
+// Handle input for edit stock_qty - supports decimal with thousand separator
+const onEditStockQtyInput = (e) => {
+    const raw = parseNumberDecimal(e.target.value);
+    editForm.stock_qty = raw;
+    editStockQtyDisplay.value = formatNumberDecimal(raw);
+};
+
+// Open edit dialog
+const openEditDialog = (product) => {
+    editingProduct.value = product;
+    editForm.name = product.name;
+    editForm.category_id = product.category_id;
+    editForm.unit = product.unit || 'pcs';
+    editForm.buy_price = product.buy_price;
+    editForm.sell_price = product.sell_price;
+    editForm.min_stock = product.min_stock;
+    editForm.stock_qty = product.stock_qty;
+    editBuyPriceDisplay.value = formatNumber(product.buy_price);
+    editSellPriceDisplay.value = formatNumber(product.sell_price);
+    editMinStockDisplay.value = formatNumberDecimal(product.min_stock);
+    editStockQtyDisplay.value = formatNumberDecimal(product.stock_qty);
+    validationErrors.value.editName = '';
+    editProductDialog.value = true;
+};
+
 const formatPrice = (price) => {
     return 'Rp ' + new Intl.NumberFormat('id-ID').format(price);
 };
@@ -120,6 +255,10 @@ const submitProduct = () => {
             productForm.reset();
             buyPriceDisplay.value = '0';
             sellPriceDisplay.value = '0';
+            stockQtyDisplay.value = '0';
+            minStockDisplay.value = '0';
+            validationErrors.value.productName = '';
+            validationErrors.value.productSupplier = '';
             snackbarMessage.value = 'Product added successfully!';
             snackbar.value = true;
         },
@@ -138,11 +277,35 @@ const submitStock = () => {
             stockForm.reset();
             stockForm.date_received = new Date().toISOString().split('T')[0];
             totalCostDisplay.value = '0';
+            qtyDisplay.value = '0';
+            validationErrors.value.stockSupplier = '';
             snackbarMessage.value = 'Stock added successfully!';
             snackbar.value = true;
         },
         onError: () => {
             snackbarMessage.value = 'Failed to add stock.';
+            snackbar.value = true;
+        }
+    });
+};
+
+const submitEditProduct = () => {
+    editForm.put(route('products.update', editingProduct.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            editProductDialog.value = false;
+            editForm.reset();
+            editBuyPriceDisplay.value = '0';
+            editSellPriceDisplay.value = '0';
+            editMinStockDisplay.value = '0';
+            editStockQtyDisplay.value = '0';
+            editingProduct.value = null;
+            validationErrors.value.editName = '';
+            snackbarMessage.value = 'Product updated successfully!';
+            snackbar.value = true;
+        },
+        onError: () => {
+            snackbarMessage.value = 'Failed to update product.';
             snackbar.value = true;
         }
     });
@@ -198,7 +361,7 @@ const submitStock = () => {
                         Incoming Stock
                     </v-btn>
                     <v-btn 
-                        color="primary" 
+                        color="#C4956A" 
                         rounded="lg" 
                         class="text-none" 
                         height="40"
@@ -250,7 +413,7 @@ const submitStock = () => {
                             </td>
                             <td class="text-center">
                                 <div class="d-inline-flex align-center ga-1">
-                                    <v-btn icon size="small" variant="text" color="grey-darken-2">
+                                    <v-btn icon size="small" variant="text" color="grey-darken-2" @click="openEditDialog(product)">
                                         <v-icon size="18">mdi-square-edit-outline</v-icon>
                                     </v-btn>
                                     <v-btn icon size="small" variant="text" color="error">
@@ -321,7 +484,12 @@ const submitStock = () => {
                 </v-card-subtitle>
                 
                 <v-card-text class="pa-4">
-                    <v-row>
+                    <!-- Product Information Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-package-variant</v-icon>
+                        Product Information
+                    </div>
+                    <v-row class="mb-2">
                         <v-col cols="6">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Product Name</div>
                             <v-text-field
@@ -329,7 +497,7 @@ const submitStock = () => {
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="Enter product name"
-                                :error-messages="productForm.errors.name"
+                                :error-messages="validationErrors.productName || productForm.errors.name"
                                 rounded="lg"
                                 bg-color="#F5F5F5"
                             ></v-text-field>
@@ -349,12 +517,21 @@ const submitStock = () => {
                                 bg-color="#F5F5F5"
                             ></v-select>
                         </v-col>
-                        <v-col cols="6">
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Stock Information Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-warehouse</v-icon>
+                        Stock Information
+                    </div>
+                    <v-row class="mb-2">
+                        <v-col cols="4">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Initial Stock</div>
                             <v-text-field
-                                v-model="productForm.stock_qty"
-                                type="number"
-                                step="0.01"
+                                :model-value="stockQtyDisplay"
+                                @input="onStockQtyInput"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -363,17 +540,40 @@ const submitStock = () => {
                                 bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
-                        <v-col cols="6">
+                        <v-col cols="4">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Min Stock</div>
+                            <v-text-field
+                                :model-value="minStockDisplay"
+                                @input="onMinStockInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                :error-messages="productForm.errors.min_stock"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="4">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Unit</div>
                             <v-text-field
                                 v-model="productForm.unit"
                                 variant="outlined"
                                 density="comfortable"
-                                placeholder="pcs, kg, bottle, etc."
+                                placeholder="pcs, kg, etc."
                                 rounded="lg"
                                 bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Pricing Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-currency-usd</v-icon>
+                        Pricing
+                    </div>
+                    <v-row class="mb-2">
                         <v-col cols="6">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Buy Price</div>
                             <v-text-field
@@ -382,6 +582,7 @@ const submitStock = () => {
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
+                                prefix="Rp"
                                 :error-messages="productForm.errors.buy_price"
                                 rounded="lg"
                                 bg-color="#F5F5F5"
@@ -395,18 +596,29 @@ const submitStock = () => {
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
+                                prefix="Rp"
                                 :error-messages="productForm.errors.sell_price"
                                 rounded="lg"
                                 bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Supplier Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-truck-delivery</v-icon>
+                        Supplier
+                    </div>
+                    <v-row>
                         <v-col cols="12">
-                            <div class="mb-2 text-subtitle-2 font-weight-medium">Supplier</div>
                             <v-text-field
                                 v-model="productForm.supplier"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="Enter supplier name"
+                                :error-messages="validationErrors.productSupplier || productForm.errors.supplier"
                                 rounded="lg"
                                 bg-color="#F5F5F5"
                             ></v-text-field>
@@ -426,14 +638,174 @@ const submitStock = () => {
                         Cancel
                     </v-btn>
                     <v-btn
-                        color="#4A7C4E"
+                        color="#C4956A"
                         @click="submitProduct"
                         :loading="productForm.processing"
+                        :disabled="!!validationErrors.productName || !!validationErrors.productSupplier"
                         rounded="lg"
                         class="px-4 text-none"
                         variant="flat"
                     >
                         Add Product
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Edit Product Dialog -->
+        <v-dialog v-model="editProductDialog" max-width="600" persistent>
+            <v-card class="rounded-xl">
+                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
+                    Edit Product
+                    <v-btn icon="mdi-close" variant="text" size="small" @click="editProductDialog = false"></v-btn>
+                </v-card-title>
+                <v-card-subtitle class="px-4 pb-4 text-grey">
+                    Update the product information
+                </v-card-subtitle>
+                
+                <v-card-text class="pa-4">
+                    <!-- Product Information Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-package-variant</v-icon>
+                        Product Information
+                    </div>
+                    <v-row class="mb-2">
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Product Name</div>
+                            <v-text-field
+                                v-model="editForm.name"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="Enter product name"
+                                :error-messages="validationErrors.editName || editForm.errors.name"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Category</div>
+                            <v-select
+                                v-model="editForm.category_id"
+                                :items="categories"
+                                item-title="name"
+                                item-value="id"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="Select category"
+                                :error-messages="editForm.errors.category_id"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-select>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Stock Information Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-warehouse</v-icon>
+                        Stock Information
+                    </div>
+                    <v-row class="mb-2">
+                        <v-col cols="4">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Current Stock</div>
+                            <v-text-field
+                                :model-value="editStockQtyDisplay"
+                                @input="onEditStockQtyInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                :error-messages="editForm.errors.stock_qty"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="4">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Min Stock</div>
+                            <v-text-field
+                                :model-value="editMinStockDisplay"
+                                @input="onEditMinStockInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                :error-messages="editForm.errors.min_stock"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="4">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Unit</div>
+                            <v-text-field
+                                v-model="editForm.unit"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="pcs, kg, etc."
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Pricing Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-currency-usd</v-icon>
+                        Pricing
+                    </div>
+                    <v-row>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Buy Price</div>
+                            <v-text-field
+                                :model-value="editBuyPriceDisplay"
+                                @input="onEditBuyPriceInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                prefix="Rp"
+                                :error-messages="editForm.errors.buy_price"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Sell Price</div>
+                            <v-text-field
+                                :model-value="editSellPriceDisplay"
+                                @input="onEditSellPriceInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                prefix="Rp"
+                                :error-messages="editForm.errors.sell_price"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+                
+                <v-card-actions class="pa-4 pt-0">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        color="grey-darken-1"
+                        @click="editProductDialog = false"
+                        rounded="lg"
+                        class="px-4 text-none"
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="#C4956A"
+                        @click="submitEditProduct"
+                        :loading="editForm.processing"
+                        :disabled="!!validationErrors.editName"
+                        rounded="lg"
+                        class="px-4 text-none"
+                        variant="flat"
+                    >
+                        Save Changes
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -451,7 +823,11 @@ const submitStock = () => {
                 </v-card-subtitle>
                 
                 <v-card-text class="pa-4">
-                    <div class="mb-2 text-subtitle-2 font-weight-medium">Product</div>
+                    <!-- Product Selection Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-package-variant</v-icon>
+                        Product Selection
+                    </div>
                     <v-select
                         v-model="stockForm.product_id"
                         :items="products"
@@ -463,57 +839,78 @@ const submitStock = () => {
                         :error-messages="stockForm.errors.product_id"
                         rounded="lg"
                         bg-color="#F5F5F5"
-                        class="mb-4"
                     ></v-select>
 
-                    <div class="mb-2 text-subtitle-2 font-weight-medium">Quantity</div>
-                    <v-text-field
-                        v-model="stockForm.qty"
-                        type="number"
-                        step="0.01"
-                        variant="outlined"
-                        density="comfortable"
-                        placeholder="0"
-                        :error-messages="stockForm.errors.qty"
-                        rounded="lg"
-                        bg-color="#F5F5F5"
-                        class="mb-4"
-                    ></v-text-field>
+                    <v-divider class="my-4"></v-divider>
 
-                    <div class="mb-2 text-subtitle-2 font-weight-medium">Supplier</div>
-                    <v-text-field
-                        v-model="stockForm.supplier"
-                        variant="outlined"
-                        density="comfortable"
-                        placeholder="Enter supplier name"
-                        rounded="lg"
-                        bg-color="#F5F5F5"
-                        class="mb-4"
-                    ></v-text-field>
+                    <!-- Stock Details Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-warehouse</v-icon>
+                        Stock Details
+                    </div>
+                    <v-row class="mb-2">
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Quantity</div>
+                            <v-text-field
+                                :model-value="qtyDisplay"
+                                @input="onQtyInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                :error-messages="stockForm.errors.qty"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Date Received</div>
+                            <v-text-field
+                                v-model="stockForm.date_received"
+                                type="date"
+                                variant="outlined"
+                                density="comfortable"
+                                :error-messages="stockForm.errors.date_received"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
 
-                    <div class="mb-2 text-subtitle-2 font-weight-medium">Date Received</div>
-                    <v-text-field
-                        v-model="stockForm.date_received"
-                        type="date"
-                        variant="outlined"
-                        density="comfortable"
-                        :error-messages="stockForm.errors.date_received"
-                        rounded="lg"
-                        bg-color="#F5F5F5"
-                        class="mb-4"
-                    ></v-text-field>
+                    <v-divider class="my-4"></v-divider>
 
-                    <div class="mb-2 text-subtitle-2 font-weight-medium">Total Cost</div>
-                    <v-text-field
-                        :model-value="totalCostDisplay"
-                        @input="onTotalCostInput"
-                        variant="outlined"
-                        density="comfortable"
-                        placeholder="0"
-                        :error-messages="stockForm.errors.total_cost"
-                        rounded="lg"
-                        bg-color="#F5F5F5"
-                    ></v-text-field>
+                    <!-- Supplier & Cost Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-truck-delivery</v-icon>
+                        Supplier & Cost
+                    </div>
+                    <v-row>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Supplier</div>
+                            <v-text-field
+                                v-model="stockForm.supplier"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="Enter supplier name"
+                                :error-messages="validationErrors.stockSupplier || stockForm.errors.supplier"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="6">
+                            <div class="mb-2 text-subtitle-2 font-weight-medium">Total Cost</div>
+                            <v-text-field
+                                :model-value="totalCostDisplay"
+                                @input="onTotalCostInput"
+                                variant="outlined"
+                                density="comfortable"
+                                placeholder="0"
+                                prefix="Rp"
+                                :error-messages="stockForm.errors.total_cost"
+                                rounded="lg"
+                                bg-color="#F5F5F5"
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
                 </v-card-text>
                 
                 <v-card-actions class="pa-4 pt-0">
@@ -528,9 +925,10 @@ const submitStock = () => {
                         Cancel
                     </v-btn>
                     <v-btn
-                        color="#4A7C4E"
+                        color="#C4956A"
                         @click="submitStock"
                         :loading="stockForm.processing"
+                        :disabled="!!validationErrors.stockSupplier"
                         rounded="lg"
                         class="px-4 text-none"
                         variant="flat"

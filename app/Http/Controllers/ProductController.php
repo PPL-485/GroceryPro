@@ -47,6 +47,7 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:100', 'unique:products,name', 'regex:/[a-zA-Z]/'],
             'category_id' => 'required|exists:categories,id',
             'stock_qty' => 'required|numeric|min:0',
+            'min_stock' => 'required|numeric|min:0',
             'unit' => 'nullable|string|max:50',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
@@ -69,7 +70,7 @@ class ProductController extends Controller
             'stock_qty' => $validated['stock_qty'],
             'buy_price' => $validated['buy_price'],
             'sell_price' => $validated['sell_price'],
-            'min_stock' => 10,
+            'min_stock' => $validated['min_stock'],
             'status' => 'active',
         ]);
 
@@ -116,5 +117,32 @@ class ProductController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Stock added successfully.');
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100', 'unique:products,name,' . $product->id, 'regex:/[a-zA-Z]/'],
+            'category_id' => 'required|exists:categories,id',
+            'unit' => 'nullable|string|max:50',
+            'buy_price' => 'required|numeric|min:0',
+            'sell_price' => 'required|numeric|min:0',
+            'min_stock' => 'required|numeric|min:0',
+            'stock_qty' => 'required|numeric|min:0',
+        ], [
+            'name.regex' => 'Product name must contain at least one letter.',
+        ]);
+
+        $product->update([
+            'name' => $validated['name'],
+            'category_id' => $validated['category_id'],
+            'unit' => $validated['unit'] ?? 'pcs',
+            'buy_price' => $validated['buy_price'],
+            'sell_price' => $validated['sell_price'],
+            'min_stock' => $validated['min_stock'],
+            'stock_qty' => $validated['stock_qty'],
+        ]);
+
+        return redirect()->back()->with('success', 'Product updated successfully.');
     }
 }

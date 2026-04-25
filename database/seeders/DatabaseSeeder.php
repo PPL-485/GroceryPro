@@ -16,31 +16,41 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Users
-        User::factory(10)->create();
+        // Users — seed factory users only if less than 10 exist
+        if (User::count() < 10) {
+            User::factory(10 - User::count())->create();
+        }
 
-        User::create([
-            'name'     => 'Admin',
-            'email'    => 'admin@gmail.com',
-            'phone'    => '08123456789',
-            'password' => Hash::make('password'),
-            'status'   => 'active',
-            'role'     => 'admin',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name'     => 'Admin',
+                'phone'    => '08123456789',
+                'password' => Hash::make('password'),
+                'status'   => 'active',
+                'role'     => 'admin',
+            ]
+        );
 
-        User::create([
-            'name'     => 'Cashier',
-            'email'    => 'cashier@gmail.com',
-            'phone'    => '08987654321',
-            'password' => Hash::make('password'),
-            'status'   => 'active',
-            'role'     => 'cashier',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'cashier@gmail.com'],
+            [
+                'name'     => 'Cashier',
+                'phone'    => '08987654321',
+                'password' => Hash::make('password'),
+                'status'   => 'active',
+                'role'     => 'cashier',
+            ]
+        );
 
-        // Categories — seed first so products can reference them
-        Category::factory(10)->create();
+        // Categories — seed only if table is empty
+        if (Category::count() === 0) {
+            Category::factory(10)->create();
+        }
 
-        // Products — each product will reuse an existing category
-        Product::factory(50)->recycle(Category::all())->create();
+        // Products — seed only if table is empty
+        if (Product::count() === 0 && Category::count() > 0) {
+            Product::factory(50)->recycle(Category::all())->create();
+        }
     }
 }
