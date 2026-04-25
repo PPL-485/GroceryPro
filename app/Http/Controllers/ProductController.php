@@ -145,4 +145,19 @@ class ProductController extends Controller
 
         return redirect()->back()->with('success', 'Product updated successfully.');
     }
+
+    public function destroy(Product $product)
+    {
+        // Set product_id to NULL in transaction_items (keep transaction history)
+        \App\Models\TransactionItem::where('product_id', $product->id)
+            ->update(['product_id' => null]);
+
+        // Delete related stock movements
+        $product->stockMovements()->delete();
+        
+        // Delete the product
+        $product->delete();
+
+        return redirect()->back()->with('success', 'Product deleted successfully.');
+    }
 }
