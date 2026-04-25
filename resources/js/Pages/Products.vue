@@ -46,6 +46,44 @@ const filteredProducts = computed(() => {
     );
 });
 
+// Display values with thousand separator
+const buyPriceDisplay = ref('0');
+const sellPriceDisplay = ref('0');
+const totalCostDisplay = ref('0');
+
+// Format number with thousand separator (titik)
+const formatNumber = (num) => {
+    if (!num && num !== 0) return '';
+    return new Intl.NumberFormat('id-ID').format(num);
+};
+
+// Parse formatted number back to raw number
+const parseNumber = (str) => {
+    if (!str) return 0;
+    return parseFloat(String(str).replace(/\./g, '').replace(',', '.')) || 0;
+};
+
+// Handle input for buy_price
+const onBuyPriceInput = (e) => {
+    const raw = parseNumber(e.target.value);
+    productForm.buy_price = raw;
+    buyPriceDisplay.value = formatNumber(raw);
+};
+
+// Handle input for sell_price
+const onSellPriceInput = (e) => {
+    const raw = parseNumber(e.target.value);
+    productForm.sell_price = raw;
+    sellPriceDisplay.value = formatNumber(raw);
+};
+
+// Handle input for total_cost
+const onTotalCostInput = (e) => {
+    const raw = parseNumber(e.target.value);
+    stockForm.total_cost = raw;
+    totalCostDisplay.value = formatNumber(raw);
+};
+
 const formatPrice = (price) => {
     return 'Rp ' + new Intl.NumberFormat('id-ID').format(price);
 };
@@ -80,6 +118,8 @@ const submitProduct = () => {
         onSuccess: () => {
             addProductDialog.value = false;
             productForm.reset();
+            buyPriceDisplay.value = '0';
+            sellPriceDisplay.value = '0';
             snackbarMessage.value = 'Product added successfully!';
             snackbar.value = true;
         },
@@ -97,6 +137,7 @@ const submitStock = () => {
             addStockDialog.value = false;
             stockForm.reset();
             stockForm.date_received = new Date().toISOString().split('T')[0];
+            totalCostDisplay.value = '0';
             snackbarMessage.value = 'Stock added successfully!';
             snackbar.value = true;
         },
@@ -276,7 +317,7 @@ const submitStock = () => {
         </v-container>
 
         <!-- Add Product Dialog -->
-        <v-dialog v-model="addProductDialog" max-width="600">
+        <v-dialog v-model="addProductDialog" max-width="600" persistent>
             <v-card class="rounded-xl">
                 <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
                     Add New Product
@@ -318,8 +359,9 @@ const submitStock = () => {
                         <v-col cols="6">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Initial Stock</div>
                             <v-text-field
-                                v-model.number="productForm.stock_qty"
+                                v-model="productForm.stock_qty"
                                 type="number"
+                                step="0.01"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -342,8 +384,8 @@ const submitStock = () => {
                         <v-col cols="6">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Buy Price</div>
                             <v-text-field
-                                v-model.number="productForm.buy_price"
-                                type="number"
+                                :model-value="buyPriceDisplay"
+                                @input="onBuyPriceInput"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -355,8 +397,8 @@ const submitStock = () => {
                         <v-col cols="6">
                             <div class="mb-2 text-subtitle-2 font-weight-medium">Sell Price</div>
                             <v-text-field
-                                v-model.number="productForm.sell_price"
-                                type="number"
+                                :model-value="sellPriceDisplay"
+                                @input="onSellPriceInput"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -405,7 +447,7 @@ const submitStock = () => {
         </v-dialog>
 
         <!-- Add Incoming Stock Dialog -->
-        <v-dialog v-model="addStockDialog" max-width="500">
+        <v-dialog v-model="addStockDialog" max-width="500" persistent>
             <v-card class="rounded-xl">
                 <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
                     Add Incoming Stock
@@ -433,8 +475,9 @@ const submitStock = () => {
 
                     <div class="mb-2 text-subtitle-2 font-weight-medium">Quantity</div>
                     <v-text-field
-                        v-model.number="stockForm.qty"
+                        v-model="stockForm.qty"
                         type="number"
+                        step="0.01"
                         variant="outlined"
                         density="comfortable"
                         placeholder="0"
@@ -469,8 +512,8 @@ const submitStock = () => {
 
                     <div class="mb-2 text-subtitle-2 font-weight-medium">Total Cost</div>
                     <v-text-field
-                        v-model.number="stockForm.total_cost"
-                        type="number"
+                        :model-value="totalCostDisplay"
+                        @input="onTotalCostInput"
                         variant="outlined"
                         density="comfortable"
                         placeholder="0"
