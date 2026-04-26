@@ -14,9 +14,12 @@ const search = ref(props.filters?.search || '');
 const addProductDialog = ref(false);
 const editProductDialog = ref(false);
 const addStockDialog = ref(false);
+const deleteDialog = ref(false);
 const snackbar = ref(false);
 const snackbarMessage = ref('');
+const snackbarColor = ref('success');
 const editingProduct = ref(null);
+const deletingProduct = ref(null);
 
 // Form for adding new product
 const productForm = useForm({
@@ -306,6 +309,36 @@ const submitEditProduct = () => {
         },
         onError: () => {
             snackbarMessage.value = 'Failed to update product.';
+            snackbarColor.value = 'error';
+            snackbar.value = true;
+        }
+    });
+};
+
+// Open delete confirmation dialog
+const openDeleteDialog = (product) => {
+    deletingProduct.value = product;
+    deleteDialog.value = true;
+};
+
+// Delete product
+const deleteProduct = () => {
+    if (!deletingProduct.value) return;
+    
+    router.delete(route('products.destroy', deletingProduct.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            deleteDialog.value = false;
+            deletingProduct.value = null;
+            snackbarMessage.value = 'Product deleted successfully!';
+            snackbarColor.value = 'success';
+            snackbar.value = true;
+        },
+        onError: (errors) => {
+            deleteDialog.value = false;
+            deletingProduct.value = null;
+            snackbarMessage.value = errors.delete || 'Failed to delete product.';
+            snackbarColor.value = 'error';
             snackbar.value = true;
         }
     });
@@ -416,7 +449,7 @@ const submitEditProduct = () => {
                                     <v-btn icon size="small" variant="text" color="grey-darken-2" @click="openEditDialog(product)">
                                         <v-icon size="18">mdi-square-edit-outline</v-icon>
                                     </v-btn>
-                                    <v-btn icon size="small" variant="text" color="error">
+                                    <v-btn icon size="small" variant="text" color="error" @click="openDeleteDialog(product)">
                                         <v-icon size="18">mdi-delete-outline</v-icon>
                                     </v-btn>
                                 </div>
@@ -939,8 +972,57 @@ const submitEditProduct = () => {
             </v-card>
         </v-dialog>
 
+        <!-- Delete Confirmation Dialog -->
+        <v-dialog v-model="deleteDialog" max-width="400" persistent>
+            <v-card class="rounded-xl">
+                <v-card-title class="pa-4 font-weight-bold d-flex align-center">
+                    <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
+                    Delete Product
+                </v-card-title>
+                
+                <v-card-text class="pa-4">
+                    <p class="text-body-1 mb-2">Are you sure you want to delete this product?</p>
+                    <v-alert
+                        v-if="deletingProduct"
+                        type="warning"
+                        variant="tonal"
+                        density="compact"
+                        class="mb-0"
+                    >
+                        <strong>{{ deletingProduct?.name }}</strong> ({{ deletingProduct?.sku }})
+                    </v-alert>
+                    <p class="text-body-2 text-grey mt-3 mb-0">
+                        This action cannot be undone. All related stock movements will also be deleted.
+                    </p>
+                </v-card-text>
+                
+                <v-card-actions class="pa-4 pt-0">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        color="grey-darken-1"
+                        @click="deleteDialog = false; deletingProduct = null"
+                        rounded="lg"
+                        class="px-4 text-none"
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="error"
+                        @click="deleteProduct"
+                        rounded="lg"
+                        class="px-4 text-none"
+                        variant="flat"
+                    >
+                        <v-icon start size="small">mdi-delete</v-icon>
+                        Delete
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <!-- Snackbar -->
-        <v-snackbar v-model="snackbar" :timeout="3000" color="success" location="bottom right">
+        <v-snackbar v-model="snackbar" :timeout="3000" :color="snackbarColor" location="bottom right">
             {{ snackbarMessage }}
         </v-snackbar>
 
