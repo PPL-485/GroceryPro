@@ -10,7 +10,7 @@ export default createVuetify({
   defaults: {
     global: {
       style: {
-        fontFamily: 'comic-sans, sans-serif'
+        fontFamily: '"Plus Jakarta Sans", sans-serif'
       }
     },
     VBtn: {
@@ -58,24 +58,28 @@ export default createVuetify({
       brand: {
         dark: false,
         colors: {
-          primary: '#4CAF50',
+          // ── Primary: deep forest green (matches landing page) ──
+          primary: '#2E6B3B',
           'on-primary': '#FFFFFF',
 
-          secondary: '#81C784',
-          'on-secondary': '#1B5E20',
+          // ── Secondary: warm terracotta accent ──
+          secondary: '#D38865',
+          'on-secondary': '#FFFFFF',
 
-          background: '#FFFFFF',
-          'on-background': '#1F2937',
+          // ── Backgrounds ──
+          background: '#FCFBF8',
+          'on-background': '#1B1B1B',
 
           surface: '#FFFFFF',
-          'on-surface': '#1F2937',
+          'on-surface': '#1B1B1B',
 
-          error: '#F44336',
+          // ── Semantic ──
+          error: '#D32F2F',
           'on-error': '#FFFFFF',
 
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
+          info: '#1976D2',
+          success: '#2E7D32',
+          warning: '#F59E0B',
         }
       }
     },
