@@ -11,6 +11,9 @@ const props = defineProps({
 });
 
 const search = ref(props.filters?.search || '');
+const tab = ref('products');
+const selectedCategory = ref(null);
+const selectedStockFilter = ref(null);
 const addProductDialog = ref(false);
 const editProductDialog = ref(false);
 const addStockDialog = ref(false);
@@ -89,14 +92,49 @@ watch(() => productForm.supplier, (val) => validateName(val, 'productSupplier'))
 watch(() => editForm.name, (val) => validateName(val, 'editName'));
 watch(() => stockForm.supplier, (val) => validateName(val, 'stockSupplier'));
 
-// Filtered products based on search
+// Computed color for stock filter icon
+const stockFilterColor = computed(() => {
+    switch (selectedStockFilter.value) {
+        case 'available': return '#4A7C4E';
+        case 'low_stock': return 'warning';
+        case 'out_of_stock': return 'error';
+        default: return 'grey-darken-1';
+    }
+});
+
+// Filtered products based on search and category and stock status
 const filteredProducts = computed(() => {
-    if (!search.value) return props.products;
+    return props.products.filter(p => {
+        const matchesSearch = !search.value || 
+            p.name.toLowerCase().includes(search.value.toLowerCase()) || 
+            p.sku.toLowerCase().includes(search.value.toLowerCase());
+        
+        const matchesCategory = selectedCategory.value === null || 
+            p.category_id === selectedCategory.value;
+
+        let matchesStock = true;
+        if (selectedStockFilter.value === 'out_of_stock') {
+            matchesStock = p.stock_qty <= 0;
+        } else if (selectedStockFilter.value === 'low_stock') {
+            matchesStock = p.stock_qty > 0 && p.stock_qty <= p.min_stock;
+        } else if (selectedStockFilter.value === 'available') {
+            matchesStock = p.stock_qty > p.min_stock;
+        }
+
+        return matchesSearch && matchesCategory && matchesStock;
+    });
+});
+
+// Filtered stock movements based on search
+const filteredStockMovements = computed(() => {
+    if (!search.value) return props.stockMovements;
     const query = search.value.toLowerCase();
-    return props.products.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        p.sku.toLowerCase().includes(query)
-    );
+    return props.stockMovements.filter(m => {
+        const stockId = ('IN-' + String(m.id).padStart(3, '0')).toLowerCase();
+        const productName = m.product?.name?.toLowerCase() || '';
+        const supplierName = m.supplier?.toLowerCase() || '';
+        return stockId.includes(query) || productName.includes(query) || supplierName.includes(query);
+    });
 });
 
 // Display values with thousand separator
@@ -373,7 +411,7 @@ const deleteProduct = () => {
                     <v-text-field
                         v-model="search"
                         prepend-inner-icon="mdi-magnify"
-                        placeholder="Search products..."
+                        :placeholder="tab === 'products' ? 'Search products...' : 'Search stock history...'"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -383,21 +421,20 @@ const deleteProduct = () => {
                 <v-spacer></v-spacer>
                 <v-col cols="auto">
                     <v-btn 
-                        variant="outlined" 
-                        color="grey-darken-2" 
+                        v-if="tab === 'incoming_stock'"
+                        color="primary" 
                         rounded="lg" 
-                        class="text-none mr-2" 
-                        height="40"
+                        class="text-none mr-2"
                         @click="addStockDialog = true"
                     >
                         <v-icon start size="small">mdi-package-variant-plus</v-icon>
                         Incoming Stock
                     </v-btn>
                     <v-btn 
-                        color="#C4956A" 
+                        v-if="tab === 'products'"
+                        color="primary" 
                         rounded="lg" 
-                        class="text-none" 
-                        height="40"
+                        class="text-none"
                         @click="addProductDialog = true"
                     >
                         <v-icon start size="small">mdi-plus</v-icon>
@@ -406,9 +443,40 @@ const deleteProduct = () => {
                 </v-col>
             </v-row>
 
-            <!-- Products Table -->
-            <v-card class="rounded-xl mb-6 border" elevation="0">
-                <v-table hover>
+            <!-- Tabs -->
+            <v-tabs
+                v-model="tab"
+                color="primary"
+                align-tabs="start"
+                class="mb-6"
+                density="compact"
+            >
+                <v-tab value="products" :ripple="true">Products</v-tab>
+                <v-tab value="incoming_stock" :ripple="true">Incoming Stock</v-tab>
+            </v-tabs>
+            <div v-if="tab === 'products'" class="mb-3">
+                <div class="d-flex align-center overflow-x-auto">
+                    <v-chip-group v-model="selectedCategory" column class="flex-shrink-0" mandatory>
+                        <v-chip :value="null" filter variant="outlined" color="primary" class="border text-grey">All</v-chip>
+                        <v-chip
+                            v-for="cat in categories"
+                            :key="cat.id"
+                            :value="cat.id"
+                            filter
+                            variant="outlined"
+                            color="primary"
+                            class="border text-grey"
+                        >
+                            {{ cat.name }}
+                        </v-chip>
+                    </v-chip-group>
+                </div>
+            </div>
+            <v-window v-model="tab" class="overflow-visible">
+                <v-window-item value="products">
+                    <!-- Products Table -->
+                    <v-card class="rounded-xl border" elevation="0">
+                        <v-table hover>
                     <thead>
                         <tr>
                             <th class="text-left font-weight-bold text-grey-darken-2">Product ID</th>
@@ -417,7 +485,32 @@ const deleteProduct = () => {
                             <th class="text-left font-weight-bold text-grey-darken-2">Stock</th>
                             <th class="text-left font-weight-bold text-grey-darken-2">Buy Price</th>
                             <th class="text-left font-weight-bold text-grey-darken-2">Sell Price</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Status</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">
+                                <div class="d-flex align-center">
+                                    Status
+                                    <v-menu location="bottom end">
+                                        <template v-slot:activator="{ props }">
+                                            <v-btn icon v-bind="props" size="small" variant="text" :color="stockFilterColor">
+                                                <v-icon size="16">mdi-filter-variant</v-icon>
+                                            </v-btn>
+                                        </template>
+                                        <v-list density="compact" min-width="150" class="rounded-lg">
+                                            <v-list-item @click="selectedStockFilter = null" :active="selectedStockFilter === null" color="primary">
+                                                <v-list-item-title>All Status</v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="selectedStockFilter = 'available'" :active="selectedStockFilter === 'available'" color="primary">
+                                                <v-list-item-title class="text-success font-weight-medium">Available</v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="selectedStockFilter = 'low_stock'" :active="selectedStockFilter === 'low_stock'" color="primary">
+                                                <v-list-item-title class="text-warning font-weight-medium">Low Stock</v-list-item-title>
+                                            </v-list-item>
+                                            <v-list-item @click="selectedStockFilter = 'out_of_stock'" :active="selectedStockFilter === 'out_of_stock'" color="primary">
+                                                <v-list-item-title class="text-error font-weight-medium">Out of Stock</v-list-item-title>
+                                            </v-list-item>
+                                        </v-list>
+                                    </v-menu>
+                                </div>
+                            </th>
                             <th class="text-center font-weight-bold text-grey-darken-2">Actions</th>
                         </tr>
                     </thead>
@@ -462,14 +555,12 @@ const deleteProduct = () => {
                         </tr>
                     </tbody>
                 </v-table>
-            </v-card>
+                    </v-card>
+                </v-window-item>
 
-            <!-- Incoming Stock History -->
-            <v-card class="rounded-xl border" elevation="0">
-                <v-card-title class="pa-4 font-weight-bold">
-                    Incoming Stock History
-                </v-card-title>
-                <v-divider></v-divider>
+                <!-- Incoming Stock History -->
+                <v-window-item value="incoming_stock">
+                    <v-card class="rounded-xl border" elevation="0">
                 <v-table hover>
                     <thead>
                         <tr>
@@ -482,7 +573,7 @@ const deleteProduct = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="movement in stockMovements" :key="movement.id">
+                        <tr v-for="movement in filteredStockMovements" :key="movement.id">
                             <td class="font-weight-medium">{{ formatStockId(movement.id) }}</td>
                             <td>{{ formatDate(movement.created_at) }}</td>
                             <td>
@@ -495,14 +586,16 @@ const deleteProduct = () => {
                             <td>{{ movement.supplier || '-' }}</td>
                             <td class="font-weight-medium">{{ formatPrice(movement.total_cost || 0) }}</td>
                         </tr>
-                        <tr v-if="!stockMovements || stockMovements.length === 0">
+                        <tr v-if="!filteredStockMovements || filteredStockMovements.length === 0">
                             <td colspan="6" class="text-center py-8 text-grey">
-                                No incoming stock history.
+                                No incoming stock history found.
                             </td>
                         </tr>
                     </tbody>
                 </v-table>
-            </v-card>
+                    </v-card>
+                </v-window-item>
+            </v-window>
         </v-container>
 
         <!-- Add Product Dialog -->
@@ -1029,5 +1122,4 @@ const deleteProduct = () => {
     </AuthenticatedLayout>
 </template>
 
-<style scoped>
-</style>
+

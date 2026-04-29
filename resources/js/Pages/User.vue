@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     users: Array,
@@ -11,6 +11,17 @@ const roles = ['admin', 'cashier'];
 const snackbar = ref(false);
 const snackbarMessage = ref('');
 const snackbarColor = ref('success');
+const search = ref('');
+
+const filteredUsers = computed(() => {
+    if (!search.value) {
+        return props.users;
+    }
+    const searchTerm = search.value.toLowerCase();
+    return props.users.filter(user => 
+        user.name.toLowerCase().includes(searchTerm)
+    );
+});
 
 const updateRole = (user, newRole) => {
     router.put(route('users.update-role', user.id), {
@@ -47,11 +58,18 @@ const updateRole = (user, newRole) => {
         
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
             <v-card>
-                <v-card-title class="px-6 pt-6">
-                    <h2 class="text-h6 font-weight-medium">Users List</h2>
-                </v-card-title>
-                
                 <v-card-text>
+                    <v-text-field
+                        label="Search"
+                        prepend-inner-icon="mdi-magnify"
+                        variant="outlined"
+                        rounded="lg"
+                        v-model="search"
+                        class="mb-4"
+                        density="comfortable"
+                        clearable
+                        hide-details
+                    ></v-text-field>    
                     <v-table>
                         <thead>
                             <tr>
@@ -63,7 +81,7 @@ const updateRole = (user, newRole) => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="user in users" :key="user.id">
+                            <tr v-for="user in filteredUsers" :key="user.id">
                                 <td>{{ user.name }}</td>
                                 <td>{{ user.email }}</td>
                                 <td>{{ user.phone || '-' }}</td>
@@ -88,7 +106,7 @@ const updateRole = (user, newRole) => {
                                     ></v-select>
                                 </td>
                             </tr>
-                            <tr v-if="!users || users.length === 0">
+                            <tr v-if="!filteredUsers || filteredUsers.length === 0">
                                 <td colspan="5" class="text-center text-gray-500 py-4">
                                     No users found.
                                 </td>
