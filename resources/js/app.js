@@ -6,6 +6,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import vuetify from './Plugins/vuetify';
+import { MotionPlugin } from '@vueuse/motion';
 import '@mdi/font/css/materialdesignicons.css';
 import '../css/app.css'
 
@@ -19,6 +20,7 @@ createInertiaApp({
             .use(plugin)
             .use(ZiggyVue)
             .use(vuetify)
+            .use(MotionPlugin)
             .mount(el);
     },
     progress: {

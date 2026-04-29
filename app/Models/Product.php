@@ -31,4 +31,12 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    /**
+     * A product has many stock movements.
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
 }
