@@ -119,10 +119,48 @@ const lowStockAlerts = ref(true);
                 </v-window-item>
 
                 <v-window-item value="system">
-                    <v-card variant="outlined" class="settings-card rounded-xl pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4">mdi-cog-outline</v-icon>
-                        <div class="text-h6">System Settings</div>
-                        <div class="text-body-1 mt-2">Advanced system configurations.</div>
+                    <v-card variant="outlined" class="settings-card rounded-xl">
+                        <!-- Card Header -->
+                        <div class="d-flex align-center px-8 pt-8 pb-4">
+                            <v-icon icon="mdi-database-export-outline" size="28" class="mr-4" color="black"></v-icon>
+                            <span class="text-h6 font-weight-medium" style="color: #000;">Database Backup</span>
+                        </div>
+
+                        <!-- Card Content -->
+                        <v-card-text class="px-8 pb-8 pt-4">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <div>
+                                    <div class="text-subtitle-1 font-weight-medium" style="color: #000;">Export Database</div>
+                                    <div class="text-body-1 mt-1" style="color: #6B7280;">Download a complete backup of your database as .sql file</div>
+                                </div>
+                                <a
+                                    :href="route('backup')"
+                                    target="_blank"
+                                    class="text-decoration-none"
+                                >
+                                    <v-btn
+                                        variant="flat"
+                                        color="#C67D53"
+                                        class="text-none px-6 rounded-lg text-white font-weight-medium"
+                                        height="44"
+                                    >
+                                        <v-icon start>mdi-download</v-icon>
+                                        Backup Now
+                                    </v-btn>
+                                </a>
+                            </div>
+                        </v-card-text>
+
+                        <!-- Divider -->
+                        <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
+
+                        <!-- Card Info -->
+                        <v-card-text class="px-8 py-6">
+                            <div class="d-flex align-center">
+                                <v-icon size="small" color="info" class="mr-2">mdi-information-outline</v-icon>
+                                <span class="text-body-2" style="color: #6B7280;">The backup file will include all tables and data from your database.</span>
+                            </div>
+                        </v-card-text>
                     </v-card>
                 </v-window-item>
             </v-window>

@@ -78,6 +78,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/goods', [\App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
     Route::put('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
     Route::delete('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Backup Database
+    Route::get('/backup', [\App\Http\Controllers\BackupController::class, 'backup'])->name('backup');
+  
+    Route::delete('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
+
     Route::post('/goods/add-stock', [\App\Http\Controllers\ProductController::class, 'addStock'])->name('products.add-stock');
 
     Route::get('/settings', function () {
