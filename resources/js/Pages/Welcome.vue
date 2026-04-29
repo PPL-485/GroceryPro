@@ -2,60 +2,629 @@
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
-    canLogin: {
-        type: Boolean,
-    },
-    canRegister: {
-        type: Boolean,
-    },
-    laravelVersion: {
-        type: String,
-        required: true,
-    },
-    phpVersion: {
-        type: String,
-        required: true,
-    },
+    canLogin: { type: Boolean },
+    canRegister: { type: Boolean },
+    laravelVersion: { type: String, required: true },
+    phpVersion: { type: String, required: true },
 });
+
+const features = [
+    { icon: 'mdi-chart-bar', title: 'Smart Dashboard', description: 'Real-time insights into your revenue, transactions, and inventory levels at a glance.' },
+    { icon: 'mdi-cart-outline', title: 'Point of Sale', description: 'Lightning-fast POS system with QRIS payment support for seamless checkout experiences.' },
+    { icon: 'mdi-package-variant-closed', title: 'Stock Management', description: 'Track inventory levels, get low stock alerts, and manage your products effortlessly.' },
+    { icon: 'mdi-trending-up', title: 'Detailed Reports', description: 'Comprehensive transaction history and analytics to make data-driven decisions.' },
+    { icon: 'mdi-account-group-outline', title: 'User Management', description: 'Control access with Owner and Cashier roles, keeping your operations secure.' },
+    { icon: 'mdi-shield-check-outline', title: 'Secure & Reliable', description: 'Built with security in mind, protecting your business data around the clock.' },
+];
 </script>
 
 <template>
-    <Head title="Welcome" />
+    <Head title="Welcome to FreshStock" />
 
-    <div
-        class="relative sm:flex sm:justify-center sm:items-center min-h-screen bg-dots-darker bg-center bg-gray-100 dark:bg-dots-lighter dark:bg-gray-900 selection:bg-red-500 selection:text-white"
-    >
-        <div v-if="canLogin" class="sm:fixed sm:top-0 sm:right-0 p-6 text-end">
-            <Link
-                v-if="$page.props.auth.user"
-                :href="route('dashboard')"
-                class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                >Dashboard</Link
-            >
+    <v-app>
+        <div class="lp-root">
 
-            <template v-else>
-                <Link
-                    :href="route('login')"
-                    class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500"
-                    >Log in</Link
-                >
-            </template>
+            <!-- ═══════════════════ HEADER ═══════════════════ -->
+            <header class="lp-header">
+                <div class="lp-logo" v-motion-fade>
+                    <div class="lp-logo-icon">
+                        <v-icon icon="mdi-package-variant-closed" size="22" color="white"></v-icon>
+                    </div>
+                    <span class="lp-logo-text">FreshStock</span>
+                </div>
+
+                <div v-if="canLogin" v-motion-fade>
+                    <Link v-if="$page.props.auth.user" :href="route('dashboard')">
+                        <v-btn color="#2E6B3B" variant="flat" class="lp-btn-signin">Dashboard</v-btn>
+                    </Link>
+                    <template v-else>
+                        <Link :href="route('login')">
+                            <v-btn color="#2E6B3B" variant="flat" class="lp-btn-signin">Sign In</v-btn>
+                        </Link>
+                    </template>
+                </div>
+            </header>
+
+            <!-- ═══════════════════ HERO ═══════════════════ -->
+            <main class="lp-hero">
+                <div class="lp-hero-blob lp-blob-1"></div>
+                <div class="lp-hero-blob lp-blob-2"></div>
+
+                <div class="lp-hero-grid">
+                    <!-- Left: Text -->
+                    <div class="lp-hero-text" v-motion-slide-visible-left>
+                        <span class="lp-badge">Built for Small Grocery Stores</span>
+                        <h1 class="lp-hero-title">
+                            Fresh Approach to<br/>
+                            <span class="lp-accent">Inventory</span>
+                        </h1>
+                        <p class="lp-hero-sub">
+                            Streamline your grocery store operations with our intuitive inventory management system.
+                            From point-of-sale to analytics, everything you need in one place.
+                        </p>
+                        <div style="margin-top: 2rem;">
+                            <Link v-if="canRegister" :href="route('register')">
+                                <v-btn color="#D38865" variant="flat" class="lp-btn-cta">
+                                    Get Started
+                                    <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
+                                </v-btn>
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Right: Dashboard Mockup -->
+                    <div class="lp-hero-graphic" v-motion-slide-visible-right>
+                        <div class="lp-mockup-bg-rotate"></div>
+                        <div class="lp-blob-circle lp-bc-right"></div>
+                        <div class="lp-blob-circle lp-bc-left"></div>
+
+                        <div class="lp-mockup-card">
+                            <div class="lp-mockup-inner">
+                                <div class="lp-mockup-header-row">
+                                    <div>
+                                        <p class="lp-mockup-label">Today's Revenue</p>
+                                        <h3 class="lp-mockup-revenue">Rp 2,450,000</h3>
+                                        <p class="lp-mockup-growth">
+                                            <v-icon icon="mdi-arrow-up" size="x-small"></v-icon>
+                                            +12.5% <span class="lp-mockup-growth-sub">from yesterday</span>
+                                        </p>
+                                    </div>
+                                    <div class="lp-mockup-icon-box">
+                                        <v-icon icon="mdi-trending-up" color="#D38865"></v-icon>
+                                    </div>
+                                </div>
+                                <div class="lp-mockup-row lp-mockup-row-neutral">
+                                    <span>Transactions</span><span class="lp-mockup-val">158</span>
+                                </div>
+                                <div class="lp-mockup-row lp-mockup-row-warn">
+                                    <span>Low Stock Items</span><span class="lp-mockup-val lp-accent">8</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- ═══════════════════ FEATURES ═══════════════════ -->
+            <section class="lp-features">
+                <div class="lp-container">
+                    <div class="lp-section-head" v-motion-slide-visible-bottom>
+                        <h2 class="lp-section-title">Everything You Need</h2>
+                        <p class="lp-section-sub">Powerful features designed for grocery store owners</p>
+                    </div>
+
+                    <div class="lp-grid-3">
+                        <div
+                            v-for="(f, i) in features"
+                            :key="i"
+                            class="lp-feature-card"
+                            v-motion
+                            :initial="{ opacity: 0, y: 50 }"
+                            :enter="{ opacity: 1, y: 0, transition: { delay: i * 100, duration: 600 } }"
+                        >
+                            <div class="lp-feature-icon">
+                                <v-icon :icon="f.icon"></v-icon>
+                            </div>
+                            <h3 class="lp-feature-title">{{ f.title }}</h3>
+                            <p class="lp-feature-desc">{{ f.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ STATS ═══════════════════ -->
+            <section class="lp-stats">
+                <div class="lp-stats-overlay"></div>
+                <div class="lp-container lp-stats-grid">
+                    <div class="lp-stat-item" v-motion-pop-visible>
+                        <span class="lp-stat-num">99.9%</span>
+                        <span class="lp-stat-label">Uptime</span>
+                    </div>
+                    <div class="lp-stat-item lp-stat-divider" v-motion-pop-visible :delay="200">
+                        <span class="lp-stat-num">500+</span>
+                        <span class="lp-stat-label">Stores Powered</span>
+                    </div>
+                    <div class="lp-stat-item lp-stat-divider" v-motion-pop-visible :delay="400">
+                        <span class="lp-stat-num">24/7</span>
+                        <span class="lp-stat-label">Support</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ CTA ═══════════════════ -->
+            <section class="lp-cta">
+                <div class="lp-container lp-cta-inner" v-motion-slide-visible-bottom>
+                    <h2 class="lp-cta-title">Ready to Transform Your Store?</h2>
+                    <p class="lp-cta-sub">Join hundreds of grocery stores already using FreshStock to streamline their operations.</p>
+                    <Link v-if="canRegister" :href="route('register')">
+                        <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
+                            Start Your Journey
+                            <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
+                        </v-btn>
+                    </Link>
+                </div>
+            </section>
+
+            <!-- ═══════════════════ FOOTER ═══════════════════ -->
+            <footer class="lp-footer">
+                <div class="lp-container lp-footer-inner">
+                    <div class="lp-footer-brand">
+                        <v-icon icon="mdi-package-variant-closed" color="#D38865" size="20"></v-icon>
+                        <span class="lp-footer-name">FreshStock</span>
+                    </div>
+                    <p class="lp-footer-copy">&copy; 2026 FreshStock. All rights reserved.</p>
+                </div>
+            </footer>
+
         </div>
-
-        <div class="max-w-7xl mx-auto p-6 lg:p-8">
-            <div class="flex justify-center">
-            <img src="data:image/jpeg;base64,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" alt="">
-            </div>
-
-            <div class="mt-16 flex flex-col items-center text-center">
-                <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-gray-800 dark:text-gray-200">
-                    Welcome to GroceryPro
-                </h1>
-
-                <p class="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-400">
-                    A simple grocery management system built with Laravel and Vue.js.
-                </p>
-            </div>
-        </div>
-    </div>
+    </v-app>
 </template>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+/* ── Root ─────────────────────────────────────────── */
+.lp-root {
+    min-height: 100vh;
+    background: #FCFBF8;
+    color: #1a1a1a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+}
+
+/* ── Container ────────────────────────────────────── */
+.lp-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* ── Header ───────────────────────────────────────── */
+.lp-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lp-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.lp-logo-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #2E6B3B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lp-logo-text {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1B5E20;
+    letter-spacing: -0.02em;
+}
+
+.lp-btn-signin {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 600;
+    padding: 0 1.5rem;
+    color: white !important;
+}
+
+/* ── Hero ─────────────────────────────────────────── */
+.lp-hero {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+}
+
+.lp-hero-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+.lp-blob-1 {
+    width: 300px; height: 300px;
+    background: #E8F5E9;
+    top: 0; left: -80px;
+}
+.lp-blob-2 {
+    width: 250px; height: 250px;
+    background: #FFF3E0;
+    top: 40px; right: 60px;
+}
+
+.lp-hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+@media (max-width: 768px) {
+    .lp-hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .lp-grid-3 { grid-template-columns: 1fr; }
+    .lp-stats-grid { grid-template-columns: 1fr; }
+    .lp-stat-divider { border-left: none; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 2rem; margin-top: 2rem; }
+}
+
+.lp-badge {
+    display: inline-block;
+    background: #E8F5E9;
+    color: #2E6B3B;
+    border: 1px solid #C8E6C9;
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+.lp-hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 700;
+    color: #1B5E20;
+    line-height: 1.15;
+    margin: 0 0 1.25rem;
+}
+
+.lp-accent {
+    color: #D38865;
+}
+
+.lp-hero-sub {
+    font-size: 1.05rem;
+    color: #555;
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0;
+}
+
+.lp-btn-cta {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-weight: 700;
+    padding: 0 2rem;
+    height: 48px;
+    color: white !important;
+    border-radius: 10px !important;
+}
+
+/* ── Hero Mockup ──────────────────────────────────── */
+.lp-hero-graphic {
+    position: relative;
+}
+
+.lp-mockup-bg-rotate {
+    position: absolute;
+    inset: -16px;
+    background: #E8F5E9;
+    border-radius: 24px;
+    transform: rotate(3deg) scale(1.05);
+    z-index: 0;
+    transition: transform 0.5s ease;
+}
+.lp-hero-graphic:hover .lp-mockup-bg-rotate {
+    transform: rotate(6deg) scale(1.05);
+}
+
+.lp-blob-circle {
+    position: absolute;
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+}
+.lp-bc-right {
+    width: 80px; height: 80px;
+    background: #EED8C9;
+    top: -24px; right: -24px;
+    opacity: 0.9;
+}
+.lp-bc-left {
+    width: 100px; height: 100px;
+    background: #E8F5E9;
+    bottom: -30px; left: -30px;
+    opacity: 0.8;
+}
+
+.lp-mockup-card {
+    position: relative;
+    background: #427A45;
+    border-radius: 24px;
+    padding: 1rem;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+    z-index: 1;
+    border: 1px solid #2d5e30;
+}
+
+.lp-mockup-inner {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.lp-mockup-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+}
+
+.lp-mockup-label {
+    font-size: 0.8rem;
+    color: #888;
+    font-weight: 500;
+    margin: 0 0 0.25rem;
+}
+
+.lp-mockup-revenue {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1B5E20;
+    margin: 0 0 0.35rem;
+}
+
+.lp-mockup-growth {
+    font-size: 0.75rem;
+    color: #4CAF50;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+.lp-mockup-growth-sub {
+    color: #aaa;
+    font-weight: 400;
+    margin-left: 4px;
+}
+
+.lp-mockup-icon-box {
+    background: #FFF5F0;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.lp-mockup-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+.lp-mockup-row-neutral {
+    background: #F5F7F5;
+    border: 1px solid #f0f0f0;
+    color: #444;
+}
+.lp-mockup-row-warn {
+    background: #FFF5F2;
+    border: 1px solid #ffe4da;
+    color: #444;
+}
+.lp-mockup-val {
+    font-weight: 700;
+    color: #333;
+}
+
+/* ── Features ─────────────────────────────────────── */
+.lp-features {
+    background: #FCFBF8;
+    padding: 6rem 0;
+}
+
+.lp-section-head {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto 3.5rem;
+}
+
+.lp-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+    font-weight: 700;
+    color: #1B5E20;
+    margin: 0 0 0.75rem;
+}
+
+.lp-section-sub {
+    font-size: 1rem;
+    color: #888;
+    margin: 0;
+}
+
+.lp-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.lp-feature-card {
+    background: white;
+    border-radius: 18px;
+    padding: 2rem;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: box-shadow 0.3s ease;
+    cursor: default;
+}
+.lp-feature-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+}
+.lp-feature-card:hover .lp-feature-icon {
+    background: #2E6B3B;
+    color: white;
+}
+
+.lp-feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #E8F5E9;
+    color: #2E6B3B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    transition: background 0.3s, color 0.3s;
+}
+
+.lp-feature-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111;
+    margin: 0 0 0.5rem;
+}
+
+.lp-feature-desc {
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.65;
+    margin: 0;
+}
+
+/* ── Stats ────────────────────────────────────────── */
+.lp-stats {
+    position: relative;
+    background: linear-gradient(135deg, #2E6B3B, #1B5E20);
+    padding: 5rem 0;
+    overflow: hidden;
+}
+
+.lp-stats-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.08);
+    pointer-events: none;
+}
+
+.lp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.lp-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 0;
+}
+
+.lp-stat-divider {
+    border-left: 1px solid rgba(255,255,255,0.2);
+}
+
+.lp-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 5vw, 3.75rem);
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.lp-stat-label {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+/* ── CTA ──────────────────────────────────────────── */
+.lp-cta {
+    padding: 6rem 0;
+    background: #FCFBF8;
+}
+
+.lp-cta-inner {
+    text-align: center;
+}
+
+.lp-cta-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    color: #1B5E20;
+    margin: 0 0 1rem;
+}
+
+.lp-cta-sub {
+    font-size: 1rem;
+    color: #777;
+    margin: 0 0 2.5rem;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ── Footer ───────────────────────────────────────── */
+.lp-footer {
+    background: #0F3511;
+    padding: 3rem 0;
+    border-top: 1px solid #1a4a1c;
+}
+
+.lp-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.lp-footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lp-footer-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.lp-footer-copy {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.4);
+    margin: 0;
+}
+</style>
