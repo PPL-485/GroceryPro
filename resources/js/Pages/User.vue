@@ -40,6 +40,24 @@ const updateRole = (user, newRole) => {
         }
     });
 };
+
+const updateStatus = (user, newStatus) => {
+    router.put(route('users.update-status', user.id), {
+        status: newStatus,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            snackbarMessage.value = 'User status updated successfully.';
+            snackbarColor.value = 'success';
+            snackbar.value = true;
+        },
+        onError: () => {
+            snackbarMessage.value = 'Failed to update user status.';
+            snackbarColor.value = 'error';
+            snackbar.value = true;
+        }
+    });
+};
 </script>
 
 <template>
@@ -86,12 +104,21 @@ const updateRole = (user, newRole) => {
                                 <td>{{ user.email }}</td>
                                 <td>{{ user.phone || '-' }}</td>
                                 <td>
-                                    <v-chip
-                                        :color="user.status === 'active' ? 'success' : 'error'"
-                                        size="small"
-                                    >
-                                        {{ user.status }}
-                                    </v-chip>
+                                    <div class="d-flex align-center" style="gap: 8px;">
+                                        <v-switch
+                                            :model-value="user.status === 'active'"
+                                            color="success"
+                                            hide-details
+                                            density="compact"
+                                            @update:model-value="(val) => updateStatus(user, val ? 'active' : 'inactive')"
+                                        ></v-switch>
+                                        <v-chip
+                                            :color="user.status === 'active' ? 'success' : 'error'"
+                                            size="small"
+                                        >
+                                            {{ user.status }}
+                                        </v-chip>
+                                    </div>
                                 </td>
                                 <td>
                                     <v-select

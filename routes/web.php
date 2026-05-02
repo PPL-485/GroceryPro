@@ -94,6 +94,12 @@ Route::middleware('auth')->group(function () {
         $user->update(['role' => $request->role]);
         return back()->with('success', 'User role updated successfully.');
     })->name('users.update-role');
+
+    Route::put('/users/{user}/status', function (\Illuminate\Http\Request $request, \App\Models\User $user) {
+        $request->validate(['status' => 'required|in:active,inactive']);
+        $user->update(['status' => $request->status]);
+        return back()->with('success', 'User status updated successfully.');
+    })->name('users.update-status');
 });
 
 require __DIR__.'/auth.php';
