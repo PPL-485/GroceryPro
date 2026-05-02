@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -12,6 +12,33 @@ const snackbar = ref(false);
 const snackbarMessage = ref('');
 const snackbarColor = ref('success');
 const search = ref('');
+
+const isAddUserModalOpen = ref(false);
+const userForm = useForm({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'cashier',
+    status: 'active',
+});
+
+const submitUser = () => {
+    userForm.post(route('users.store'), {
+        onSuccess: () => {
+            isAddUserModalOpen.value = false;
+            userForm.reset();
+            snackbarMessage.value = 'User created successfully.';
+            snackbarColor.value = 'success';
+            snackbar.value = true;
+        },
+        onError: () => {
+            snackbarMessage.value = 'Failed to create user. Please check the inputs.';
+            snackbarColor.value = 'error';
+            snackbar.value = true;
+        }
+    });
+};
 
 const filteredUsers = computed(() => {
     if (!search.value) {
@@ -59,17 +86,28 @@ const updateRole = (user, newRole) => {
         <div class="overflow-hidden shadow-sm sm:rounded-lg">
             <v-card>
                 <v-card-text>
-                    <v-text-field
-                        label="Search"
-                        prepend-inner-icon="mdi-magnify"
-                        variant="outlined"
-                        rounded="lg"
-                        v-model="search"
-                        class="mb-4"
-                        density="comfortable"
-                        clearable
-                        hide-details
-                    ></v-text-field>    
+                    <div class="d-flex align-center mb-4 gap-4">
+                        <v-text-field
+                            label="Search"
+                            prepend-inner-icon="mdi-magnify"
+                            variant="outlined"
+                            rounded="lg"
+                            v-model="search"
+                            density="comfortable"
+                            clearable
+                            hide-details
+                            class="flex-grow-1"
+                        ></v-text-field>
+                        <v-btn
+                            color="primary"
+                            prepend-icon="mdi-plus"
+                            @click="isAddUserModalOpen = true"
+                            height="48"
+                            class="ml-4"
+                        >
+                            Add User
+                        </v-btn>
+                    </div>
                     <v-table>
                         <thead>
                             <tr>
@@ -115,6 +153,80 @@ const updateRole = (user, newRole) => {
                     </v-table>
                 </v-card-text>
             </v-card>
+
+            <v-dialog v-model="isAddUserModalOpen" max-width="500px">
+                <v-card>
+                    <v-card-title>
+                        <span class="text-h5">Add New User</span>
+                    </v-card-title>
+                    <v-card-text>
+                        <v-container>
+                            <v-row>
+                                <v-col cols="12">
+                                    <v-text-field
+                                        v-model="userForm.name"
+                                        label="Name"
+                                        :error-messages="userForm.errors.name"
+                                        required
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-text-field
+                                        v-model="userForm.email"
+                                        label="Email"
+                                        type="email"
+                                        :error-messages="userForm.errors.email"
+                                        required
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-text-field
+                                        v-model="userForm.phone"
+                                        label="Phone (Optional)"
+                                        :error-messages="userForm.errors.phone"
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-text-field
+                                        v-model="userForm.password"
+                                        label="Password"
+                                        type="password"
+                                        :error-messages="userForm.errors.password"
+                                        required
+                                    ></v-text-field>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <v-select
+                                        v-model="userForm.role"
+                                        :items="roles"
+                                        label="Role"
+                                        :error-messages="userForm.errors.role"
+                                        required
+                                    ></v-select>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <v-select
+                                        v-model="userForm.status"
+                                        :items="['active', 'inactive']"
+                                        label="Status"
+                                        :error-messages="userForm.errors.status"
+                                        required
+                                    ></v-select>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue-darken-1" variant="text" @click="isAddUserModalOpen = false">
+                            Cancel
+                        </v-btn>
+                        <v-btn color="blue-darken-1" variant="text" @click="submitUser" :loading="userForm.processing">
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
 
             <v-snackbar
                 v-model="snackbar"
