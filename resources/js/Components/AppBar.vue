@@ -36,10 +36,19 @@
 
 <script setup>
 import { useTheme } from 'vuetify'
-import { computed, inject } from 'vue'
+import { computed, inject, onMounted } from 'vue'
 
 const theme = useTheme()
 const themes = ['brand', 'dark']
+const THEME_KEY = 'grocerypro-theme'
+
+// Restore saved theme on every page load
+onMounted(() => {
+  const saved = localStorage.getItem(THEME_KEY)
+  if (saved && themes.includes(saved)) {
+    theme.global.name.value = saved
+  }
+})
 
 const themeIcon = computed(() => {
   if (theme.global.name.value === 'dark') return 'mdi-weather-night'
@@ -51,6 +60,7 @@ function toggleTheme() {
   const currentIndex = themes.indexOf(theme.global.name.value)
   const nextIndex = (currentIndex + 1) % themes.length
   theme.global.name.value = themes[nextIndex]
+  localStorage.setItem(THEME_KEY, theme.global.name.value)
 }
 
 // Injected from AuthenticatedLayout — controls the right panel
