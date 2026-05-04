@@ -55,41 +55,34 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/users', function () {
-    return Inertia::render('User', [
-        'users' => \App\Models\User::all(),
-    ]);
-})->middleware(['auth', 'verified'])->name('users.index');
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+    Route::get('/users', function () {
+        return Inertia::render('User', [
+            'users' => \App\Models\User::all(),
+        ]);
+    })->name('users.index');
 
-Route::post('/users', function (\Illuminate\Http\Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|string|email|max:255|unique:users',
-        'phone' => 'nullable|string|max:20',
-        'password' => 'required|string|min:8',
-        'role' => 'required|in:admin,cashier',
-        'status' => 'required|in:active,inactive',
-    ]);
+    Route::post('/users', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8',
+            'role' => 'required|in:admin,cashier',
+            'status' => 'required|in:active,inactive',
+        ]);
 
-    \App\Models\User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-        'role' => $request->role,
-        'status' => $request->status,
-    ]);
+        \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'role' => $request->role,
+            'status' => $request->status,
+        ]);
 
-    return back()->with('success', 'User created successfully.');
-})->middleware(['auth', 'verified'])->name('users.store');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
-    Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+        return back()->with('success', 'User created successfully.');
+    })->name('users.store');
 
     Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
 
@@ -104,18 +97,26 @@ Route::middleware('auth')->group(function () {
     // Backup Database
     Route::get('/backup', [\App\Http\Controllers\BackupController::class, 'backup'])->name('backup');
   
-    Route::delete('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
-
     Route::post('/goods/add-stock', [\App\Http\Controllers\ProductController::class, 'addStock'])->name('products.add-stock');
 
-    Route::get('/settings', function () {
-        return Inertia::render('Settings');
-    })->name('settings');
     Route::put('/users/{user}/role', function (\Illuminate\Http\Request $request, \App\Models\User $user) {
         $request->validate(['role' => 'required|in:admin,cashier']);
         $user->update(['role' => $request->role]);
         return back()->with('success', 'User role updated successfully.');
     })->name('users.update-role');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
+    Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+
+    Route::get('/settings', function () {
+        return Inertia::render('Settings');
+    })->name('settings');
 });
 
 require __DIR__.'/auth.php';
