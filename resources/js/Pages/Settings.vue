@@ -51,12 +51,6 @@ const updatePassword = () => {
         <template #header-title>Settings</template>
         
         <div class="px-2 pb-6 max-w-5xl mx-auto">
-            <!-- Page Header -->
-            <div class="mb-8 px-2">
-                <h1 class="text-h3 font-weight-regular mb-2" style="font-family: Georgia, serif !important; color: #000;">Settings</h1>
-                <p class="text-subtitle-1" style="color: #4A5D53;">Configure your store settings and preferences</p>
-            </div>
-
             <!-- Tabs -->
             <div class="px-2">
                 <v-tabs
@@ -64,7 +58,6 @@ const updatePassword = () => {
                     color="primary"
                     align-tabs="start"
                     class="mb-8 custom-tabs rounded-xl"
-                    hide-slider
                     height="48"
                 >
                     <v-tab value="info_settings" class="text-none custom-tab" rounded="xl" :ripple="false">Info Settings</v-tab>
@@ -83,20 +76,18 @@ const updatePassword = () => {
                         <form @submit.prevent="submitProfile">
                             <!-- Card Header -->
                             <div class="d-flex align-center px-8 pt-8 pb-4">
-                                <v-icon icon="mdi-account-outline" size="28" class="mr-4" color="black"></v-icon>
-                                <span class="text-h6 font-weight-medium" style="color: #000;">Profil Informasi Pribadi</span>
+                                <v-icon icon="mdi-account-outline" size="28" class="mr-4" color="primary"></v-icon>
+                                <span class="text-h6 font-weight-medium text-primary">Profil Informasi Pribadi</span>
                             </div>
 
                             <!-- Card Content -->
                             <v-card-text class="px-8 pb-4 pt-4">
                                 <v-row>
                                     <v-col cols="12" md="6" class="pb-2">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Full Name</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Full Name</div>
                                         <v-text-field
                                             v-model="form.name"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -104,12 +95,10 @@ const updatePassword = () => {
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6" class="pb-2">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Phone Number</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Phone Number</div>
                                         <v-text-field
                                             v-model="form.phone"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -119,12 +108,10 @@ const updatePassword = () => {
                                 </v-row>
                                 <v-row>
                                     <v-col cols="12" md="6" class="pt-2 pb-4">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Email</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Email</div>
                                         <v-text-field
                                             v-model="form.email"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -132,12 +119,10 @@ const updatePassword = () => {
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6" class="pt-2 pb-4">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Role</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Role</div>
                                         <v-text-field
                                             :model-value="user.role"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#E5E7EB"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -154,8 +139,7 @@ const updatePassword = () => {
                             <!-- Card Actions -->
                             <v-card-actions class="px-8 py-6 justify-end">
                                 <v-btn
-                                    variant="outlined"
-                                    color="black"
+                                    variant="flat"
                                     class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                     height="44"
                                     @click="form.reset()"
@@ -165,7 +149,7 @@ const updatePassword = () => {
                                 <v-btn
                                     type="submit"
                                     variant="flat"
-                                    color="#C67D53"
+                                    color="primary"
                                     class="text-none px-6 rounded-lg text-white font-weight-medium"
                                     height="44"
                                     :loading="form.processing"
@@ -177,25 +161,24 @@ const updatePassword = () => {
                     </v-card>
                 </v-window-item>
 
-                <!-- Notifications Tab Content (From the image) -->
+                <!-- Notifications Tab Content -->
                 <v-window-item value="notifications">
                     <v-card variant="outlined" class="settings-card rounded-xl">
                         <!-- Card Header -->
                         <div class="d-flex align-center px-8 pt-8 pb-4">
-                            <v-icon icon="mdi-bell-outline" size="28" class="mr-4" color="black"></v-icon>
-                            <span class="text-h6 font-weight-medium" style="color: #000;">Notification Settings</span>
+                            <v-icon icon="mdi-bell-outline" size="28" class="mr-4" color="primary"></v-icon>
+                            <span class="text-h6 font-weight-medium text-primary">Notification Settings</span>
                         </div>
 
                         <!-- Card Content -->
                         <v-card-text class="px-8 pb-8 pt-4">
                             <div class="d-flex align-center justify-space-between mb-2">
                                 <div>
-                                    <div class="text-subtitle-1 font-weight-medium" style="color: #000;">Low Stock Alerts</div>
-                                    <div class="text-body-1 mt-1" style="color: #6B7280;">Get notified when products are running low</div>
+                                    <div class="text-subtitle-1 font-weight-medium">Low Stock Alerts</div>
+                                    <div class="text-body-1 mt-1">Get notified when products are running low</div>
                                 </div>
                                 <v-switch
                                     v-model="lowStockAlerts"
-                                    color="black"
                                     inset
                                     hide-details
                                     density="compact"
@@ -209,8 +192,7 @@ const updatePassword = () => {
                         <!-- Card Actions -->
                         <v-card-actions class="px-8 py-6 justify-end">
                             <v-btn
-                                variant="outlined"
-                                color="black"
+                                variant="flat"
                                 class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                 height="44"
                             >
@@ -218,7 +200,7 @@ const updatePassword = () => {
                             </v-btn>
                             <v-btn
                                 variant="flat"
-                                color="#C67D53"
+                                color="primary"
                                 class="text-none px-6 rounded-lg text-white font-weight-medium"
                                 height="44"
                             >
@@ -228,27 +210,24 @@ const updatePassword = () => {
                     </v-card>
                 </v-window-item>
                 
-                <!-- Placeholders for other tabs -->
                 <v-window-item value="security">
                     <v-card variant="outlined" class="settings-card rounded-xl">
                         <form @submit.prevent="updatePassword">
                             <!-- Card Header -->
                             <div class="d-flex align-center px-8 pt-8 pb-4">
-                                <v-icon icon="mdi-lock-outline" size="28" class="mr-4" color="black"></v-icon>
-                                <span class="text-h6 font-weight-medium" style="color: #000;">Security Settings</span>
+                                <v-icon icon="mdi-lock-outline" size="28" class="mr-4" color="primary"></v-icon>
+                                <span class="text-h6 font-weight-medium text-primary">Security Settings</span>
                             </div>
 
                             <!-- Card Content -->
                             <v-card-text class="px-8 pb-4 pt-4">
                                 <v-row>
                                     <v-col cols="12" class="pb-2">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Current Password</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Current Password</div>
                                         <v-text-field
                                             v-model="passwordForm.current_password"
                                             type="password"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -258,13 +237,11 @@ const updatePassword = () => {
                                 </v-row>
                                 <v-row>
                                     <v-col cols="12" class="py-2">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">New Password</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">New Password</div>
                                         <v-text-field
                                             v-model="passwordForm.password"
                                             type="password"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -274,13 +251,11 @@ const updatePassword = () => {
                                 </v-row>
                                 <v-row>
                                     <v-col cols="12" class="pt-2 pb-4">
-                                        <div class="text-subtitle-2 font-weight-medium mb-2" style="color: #000;">Confirm New Password</div>
+                                        <div class="text-subtitle-2 font-weight-medium mb-2">Confirm New Password</div>
                                         <v-text-field
                                             v-model="passwordForm.password_confirmation"
                                             type="password"
-                                            variant="solo-filled"
-                                            flat
-                                            bg-color="#F3F4F6"
+                                            variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
@@ -296,8 +271,7 @@ const updatePassword = () => {
                             <!-- Card Actions -->
                             <v-card-actions class="px-8 py-6 justify-end">
                                 <v-btn
-                                    variant="outlined"
-                                    color="black"
+                                    variant="flat"
                                     class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                     height="44"
                                     @click="passwordForm.reset()"
@@ -307,7 +281,7 @@ const updatePassword = () => {
                                 <v-btn
                                     type="submit"
                                     variant="flat"
-                                    color="#C67D53"
+                                    color="primary"
                                     class="text-none px-6 rounded-lg text-white font-weight-medium"
                                     height="44"
                                     :loading="passwordForm.processing"
@@ -321,9 +295,9 @@ const updatePassword = () => {
 
                 <v-window-item value="appearance">
                     <v-card variant="outlined" class="settings-card rounded-xl pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4">mdi-palette-outline</v-icon>
-                        <div class="text-h6">Appearance Settings</div>
-                        <div class="text-body-1 mt-2">Customize the look and feel.</div>
+                        <v-icon size="48" class="mb-4" color="primary">mdi-palette-outline</v-icon>
+                        <div class="text-h6 text-primary">Appearance Settings</div>
+                        <div class="text-body-1 mt-2" style="color: #6B7280;">Customize the look and feel.</div>
                     </v-card>
                 </v-window-item>
 
@@ -331,15 +305,15 @@ const updatePassword = () => {
                     <v-card variant="outlined" class="settings-card rounded-xl">
                         <!-- Card Header -->
                         <div class="d-flex align-center px-8 pt-8 pb-4">
-                            <v-icon icon="mdi-database-export-outline" size="28" class="mr-4" color="black"></v-icon>
-                            <span class="text-h6 font-weight-medium" style="color: #000;">Database Backup</span>
+                            <v-icon icon="mdi-database-export-outline" size="28" class="mr-4" color="primary"></v-icon>
+                            <span class="text-h6 font-weight-medium text-primary">Database Backup</span>
                         </div>
 
                         <!-- Card Content -->
                         <v-card-text class="px-8 pb-8 pt-4">
                             <div class="d-flex align-center justify-space-between mb-2">
                                 <div>
-                                    <div class="text-subtitle-1 font-weight-medium" style="color: #000;">Export Database</div>
+                                    <div class="text-subtitle-1 font-weight-medium">Export Database</div>
                                     <div class="text-body-1 mt-1" style="color: #6B7280;">Download a complete backup of your database as .sql file</div>
                                 </div>
                                 <a
@@ -349,7 +323,7 @@ const updatePassword = () => {
                                 >
                                     <v-btn
                                         variant="flat"
-                                        color="#C67D53"
+                                        color="primary"
                                         class="text-none px-6 rounded-lg text-white font-weight-medium"
                                         height="44"
                                     >
@@ -366,7 +340,7 @@ const updatePassword = () => {
                         <!-- Card Info -->
                         <v-card-text class="px-8 py-6">
                             <div class="d-flex align-center">
-                                <v-icon size="small" color="info" class="mr-2">mdi-information-outline</v-icon>
+                                <v-icon size="small" color="#6B7280" class="mr-2">mdi-information-outline</v-icon>
                                 <span class="text-body-2" style="color: #6B7280;">The backup file will include all tables and data from your database.</span>
                             </div>
                         </v-card-text>
@@ -374,132 +348,6 @@ const updatePassword = () => {
                 </v-window-item>
             </v-window>
         </div>
-
-        <!-- Tab Windows -->
-        <v-window v-model="tab" class="overflow-visible px-2">
-
-            <!-- Placeholders for other tabs -->
-            <v-window-item value="store_info">
-                <v-card variant="outlined" class=" rounded-xl pa-10 text-center text-grey">
-                    <v-icon size="48" class="mb-4">mdi-store</v-icon>
-                    <div class="text-h6">Store Info Settings</div>
-                    <div class="text-body-1 mt-2">Configuration for store information.</div>
-                </v-card>
-            </v-window-item>
-
-            <!-- Notifications Tab Content (From the image) -->
-            <v-window-item value="notifications">
-                <v-card variant="outlined" class=" rounded-xl">
-                    <!-- Card Header -->
-                    <div class="d-flex align-center px-8 pt-8 pb-4">
-                        <v-icon icon="mdi-bell-outline" size="28" class="mr-4" color="black"></v-icon>
-                        <span class="text-h6 font-weight-medium" style="color: #000;">Notification Settings</span>
-                    </div>
-
-                    <!-- Card Content -->
-                    <v-card-text class="px-8 pb-8 pt-4">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div>
-                                <div class="text-subtitle-1 font-weight-medium" style="color: #000;">Low Stock Alerts</div>
-                                <div class="text-body-1 mt-1" style="color: #6B7280;">Get notified when products are running low</div>
-                            </div>
-                            <v-switch
-                                v-model="lowStockAlerts"
-                                color="black"
-                                inset
-                                hide-details
-                                density="compact"
-                            ></v-switch>
-                        </div>
-                    </v-card-text>
-
-                    <!-- Divider -->
-                    <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
-
-                    <!-- Card Actions -->
-                    <v-card-actions class="px-8 py-6 justify-end">
-                        <v-btn
-                            variant="outlined"
-                            color="black"
-                            class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
-                            height="44"
-                        >
-                            Reset to Default
-                        </v-btn>
-                        <v-btn
-                            variant="flat"
-                            color="#C67D53"
-                            class="text-none px-6 rounded-lg text-white font-weight-medium"
-                            height="44"
-                        >
-                            Save Preferences
-                        </v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-window-item>
-
-            <v-window-item value="security">
-                <v-card variant="outlined" class=" rounded-xl pa-10 text-center text-grey">
-                    <v-icon size="48" class="mb-4">mdi-shield-check-outline</v-icon>
-                    <div class="text-h6">Security Settings</div>
-                    <div class="text-body-1 mt-2">Manage security and passwords.</div>
-                </v-card>
-            </v-window-item>
-
-            <v-window-item value="appearance">
-                <v-card variant="outlined" class=" rounded-xl pa-10 text-center text-grey">
-                    <v-icon size="48" class="mb-4">mdi-palette-outline</v-icon>
-                    <div class="text-h6">Appearance Settings</div>
-                    <div class="text-body-1 mt-2">Customize the look and feel.</div>
-                </v-card>
-            </v-window-item>
-
-            <v-window-item value="system">
-                <v-card variant="outlined" class=" rounded-xl">
-                    <!-- Card Header -->
-                    <div class="d-flex align-center px-8 pt-8 pb-4">
-                        <v-icon icon="mdi-database-export-outline" size="28" class="mr-4"></v-icon>
-                        <span class="text-h6 font-weight-medium">Database Backup</span>
-                    </div>
-
-                    <!-- Card Content -->
-                    <v-card-text class="px-8 pb-8 pt-4">
-                        <div class="d-flex align-center justify-space-between mb-2">
-                            <div>
-                                <div class="text-subtitle-1 font-weight-medium">Export Database</div>
-                                <div class="text-body-1 mt-1">Download a complete backup of your database as .sql file</div>
-                            </div>
-                            <a
-                                :href="route('backup')"
-                                target="_blank"
-                                class="text-decoration-none"
-                            >
-                                <v-btn
-                                    variant="flat"
-                                    color="#C67D53"
-                                    class="text-none px-6 rounded-lg text-white font-weight-medium"
-                                    height="44"
-                                >
-                                    <v-icon start>mdi-download</v-icon>
-                                    Backup Now
-                                </v-btn>
-                            </a>
-                        </div>
-                    </v-card-text>
-
-                    <!-- Divider -->
-                    <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
-
-                    <!-- Card Info -->
-                    <v-card-text class="px-8 py-6">
-                        <div class="d-flex align-center">
-                            <v-icon size="small" color="info" class="mr-2">mdi-information-outline</v-icon>
-                            <span class="text-body-2" style="color: #6B7280;">The backup file will include all tables and data from your database.</span>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-window-item>
-        </v-window>
     </AuthenticatedLayout>
 </template>
 
