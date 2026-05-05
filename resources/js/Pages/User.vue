@@ -195,8 +195,8 @@ const deleteUser = (user) => {
                                 </td>
                                 <td class="text-center">
                                     <v-btn
-                                        icon="mdi-delete"
-                                        color="error"
+                                        icon="mdi-trash-can-outline"
+                                        color="#C87A54"
                                         variant="text"
                                         density="comfortable"
                                         @click="deleteUser(user)"
