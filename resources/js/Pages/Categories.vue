@@ -241,7 +241,7 @@ const openAddDialog = () => {
                     </v-form>
                 </v-card-text>
                 
-                <v-card-actions class="pa-4 pt-0 border-t mt-4">
+                <v-card-actions class="pa-4 pt-4 border-t mt-4">
                     <v-spacer></v-spacer>
                     <v-btn
                         variant="tonal"
