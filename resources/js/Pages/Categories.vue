@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -9,8 +9,13 @@ const props = defineProps({
 
 const search = ref('');
 const dialog = ref(false);
+const deleteDialog = ref(false);
+const categoryToDelete = ref(null);
 const snackbar = ref(false);
 const snackbarMessage = ref('');
+const snackbarColor = ref('success');
+const isEditing = ref(false);
+const editingId = ref(null);
 
 const form = useForm({
     name: '',
@@ -30,20 +35,83 @@ const formatId = (id) => {
     return 'CAT-' + id.toString().padStart(3, '0');
 };
 
-const submit = () => {
-    form.post(route('categories.store'), {
+const editCategory = (category) => {
+    isEditing.value = true;
+    editingId.value = category.id;
+    form.name = category.name;
+    form.description = category.description;
+    dialog.value = true;
+};
+
+const confirmDeleteCategory = (category) => {
+    categoryToDelete.value = category;
+    deleteDialog.value = true;
+};
+
+const executeDelete = () => {
+    if (!categoryToDelete.value) return;
+    
+    router.delete(route('categories.destroy', categoryToDelete.value.id), {
         preserveScroll: true,
         onSuccess: () => {
-            dialog.value = false;
-            form.reset();
-            snackbarMessage.value = 'Category added successfully!';
+            deleteDialog.value = false;
+            categoryToDelete.value = null;
+            snackbarMessage.value = 'Category deleted successfully!';
+            snackbarColor.value = 'success';
             snackbar.value = true;
         },
         onError: (errors) => {
-            snackbarMessage.value = 'Failed to add category. Please check your inputs.';
+            deleteDialog.value = false;
+            snackbarMessage.value = errors.error || 'Failed to delete category.';
+            snackbarColor.value = 'error';
             snackbar.value = true;
         }
     });
+};
+
+const submit = () => {
+    if (isEditing.value) {
+        form.put(route('categories.update', editingId.value), {
+            preserveScroll: true,
+            onSuccess: () => {
+                dialog.value = false;
+                form.reset();
+                isEditing.value = false;
+                editingId.value = null;
+                snackbarMessage.value = 'Category updated successfully!';
+                snackbarColor.value = 'success';
+                snackbar.value = true;
+            },
+            onError: (errors) => {
+                snackbarMessage.value = 'Failed to update category. Please check your inputs.';
+                snackbarColor.value = 'error';
+                snackbar.value = true;
+            }
+        });
+    } else {
+        form.post(route('categories.store'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                dialog.value = false;
+                form.reset();
+                snackbarMessage.value = 'Category added successfully!';
+                snackbarColor.value = 'success';
+                snackbar.value = true;
+            },
+            onError: (errors) => {
+                snackbarMessage.value = 'Failed to add category. Please check your inputs.';
+                snackbarColor.value = 'error';
+                snackbar.value = true;
+            }
+        });
+    }
+};
+
+const openAddDialog = () => {
+    isEditing.value = false;
+    editingId.value = null;
+    form.reset();
+    dialog.value = true;
 };
 </script>
 
@@ -77,7 +145,7 @@ const submit = () => {
                 </v-col>
                 <v-spacer></v-spacer>
                 <v-col cols="auto">
-                    <v-btn color="primary" rounded="lg" @click="dialog = true" class="text-none px-6" elevation="0" height="40">
+                    <v-btn color="primary" rounded="lg" @click="openAddDialog" class="text-none px-6" elevation="0" height="40">
                         <v-icon start size="small">mdi-plus</v-icon>
                         <span class="font-weight-medium">Add Category</span>
                     </v-btn>
@@ -99,10 +167,10 @@ const submit = () => {
                                     <v-icon>mdi-shape-outline</v-icon>
                                 </v-sheet>
                                 <div class="d-flex gap-2">
-                                    <v-btn icon size="x-small" variant="text">
+                                    <v-btn icon size="x-small" variant="text" color="primary" @click="editCategory(category)">
                                         <v-icon size="small">mdi-pencil-outline</v-icon>
                                     </v-btn>
-                                    <v-btn icon size="x-small" variant="text" color="#C87A54">
+                                    <v-btn icon size="x-small" variant="text" color="error" @click="confirmDeleteCategory(category)">
                                         <v-icon size="small">mdi-trash-can-outline</v-icon>
                                     </v-btn>
                                 </div>
@@ -143,7 +211,7 @@ const submit = () => {
         <v-dialog v-model="dialog" max-width="500">
             <v-card class="rounded-xl">
                 <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
-                    Add New Category
+                    {{ isEditing ? 'Edit Category' : 'Add New Category' }}
                     <v-btn icon="mdi-close" variant="text" size="small" @click="dialog = false"></v-btn>
                 </v-card-title>
                 
@@ -191,14 +259,47 @@ const submit = () => {
                         class="px-4 text-none"
                         variant="flat"
                     >
-                        Save Category
+                        {{ isEditing ? 'Update Category' : 'Save Category' }}
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Delete Confirmation Dialog -->
+        <v-dialog v-model="deleteDialog" max-width="400">
+            <v-card class="rounded-xl">
+                <v-card-text class="pa-6 text-center">
+                    <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
+                    <div class="text-h6 font-weight-bold mb-2">Delete Category?</div>
+                    <div class="text-body-2 text-grey-darken-1">
+                        Are you sure you want to delete <strong>{{ categoryToDelete?.name }}</strong>? This action cannot be undone.
+                    </div>
+                </v-card-text>
+                
+                <v-card-actions class="pa-4 pt-0 justify-center">
+                    <v-btn
+                        variant="tonal"
+                        @click="deleteDialog = false"
+                        rounded="lg"
+                        class="px-6 text-none"
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="error"
+                        @click="executeDelete"
+                        rounded="lg"
+                        class="px-6 text-none"
+                        variant="flat"
+                    >
+                        Yes, Delete
                     </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
 
         <!-- Snackbar -->
-        <v-snackbar v-model="snackbar" :timeout="3000" color="success" location="bottom right">
+        <v-snackbar v-model="snackbar" :timeout="3000" :color="snackbarColor" location="bottom right">
             {{ snackbarMessage }}
         </v-snackbar>
 
