@@ -413,8 +413,7 @@ const handleFileUpload = (event) => {
 
 <style scoped>
 /* Settings card styling */
-/* .settings-card {
-    border-color: #E5E7EB;
-    background-color: #FFFFFF;
-} */
+.settings-card {
+    background-color: rgb(var(--v-theme-surface));
+}
 </style>
