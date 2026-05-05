@@ -83,6 +83,29 @@ const toggleStatus = (user) => {
         }
     });
 };
+
+const deleteUser = (user) => {
+    if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
+        router.delete(route('users.destroy', user.id), {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                if (page.props.flash && page.props.flash.error) {
+                    snackbarMessage.value = page.props.flash.error;
+                    snackbarColor.value = 'error';
+                } else {
+                    snackbarMessage.value = 'User deleted successfully.';
+                    snackbarColor.value = 'success';
+                }
+                snackbar.value = true;
+            },
+            onError: () => {
+                snackbarMessage.value = 'Failed to delete user.';
+                snackbarColor.value = 'error';
+                snackbar.value = true;
+            }
+        });
+    }
+};
 </script>
 
 <template>
@@ -132,6 +155,7 @@ const toggleStatus = (user) => {
                                 <th class="text-left">Phone</th>
                                 <th class="text-left">Status</th>
                                 <th class="text-left">Role</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -169,9 +193,19 @@ const toggleStatus = (user) => {
                                         style="max-width: 150px"
                                     ></v-select>
                                 </td>
+                                <td class="text-center">
+                                    <v-btn
+                                        icon="mdi-trash-can-outline"
+                                        color="#C87A54"
+                                        variant="text"
+                                        density="comfortable"
+                                        @click="deleteUser(user)"
+                                        title="Delete User"
+                                    ></v-btn>
+                                </td>
                             </tr>
                             <tr v-if="!filteredUsers || filteredUsers.length === 0">
-                                <td colspan="5" class="text-center text-gray-500 py-4">
+                                <td colspan="6" class="text-center text-gray-500 py-4">
                                     No users found.
                                 </td>
                             </tr>
