@@ -88,6 +88,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
     Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+    Route::put('/categories/{category}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/categories/{category}', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.destroy');
 
     Route::get('/goods', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
     Route::post('/goods', [\App\Http\Controllers\ProductController::class, 'store'])->name('products.store');
