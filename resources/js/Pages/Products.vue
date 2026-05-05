@@ -601,13 +601,10 @@ const deleteProduct = () => {
         <!-- Add Product Dialog -->
         <v-dialog v-model="addProductDialog" max-width="600" persistent>
             <v-card class="rounded-xl">
-                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
+                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
                     Add New Product
                     <v-btn icon="mdi-close" variant="text" size="small" @click="addProductDialog = false"></v-btn>
                 </v-card-title>
-                <v-card-subtitle class="px-4 pb-4 text-grey">
-                    Enter the product details to add it to your inventory
-                </v-card-subtitle>
                 
                 <v-card-text class="pa-4">
                     <!-- Product Information Section -->
@@ -625,7 +622,6 @@ const deleteProduct = () => {
                                 placeholder="Enter product name"
                                 :error-messages="validationErrors.productName || productForm.errors.name"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -640,7 +636,6 @@ const deleteProduct = () => {
                                 placeholder="Select category"
                                 :error-messages="productForm.errors.category_id"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-select>
                         </v-col>
                     </v-row>
@@ -663,7 +658,6 @@ const deleteProduct = () => {
                                 placeholder="0"
                                 :error-messages="productForm.errors.stock_qty"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="4">
@@ -676,7 +670,6 @@ const deleteProduct = () => {
                                 placeholder="0"
                                 :error-messages="productForm.errors.min_stock"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="4">
@@ -687,7 +680,6 @@ const deleteProduct = () => {
                                 density="comfortable"
                                 placeholder="pcs, kg, etc."
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -711,7 +703,6 @@ const deleteProduct = () => {
                                 prefix="Rp"
                                 :error-messages="productForm.errors.buy_price"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -725,7 +716,6 @@ const deleteProduct = () => {
                                 prefix="Rp"
                                 :error-messages="productForm.errors.sell_price"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -746,17 +736,15 @@ const deleteProduct = () => {
                                 placeholder="Enter supplier name"
                                 :error-messages="validationErrors.productSupplier || productForm.errors.supplier"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
                 </v-card-text>
                 
-                <v-card-actions class="pa-4 pt-0">
+                <v-card-actions class="pa-4 pt-4 border-t mt-4">
                     <v-spacer></v-spacer>
                     <v-btn
-                        variant="text"
-                        color="grey-darken-1"
+                        variant="tonal"
                         @click="addProductDialog = false"
                         rounded="lg"
                         class="px-4 text-none"
@@ -764,7 +752,7 @@ const deleteProduct = () => {
                         Cancel
                     </v-btn>
                     <v-btn
-                        color="#C4956A"
+                        color="primary"
                         @click="submitProduct"
                         :loading="productForm.processing"
                         :disabled="!!validationErrors.productName || !!validationErrors.productSupplier"
@@ -781,13 +769,10 @@ const deleteProduct = () => {
         <!-- Edit Product Dialog -->
         <v-dialog v-model="editProductDialog" max-width="600" persistent>
             <v-card class="rounded-xl">
-                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
+                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
                     Edit Product
                     <v-btn icon="mdi-close" variant="text" size="small" @click="editProductDialog = false"></v-btn>
                 </v-card-title>
-                <v-card-subtitle class="px-4 pb-4 text-grey">
-                    Update the product information
-                </v-card-subtitle>
                 
                 <v-card-text class="pa-4">
                     <!-- Product Information Section -->
@@ -805,7 +790,6 @@ const deleteProduct = () => {
                                 placeholder="Enter product name"
                                 :error-messages="validationErrors.editName || editForm.errors.name"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -820,7 +804,6 @@ const deleteProduct = () => {
                                 placeholder="Select category"
                                 :error-messages="editForm.errors.category_id"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-select>
                         </v-col>
                     </v-row>
@@ -843,7 +826,6 @@ const deleteProduct = () => {
                                 placeholder="0"
                                 :error-messages="editForm.errors.stock_qty"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="4">
@@ -856,7 +838,6 @@ const deleteProduct = () => {
                                 placeholder="0"
                                 :error-messages="editForm.errors.min_stock"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="4">
@@ -867,7 +848,6 @@ const deleteProduct = () => {
                                 density="comfortable"
                                 placeholder="pcs, kg, etc."
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -891,7 +871,6 @@ const deleteProduct = () => {
                                 prefix="Rp"
                                 :error-messages="editForm.errors.buy_price"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -905,17 +884,15 @@ const deleteProduct = () => {
                                 prefix="Rp"
                                 :error-messages="editForm.errors.sell_price"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
                 </v-card-text>
                 
-                <v-card-actions class="pa-4 pt-0">
+                <v-card-actions class="pa-4 pt-4 border-t mt-4">
                     <v-spacer></v-spacer>
                     <v-btn
-                        variant="text"
-                        color="grey-darken-1"
+                        variant="tonal"
                         @click="editProductDialog = false"
                         rounded="lg"
                         class="px-4 text-none"
@@ -923,7 +900,7 @@ const deleteProduct = () => {
                         Cancel
                     </v-btn>
                     <v-btn
-                        color="#C4956A"
+                        color="primary"
                         @click="submitEditProduct"
                         :loading="editForm.processing"
                         :disabled="!!validationErrors.editName"
@@ -940,13 +917,10 @@ const deleteProduct = () => {
         <!-- Add Incoming Stock Dialog -->
         <v-dialog v-model="addStockDialog" max-width="500" persistent>
             <v-card class="rounded-xl">
-                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center">
+                <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
                     Add Incoming Stock
                     <v-btn icon="mdi-close" variant="text" size="small" @click="addStockDialog = false"></v-btn>
                 </v-card-title>
-                <v-card-subtitle class="px-4 pb-4 text-grey">
-                    Record new stock received from supplier
-                </v-card-subtitle>
                 
                 <v-card-text class="pa-4">
                     <!-- Product Selection Section -->
@@ -964,7 +938,6 @@ const deleteProduct = () => {
                         placeholder="Select product"
                         :error-messages="stockForm.errors.product_id"
                         rounded="lg"
-                        bg-color="#F5F5F5"
                     ></v-select>
 
                     <v-divider class="my-4"></v-divider>
@@ -985,7 +958,6 @@ const deleteProduct = () => {
                                 placeholder="0"
                                 :error-messages="stockForm.errors.qty"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -997,7 +969,6 @@ const deleteProduct = () => {
                                 density="comfortable"
                                 :error-messages="stockForm.errors.date_received"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
@@ -1019,7 +990,6 @@ const deleteProduct = () => {
                                 placeholder="Enter supplier name"
                                 :error-messages="validationErrors.stockSupplier || stockForm.errors.supplier"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="6">
@@ -1033,17 +1003,15 @@ const deleteProduct = () => {
                                 prefix="Rp"
                                 :error-messages="stockForm.errors.total_cost"
                                 rounded="lg"
-                                bg-color="#F5F5F5"
                             ></v-text-field>
                         </v-col>
                     </v-row>
                 </v-card-text>
                 
-                <v-card-actions class="pa-4 pt-0">
+                <v-card-actions class="pa-4 pt-4 border-t mt-4">
                     <v-spacer></v-spacer>
                     <v-btn
-                        variant="text"
-                        color="grey-darken-1"
+                        variant="tonal"
                         @click="addStockDialog = false"
                         rounded="lg"
                         class="px-4 text-none"
@@ -1051,7 +1019,7 @@ const deleteProduct = () => {
                         Cancel
                     </v-btn>
                     <v-btn
-                        color="#C4956A"
+                        color="primary"
                         @click="submitStock"
                         :loading="stockForm.processing"
                         :disabled="!!validationErrors.stockSupplier"
