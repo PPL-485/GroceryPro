@@ -218,74 +218,109 @@ const executeDelete = () => {
                 </v-card-text>
             </v-card>
 
-            <v-dialog v-model="isAddUserModalOpen" max-width="500px">
-                <v-card>
-                    <v-card-title>
-                        <span class="text-h5">Add New User</span>
+            <v-dialog v-model="isAddUserModalOpen" max-width="500">
+                <v-card class="rounded-xl">
+                    <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
+                        Add New User
+                        <v-btn icon="mdi-close" variant="text" size="small" @click="isAddUserModalOpen = false"></v-btn>
                     </v-card-title>
-                    <v-card-text>
-                        <v-container>
+                    <v-card-text class="pa-4">
+                        <v-form @submit.prevent="submitUser">
                             <v-row>
-                                <v-col cols="12">
+                                <v-col cols="12" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Name</div>
                                     <v-text-field
                                         v-model="userForm.name"
-                                        label="Name"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        placeholder="Enter name"
                                         :error-messages="userForm.errors.name"
+                                        rounded="lg"
                                         required
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Email</div>
                                     <v-text-field
                                         v-model="userForm.email"
-                                        label="Email"
                                         type="email"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        placeholder="Enter email"
                                         :error-messages="userForm.errors.email"
+                                        rounded="lg"
                                         required
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Phone (Optional)</div>
                                     <v-text-field
                                         v-model="userForm.phone"
-                                        label="Phone (Optional)"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        placeholder="Enter phone number"
                                         :error-messages="userForm.errors.phone"
+                                        rounded="lg"
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Password</div>
                                     <v-text-field
                                         v-model="userForm.password"
-                                        label="Password"
                                         type="password"
+                                        variant="outlined"
+                                        density="comfortable"
+                                        placeholder="Enter password"
                                         :error-messages="userForm.errors.password"
+                                        rounded="lg"
                                         required
                                     ></v-text-field>
                                 </v-col>
-                                <v-col cols="12" sm="6">
+                                <v-col cols="12" sm="6" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Role</div>
                                     <v-select
                                         v-model="userForm.role"
                                         :items="roles"
-                                        label="Role"
+                                        variant="outlined"
+                                        density="comfortable"
                                         :error-messages="userForm.errors.role"
+                                        rounded="lg"
                                         required
                                     ></v-select>
                                 </v-col>
-                                <v-col cols="12" sm="6">
+                                <v-col cols="12" sm="6" class="pb-0">
+                                    <div class="mb-2 text-subtitle-2 font-weight-medium">Status</div>
                                     <v-select
                                         v-model="userForm.status"
                                         :items="['active', 'inactive']"
-                                        label="Status"
+                                        variant="outlined"
+                                        density="comfortable"
                                         :error-messages="userForm.errors.status"
+                                        rounded="lg"
                                         required
                                     ></v-select>
                                 </v-col>
                             </v-row>
-                        </v-container>
+                        </v-form>
                     </v-card-text>
-                    <v-card-actions>
+                    <v-card-actions class="pa-4 pt-4 border-t mt-4">
                         <v-spacer></v-spacer>
-                        <v-btn color="blue-darken-1" variant="text" @click="isAddUserModalOpen = false">
+                        <v-btn
+                            variant="tonal"
+                            @click="isAddUserModalOpen = false"
+                            rounded="lg"
+                            class="px-4 text-none"
+                        >
                             Cancel
                         </v-btn>
-                        <v-btn color="blue-darken-1" variant="text" @click="submitUser" :loading="userForm.processing">
+                        <v-btn
+                            color="primary"
+                            @click="submitUser"
+                            :loading="userForm.processing"
+                            rounded="lg"
+                            class="px-4 text-none"
+                            variant="flat"
+                        >
                             Save
                         </v-btn>
                     </v-card-actions>

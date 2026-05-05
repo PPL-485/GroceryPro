@@ -72,7 +72,7 @@ const updatePassword = () => {
             <v-window v-model="tab" class="overflow-visible px-2">
                 <!-- Info Settings Tab Content -->
                 <v-window-item value="info_settings">
-                    <v-card variant="outlined" class="settings-card rounded-xl">
+                    <v-card hover flat class="rounded-xl border">
                         <form @submit.prevent="submitProfile">
                             <!-- Card Header -->
                             <div class="d-flex align-center px-8 pt-8 pb-4">
@@ -134,7 +134,7 @@ const updatePassword = () => {
                             </v-card-text>
 
                             <!-- Divider -->
-                            <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
+                            <v-divider class="mx-8"></v-divider>
 
                             <!-- Card Actions -->
                             <v-card-actions class="px-8 py-6 justify-end">
@@ -163,7 +163,7 @@ const updatePassword = () => {
 
                 <!-- Notifications Tab Content -->
                 <v-window-item value="notifications">
-                    <v-card variant="outlined" class="settings-card rounded-xl">
+                    <v-card hover flat class="rounded-xl border">
                         <!-- Card Header -->
                         <div class="d-flex align-center px-8 pt-8 pb-4">
                             <v-icon icon="mdi-bell-outline" size="28" class="mr-4" color="primary"></v-icon>
@@ -187,7 +187,7 @@ const updatePassword = () => {
                         </v-card-text>
 
                         <!-- Divider -->
-                        <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
+                        <v-divider class="mx-8" color="#E5E7EB"></v-divider>
 
                         <!-- Card Actions -->
                         <v-card-actions class="px-8 py-6 justify-end">
@@ -211,7 +211,7 @@ const updatePassword = () => {
                 </v-window-item>
                 
                 <v-window-item value="security">
-                    <v-card variant="outlined" class="settings-card rounded-xl">
+                    <v-card hover flat class="rounded-xl border">
                         <form @submit.prevent="updatePassword">
                             <!-- Card Header -->
                             <div class="d-flex align-center px-8 pt-8 pb-4">
@@ -266,7 +266,7 @@ const updatePassword = () => {
                             </v-card-text>
 
                             <!-- Divider -->
-                            <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
+                            <v-divider class="mx-8"></v-divider>
 
                             <!-- Card Actions -->
                             <v-card-actions class="px-8 py-6 justify-end">
@@ -294,7 +294,7 @@ const updatePassword = () => {
                 </v-window-item>
 
                 <v-window-item value="appearance">
-                    <v-card variant="outlined" class="settings-card rounded-xl pa-10 text-center text-grey">
+                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
                         <v-icon size="48" class="mb-4" color="primary">mdi-palette-outline</v-icon>
                         <div class="text-h6 text-primary">Appearance Settings</div>
                         <div class="text-body-1 mt-2" style="color: #6B7280;">Customize the look and feel.</div>
@@ -302,7 +302,7 @@ const updatePassword = () => {
                 </v-window-item>
 
                 <v-window-item value="system">
-                    <v-card variant="outlined" class="settings-card rounded-xl">
+                    <v-card hover flat class="rounded-xl border">
                         <!-- Card Header -->
                         <div class="d-flex align-center px-8 pt-8 pb-4">
                             <v-icon icon="mdi-database-export-outline" size="28" class="mr-4" color="primary"></v-icon>
@@ -335,7 +335,7 @@ const updatePassword = () => {
                         </v-card-text>
 
                         <!-- Divider -->
-                        <v-divider class="mx-8 border-opacity-100" color="#E5E7EB"></v-divider>
+                        <v-divider class="mx-8" color="#E5E7EB"></v-divider>
 
                         <!-- Card Info -->
                         <v-card-text class="px-8 py-6">
@@ -353,8 +353,7 @@ const updatePassword = () => {
 
 <style scoped>
 /* Settings card styling */
-/* .settings-card {
-    border-color: #E5E7EB;
-    background-color: #FFFFFF;
-} */
+.settings-card {
+    background-color: rgb(var(--v-theme-surface));
+}
 </style>
