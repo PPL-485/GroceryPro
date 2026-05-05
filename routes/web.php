@@ -109,6 +109,14 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
         return back()->with('success', 'User status updated successfully.');
     })->name('users.update-status');
+
+    Route::delete('/users/{user}', function (\App\Models\User $user) {
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+        $user->delete();
+        return back()->with('success', 'User deleted successfully.');
+    })->name('users.destroy');
 });
 
 Route::middleware('auth')->group(function () {
