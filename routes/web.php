@@ -104,6 +104,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         $user->update(['role' => $request->role]);
         return back()->with('success', 'User role updated successfully.');
     })->name('users.update-role');
+
+    Route::put('/users/{user}/status', function (\App\Models\User $user) {
+        $user->update(['status' => $user->status === 'active' ? 'inactive' : 'active']);
+        return back()->with('success', 'User status updated successfully.');
+    })->name('users.update-status');
 });
 
 Route::middleware('auth')->group(function () {
