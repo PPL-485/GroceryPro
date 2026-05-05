@@ -14,6 +14,8 @@ const snackbarColor = ref('success');
 const search = ref('');
 
 const isAddUserModalOpen = ref(false);
+const deleteDialog = ref(false);
+const userToDelete = ref(null);
 const userForm = useForm({
     name: '',
     email: '',
@@ -84,27 +86,35 @@ const toggleStatus = (user) => {
     });
 };
 
-const deleteUser = (user) => {
-    if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
-        router.delete(route('users.destroy', user.id), {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                if (page.props.flash && page.props.flash.error) {
-                    snackbarMessage.value = page.props.flash.error;
-                    snackbarColor.value = 'error';
-                } else {
-                    snackbarMessage.value = 'User deleted successfully.';
-                    snackbarColor.value = 'success';
-                }
-                snackbar.value = true;
-            },
-            onError: () => {
-                snackbarMessage.value = 'Failed to delete user.';
+const confirmDeleteUser = (user) => {
+    userToDelete.value = user;
+    deleteDialog.value = true;
+};
+
+const executeDelete = () => {
+    if (!userToDelete.value) return;
+
+    router.delete(route('users.destroy', userToDelete.value.id), {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            deleteDialog.value = false;
+            userToDelete.value = null;
+            if (page.props.flash && page.props.flash.error) {
+                snackbarMessage.value = page.props.flash.error;
                 snackbarColor.value = 'error';
-                snackbar.value = true;
+            } else {
+                snackbarMessage.value = 'User deleted successfully.';
+                snackbarColor.value = 'success';
             }
-        });
-    }
+            snackbar.value = true;
+        },
+        onError: () => {
+            deleteDialog.value = false;
+            snackbarMessage.value = 'Failed to delete user.';
+            snackbarColor.value = 'error';
+            snackbar.value = true;
+        }
+    });
 };
 </script>
 
@@ -168,17 +178,11 @@ const deleteUser = (user) => {
                                         <v-switch
                                             :model-value="user.status === 'active'"
                                             color="success"
+                                            base-color="error"
                                             hide-details
                                             density="compact"
                                             @change="toggleStatus(user)"
                                         ></v-switch>
-                                        <v-chip
-                                            :color="user.status === 'active' ? 'success' : 'error'"
-                                            size="small"
-                                            class="ml-2"
-                                        >
-                                            {{ user.status }}
-                                        </v-chip>
                                     </div>
                                 </td>
                                 <td>
@@ -199,7 +203,7 @@ const deleteUser = (user) => {
                                         color="#C87A54"
                                         variant="text"
                                         density="comfortable"
-                                        @click="deleteUser(user)"
+                                        @click="confirmDeleteUser(user)"
                                         title="Delete User"
                                     ></v-btn>
                                 </td>
@@ -283,6 +287,39 @@ const deleteUser = (user) => {
                         </v-btn>
                         <v-btn color="blue-darken-1" variant="text" @click="submitUser" :loading="userForm.processing">
                             Save
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
+            <!-- Delete Confirmation Dialog -->
+            <v-dialog v-model="deleteDialog" max-width="400">
+                <v-card class="rounded-xl">
+                    <v-card-text class="pa-6 text-center">
+                        <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
+                        <div class="text-h6 font-weight-bold mb-2">Delete User?</div>
+                        <div class="text-body-2 text-grey-darken-1">
+                            Are you sure you want to delete <strong>{{ userToDelete?.name }}</strong>? This action cannot be undone.
+                        </div>
+                    </v-card-text>
+                    
+                    <v-card-actions class="pa-4 pt-0 justify-center">
+                        <v-btn
+                            variant="tonal"
+                            @click="deleteDialog = false"
+                            rounded="lg"
+                            class="px-6 text-none"
+                        >
+                            Cancel
+                        </v-btn>
+                        <v-btn
+                            color="error"
+                            @click="executeDelete"
+                            rounded="lg"
+                            class="px-6 text-none"
+                            variant="flat"
+                        >
+                            Yes, Delete
                         </v-btn>
                     </v-card-actions>
                 </v-card>
