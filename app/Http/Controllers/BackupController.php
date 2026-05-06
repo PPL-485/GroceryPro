@@ -42,6 +42,34 @@ class BackupController extends Controller
     }
 
     /**
+     * Trigger backup manually and return ZIP download
+     */
+    public function backup(Request $request)
+    {
+        Log::info('Manual backup triggered by user: ' . auth()->id());
+        
+        $result = $this->backupService->backup();
+
+        if ($result['success']) {
+            $backupFile = storage_path('backups/' . $result['fileName'] . '.zip');
+
+            if (!file_exists($backupFile)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Backup completed, but backup file is missing.'
+                ], 500);
+            }
+
+            return response()->download($backupFile);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['message']
+        ], 500);
+    }
+
+    /**
      * Trigger backup manually
      */
     public function create(Request $request)
