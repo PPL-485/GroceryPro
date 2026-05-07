@@ -96,9 +96,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::put('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'update'])->name('products.update');
     Route::delete('/goods/{product}', [\App\Http\Controllers\ProductController::class, 'destroy'])->name('products.destroy');
 
-    // Backup Database
+    // Backup & Restore Database
     Route::get('/backup', [\App\Http\Controllers\BackupController::class, 'backup'])->name('backup');
-  
+    Route::post('/restore', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
+
     Route::post('/goods/add-stock', [\App\Http\Controllers\ProductController::class, 'addStock'])->name('products.add-stock');
 
     Route::put('/users/{user}/role', function (\Illuminate\Http\Request $request, \App\Models\User $user) {

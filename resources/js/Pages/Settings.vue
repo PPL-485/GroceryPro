@@ -40,6 +40,33 @@ const updatePassword = () => {
         },
     });
 };
+
+const fileInput = ref(null);
+const restoreForm = useForm({
+    file: null,
+});
+
+const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (confirm('Are you sure you want to restore the database? This will overwrite all current data and cannot be undone!')) {
+        restoreForm.file = file;
+        restoreForm.post(route('restore'), {
+            preserveScroll: true,
+            onSuccess: () => {
+                alert('Database restored successfully!');
+                event.target.value = null;
+            },
+            onError: () => {
+                alert('Failed to restore database.');
+                event.target.value = null;
+            }
+        });
+    } else {
+        event.target.value = null;
+    }
+};
 </script>
 
 <template>
@@ -331,6 +358,39 @@ const updatePassword = () => {
                                         Backup Now
                                     </v-btn>
                                 </a>
+                            </div>
+                        </v-card-text>
+
+                        <!-- Divider -->
+                        <v-divider class="mx-8" color="#E5E7EB"></v-divider>
+
+                        <!-- Restore Section -->
+                        <v-card-text class="px-8 pb-8 pt-4">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <div>
+                                    <div class="text-subtitle-1 font-weight-medium">Restore Database</div>
+                                    <div class="text-body-1 mt-1" style="color: #6B7280;">Upload a .sql backup file to restore your database</div>
+                                </div>
+                                <div>
+                                    <v-btn
+                                        variant="tonal"
+                                        color="primary"
+                                        class="text-none px-6 rounded-lg font-weight-medium"
+                                        height="44"
+                                        @click="fileInput.click()"
+                                        :loading="restoreForm.processing"
+                                    >
+                                        <v-icon start>mdi-upload</v-icon>
+                                        Restore Data
+                                    </v-btn>
+                                    <input
+                                        type="file"
+                                        ref="fileInput"
+                                        accept=".sql"
+                                        class="d-none"
+                                        @change="handleFileUpload"
+                                    >
+                                </div>
                             </div>
                         </v-card-text>
 
