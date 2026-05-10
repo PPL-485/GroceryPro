@@ -33,7 +33,7 @@ const submit = () => {
 
         <v-card class="pa-8 pa-sm-8" elevation="2" rounded="xl" color="white">
             <div class="text-center mb-8">
-                <v-sheet color="#386641" rounded="lg" width="48" height="48" class="d-flex align-center justify-center mx-auto mb-4">
+                <v-sheet color="#2E6B3B" rounded="lg" width="48" height="48" class="d-flex align-center justify-center mx-auto mb-4">
                     <v-icon icon="mdi-cart-outline" color="white" size="24"></v-icon>
                 </v-sheet>
                 <h1 class="text-h4 font-weight-medium mb-1">Welcome Back</h1>
@@ -99,12 +99,12 @@ const submit = () => {
                     type="submit"
                     block
                     height="48"
-                    color="#B26B43"
+                    color="#2E6B3B"
                     class="text-none font-weight-bold text-body-1"
                     rounded="lg"
                     :loading="form.processing"
                     :disabled="form.processing"
-                    style="letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(178, 107, 67, 0.2); color: white;"
+                    style="letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(46, 107, 59, 0.2); color: white;"
                 >
                     Sign In
                 </v-btn>
