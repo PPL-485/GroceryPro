@@ -30,7 +30,11 @@ class ProductObserver
             if ($product->stock_qty <= $product->min_stock && $originalStock > $product->min_stock) {
                 // Dispatch notification to admins
                 $admins = User::where('role', 'admin')->get();
-                Notification::send($admins, new LowStockNotification($product));
+                try {
+                    Notification::send($admins, new LowStockNotification($product));
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Notification Error: ' . $e->getMessage());
+                }
             }
         }
     }
