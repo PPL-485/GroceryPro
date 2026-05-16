@@ -62,7 +62,7 @@ const getPaymentColor = (type) => {
                             <div class="d-flex justify-space-between align-start">
                                 <div>
                                     <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Revenue</div>
-                                    <div class="text-h5 font-weight-bold text-grey-darken-4">
+                                    <div class="text-h5 font-weight-bold">
                                         {{ formatCurrency(stats.totalRevenue || 0) }}
                                     </div>
                                     <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
@@ -70,8 +70,8 @@ const getPaymentColor = (type) => {
                                         +20.1% <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
-                                <v-avatar color="green-lighten-4" size="40" rounded>
-                                    <v-icon color="green-darken-3">mdi-currency-usd</v-icon>
+                                <v-avatar color="primary" size="40" rounded>
+                                    <v-icon color="white">mdi-currency-usd</v-icon>
                                 </v-avatar>
                             </div>
                         </v-card-text>
@@ -85,7 +85,7 @@ const getPaymentColor = (type) => {
                             <div class="d-flex justify-space-between align-start">
                                 <div>
                                     <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Products</div>
-                                    <div class="text-h5 font-weight-bold text-grey-darken-4">
+                                    <div class="text-h5 font-weight-bold">
                                         {{ formatNumber(stats.totalProducts || 0) }}
                                     </div>
                                     <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
@@ -93,8 +93,8 @@ const getPaymentColor = (type) => {
                                         +180 <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
-                                <v-avatar color="green-lighten-4" size="40" rounded>
-                                    <v-icon color="green-darken-3">mdi-package-variant-closed</v-icon>
+                                <v-avatar color="primary" size="40" rounded>
+                                    <v-icon color="white">mdi-package-variant-closed</v-icon>
                                 </v-avatar>
                             </div>
                         </v-card-text>
@@ -108,7 +108,7 @@ const getPaymentColor = (type) => {
                             <div class="d-flex justify-space-between align-start">
                                 <div>
                                     <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Transactions Today</div>
-                                    <div class="text-h5 font-weight-bold text-grey-darken-4">
+                                    <div class="text-h5 font-weight-bold">
                                         {{ formatNumber(stats.transactionsToday || 0) }}
                                     </div>
                                     <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
@@ -116,8 +116,8 @@ const getPaymentColor = (type) => {
                                         +12.5% <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
-                                <v-avatar color="green-lighten-4" size="40" rounded>
-                                    <v-icon color="green-darken-3">mdi-cart-outline</v-icon>
+                                <v-avatar color="primary" size="40" rounded>
+                                    <v-icon color="white">mdi-cart-outline</v-icon>
                                 </v-avatar>
                             </div>
                         </v-card-text>
@@ -131,7 +131,7 @@ const getPaymentColor = (type) => {
                             <div class="d-flex justify-space-between align-start">
                                 <div>
                                     <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Low Stock Items</div>
-                                    <div class="text-h5 font-weight-bold text-grey-darken-4">
+                                    <div class="text-h5 font-weight-bold">
                                         {{ formatNumber(stats.lowStockItemsCount || 0) }}
                                     </div>
                                     <div class="text-caption mt-2 text-error font-weight-medium d-flex align-center">
@@ -139,8 +139,8 @@ const getPaymentColor = (type) => {
                                         -3 <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
-                                <v-avatar color="red-lighten-5" size="40" rounded>
-                                    <v-icon color="error">mdi-alert-circle-outline</v-icon>
+                                <v-avatar color="error" size="40" rounded>
+                                    <v-icon color="white">mdi-alert-circle-outline</v-icon>
                                 </v-avatar>
                             </div>
                         </v-card-text>
@@ -168,10 +168,10 @@ const getPaymentColor = (type) => {
                                 </thead>
                                 <tbody>
                                     <tr v-for="trx in recentTransactions" :key="trx.id">
-                                        <td class="font-weight-medium text-body-2">{{ trx.id }}</td>
+                                        <td class="text-grey-darken-1 font-weight-medium text-body-2">{{ trx.id }}</td>
                                         <td class="text-grey-darken-1 text-body-2">{{ trx.customer || 'Customer' }}</td>
                                         <td class="text-grey-darken-1 text-body-2">{{ trx.items || 0 }}</td>
-                                        <td class="font-weight-medium text-body-2">{{ formatCurrency(trx.total) }}</td>
+                                        <td class="text-grey-darken-1 font-weight-medium text-body-2">{{ formatCurrency(trx.total) }}</td>
                                         <td>
                                             <v-chip
                                                 :color="getPaymentColor(trx.payment_type)"
