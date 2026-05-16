@@ -39,4 +39,25 @@ class Product extends Model
     {
         return $this->hasMany(StockMovement::class);
     }
+
+    /**
+     * Check if the product is low on stock.
+     *
+     * @return bool
+     */
+    public function isLowStock()
+    {
+        return $this->stock_qty <= $this->min_stock;
+    }
+
+    /**
+     * Scope a query to only include low stock products.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->whereColumn('stock_qty', '<=', 'min_stock');
+    }
 }
