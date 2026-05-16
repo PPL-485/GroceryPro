@@ -84,8 +84,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         return back()->with('success', 'User created successfully.');
     })->name('users.store');
 
-    Route::get('/report', [\App\Http\Controllers\TransactionController::class, 'report'])->name('report');
-
     Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
     Route::post('/categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
     Route::put('/categories/{category}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
@@ -129,6 +127,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
     Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+
+    Route::get('/report', [\App\Http\Controllers\ReportController::class, 'index'])->name('report');
 
     Route::get('/settings', function () {
         return Inertia::render('Settings');
