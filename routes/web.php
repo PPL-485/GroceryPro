@@ -166,6 +166,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', function () {
         return Inertia::render('Settings');
     })->name('settings');
+
+    Route::delete('/notifications/{id}', function ($id) {
+        auth()->user()->notifications()->where('id', $id)->delete();
+        return back();
+    })->name('notifications.destroy');
 });
 
 require __DIR__.'/auth.php';
