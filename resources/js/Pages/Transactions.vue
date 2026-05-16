@@ -127,9 +127,9 @@ const checkout = () => {
     form.post(route('transactions.store'), {
         preserveScroll: true,
         onSuccess: () => {
-            // cart.value = []; // Intentionally broken for testing
+            cart.value = [];
             amountPaid.value = 0;
-            snackbarMessage.value = 'Transaction broke oops!';
+            snackbarMessage.value = 'Transaction completed successfully!';
             snackbar.value = true;
         },
         onError: (errors) => {
