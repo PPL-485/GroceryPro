@@ -47,6 +47,9 @@
           <v-list-item-subtitle class="text-caption mt-1" style="white-space: normal;">
             {{ notification.data.product_name }} is low on stock ({{ notification.data.stock_qty }} left).
           </v-list-item-subtitle>
+          <template v-slot:append>
+            <v-btn icon="mdi-close" variant="text" size="small" color="grey" @click.stop="deleteNotification(notification.id)"></v-btn>
+          </template>
         </v-list-item>
       </v-list>
     </v-menu>
@@ -76,10 +79,16 @@
 <script setup>
 import { useTheme } from 'vuetify'
 import { computed, inject, onMounted } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { usePage, router } from '@inertiajs/vue3'
 
 const page = usePage()
 const unreadNotifications = computed(() => page.props.auth.unreadNotifications || [])
+
+function deleteNotification(id) {
+  router.delete(route('notifications.destroy', id), {
+    preserveScroll: true,
+  })
+}
 
 const theme = useTheme()
 const themes = ['brand', 'dark']
