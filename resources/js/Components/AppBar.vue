@@ -12,6 +12,45 @@
 
     <v-spacer />
 
+    <!-- Notifications -->
+    <v-menu location="bottom end">
+      <template v-slot:activator="{ props }">
+        <v-btn icon v-bind="props" class="mr-1">
+          <v-badge
+            v-if="unreadNotifications.length > 0"
+            :content="unreadNotifications.length"
+            color="error"
+          >
+            <v-icon>mdi-bell-outline</v-icon>
+          </v-badge>
+          <v-icon v-else>mdi-bell-outline</v-icon>
+          <v-tooltip activator="parent" location="bottom">Notifications</v-tooltip>
+        </v-btn>
+      </template>
+
+      <v-list min-width="300" max-width="400">
+        <v-list-item v-if="unreadNotifications.length === 0">
+          <v-list-item-title class="text-caption text-grey pa-2 text-center">No new notifications</v-list-item-title>
+        </v-list-item>
+        <v-list-item
+          v-for="notification in unreadNotifications"
+          :key="notification.id"
+          class="border-b"
+          lines="two"
+        >
+          <template v-slot:prepend>
+            <v-avatar color="red-lighten-5" size="36">
+              <v-icon color="error" size="small">mdi-alert</v-icon>
+            </v-avatar>
+          </template>
+          <v-list-item-title class="font-weight-bold text-body-2">Low Stock Alert</v-list-item-title>
+          <v-list-item-subtitle class="text-caption mt-1" style="white-space: normal;">
+            {{ notification.data.product_name }} is low on stock ({{ notification.data.stock_qty }} left).
+          </v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
     <!-- Actions -->
     <v-btn icon @click="toggleTheme" class="mr-1">
       <v-icon>{{ themeIcon }}</v-icon>
@@ -37,6 +76,10 @@
 <script setup>
 import { useTheme } from 'vuetify'
 import { computed, inject, onMounted } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+
+const page = usePage()
+const unreadNotifications = computed(() => page.props.auth.unreadNotifications || [])
 
 const theme = useTheme()
 const themes = ['brand', 'dark']
