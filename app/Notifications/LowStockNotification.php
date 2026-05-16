@@ -11,12 +11,14 @@ class LowStockNotification extends Notification
 {
     use Queueable;
 
+    public $product;
+
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct(\App\Models\Product $product)
     {
-        //
+        $this->product = $product;
     }
 
     /**
@@ -26,7 +28,7 @@ class LowStockNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['database', 'mail'];
     }
 
     /**
@@ -35,9 +37,12 @@ class LowStockNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+                    ->subject('Alert: Low Stock for ' . $this->product->name)
+                    ->line('The stock for ' . $this->product->name . ' has fallen below the minimum threshold.')
+                    ->line('Current Stock: ' . $this->product->stock_qty)
+                    ->line('Minimum Required: ' . $this->product->min_stock)
+                    ->action('View Inventory', url('/goods'))
+                    ->line('Please restock this item as soon as possible.');
     }
 
     /**
@@ -48,7 +53,10 @@ class LowStockNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'stock_qty' => $this->product->stock_qty,
+            'min_stock' => $this->product->min_stock,
         ];
     }
 }
