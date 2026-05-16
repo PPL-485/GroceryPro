@@ -15,7 +15,7 @@ const menus = [
 
     { name: 'POS', href: '/transactions', icon: 'mdi-cash', roles: ['cashier', 'admin'] },
 
-    { name: 'Report', href: '/report', icon: 'mdi-chart-box-outline', roles: ['admin'] },
+    { name: 'Report', href: '/report', icon: 'mdi-chart-box-outline', roles: ['admin', 'cashier'] },
 
     { name: 'User Management', href: '/users', icon: 'mdi-account-group-outline', roles: ['admin'] },
 
