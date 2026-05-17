@@ -2,10 +2,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 
+import { computed } from 'vue';
+
 const props = defineProps({
     stats: Object,
     recentTransactions: Array,
     lowStockAlerts: Array,
+    categoryPerformance: Array,
 });
 
 const formatCurrency = (value) => {
@@ -21,15 +24,33 @@ const formatNumber = (value) => {
     return new Intl.NumberFormat('id-ID').format(value);
 };
 
-// Dummy data for pie chart
-const categoryColors = {
-    'Instant Noodles': '#4A6925', // dark green
-    'Beverages': '#689F38', // lighter green
-    'Rice': '#2E4A14', // very dark green
-    'Cooking Oil': '#C06B4D', // burnt orange
-    'Snacks': '#33501E',
-    'Dairy': '#55802E'
-};
+// Dynamic data for pie chart
+const baseColors = [
+    '#4A6925', '#689F38', '#2E4A14', '#C06B4D', 
+    '#33501E', '#55802E', '#8E6C3A', '#A0522D',
+];
+
+const pieItems = computed(() => {
+    if (!props.categoryPerformance) return [];
+    
+    const total = props.categoryPerformance.reduce((acc, curr) => acc + parseInt(curr.total_sold), 0);
+    let currentPercent = 0;
+    
+    return props.categoryPerformance.map((cat, index) => {
+        const percent = total > 0 ? (parseInt(cat.total_sold) / total) * 100 : 0;
+        const color = baseColors[index % baseColors.length];
+        const start = currentPercent;
+        currentPercent += percent;
+        
+        return {
+            title: cat.name,
+            value: parseInt(cat.total_sold),
+            percent: percent,
+            color: color,
+            start: start
+        };
+    });
+});
 
 const getPaymentColor = (type) => {
     if (type?.toLowerCase() === 'cash') return 'success';
@@ -198,16 +219,50 @@ const getPaymentColor = (type) => {
                         <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
                             Category Performance
                         </v-card-title>
-                        <v-card-text class="d-flex flex-column align-center justify-center pt-8">
-                            <!-- CSS Pie Chart -->
-                            <div class="pie-chart mb-6"></div>
-                            
+                        <v-card-text class="d-flex flex-column align-center justify-center pt-8 pb-4">
+                            <!-- Vuetify Progress Circular Donut Chart -->
+                            <div class="position-relative d-flex justify-center mx-auto mb-6" style="width: 240px; height: 240px;">
+                                <template v-if="pieItems.length > 0 && pieItems.some(i => i.value > 0)">
+                                    <v-progress-circular
+                                        v-for="item in pieItems"
+                                        :key="item.title"
+                                        :model-value="item.percent"
+                                        :color="item.color"
+                                        :size="240"
+                                        :width="45"
+                                        :rotate="(item.start / 100) * 360 - 90"
+                                        bg-color="transparent"
+                                        class="position-absolute"
+                                        style="top: 0; left: 0; transition: all 0.5s ease; cursor: pointer;"
+                                    >
+                                        <v-tooltip activator="parent" location="top">
+                                            {{ item.title }}: {{ formatNumber(item.value) }} units ({{ Math.round(item.percent) }}%)
+                                        </v-tooltip>
+                                    </v-progress-circular>
+                                </template>
+                                <v-progress-circular
+                                    v-else
+                                    :model-value="100"
+                                    color="grey-lighten-2"
+                                    :size="240"
+                                    :width="45"
+                                ></v-progress-circular>
+                            </div>
+
                             <!-- Legend -->
-                            <div class="d-flex flex-wrap justify-center ga-2 mt-4" style="gap: 8px 16px;">
-                                <div v-for="(color, name) in categoryColors" :key="name" class="d-flex align-center">
-                                    <div class="color-box mr-2" :style="{ backgroundColor: color }"></div>
-                                    <span class="text-caption text-grey-darken-2">{{ name }}</span>
+                            <div class="w-100 mt-2 px-4" v-if="pieItems.length > 0 && pieItems.some(i => i.value > 0)">
+                                <div v-for="item in pieItems" :key="item.title" class="d-flex align-center mb-3">
+                                    <div class="color-box mr-3" :style="{ backgroundColor: item.color, borderRadius: '50%' }"></div>
+                                    <div class="d-flex w-100 text-body-2 text-grey-darken-2">
+                                        <div>{{ item.title }}</div>
+                                        <div class="ml-auto font-weight-bold">
+                                            {{ formatNumber(item.value) }}
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <div v-else class="text-caption text-grey py-8 text-center">
+                                No sales data available
                             </div>
                         </v-card-text>
                     </v-card>
@@ -248,33 +303,6 @@ const getPaymentColor = (type) => {
 </template>
 
 <style scoped>
-.pie-chart {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    /* Approximation of the pie chart in the design */
-    background: conic-gradient(
-        #4A6925 0% 35%,
-        #689F38 35% 55%,
-        #2E4A14 55% 75%,
-        #55802E 75% 85%,
-        #33501E 85% 90%,
-        #C06B4D 90% 100%
-    );
-    border: 1px solid rgba(255,255,255,0.8);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
-    position: relative;
-}
-
-/* Adding white lines between segments for the pie chart */
-.pie-chart::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    border-radius: 50%;
-    /* We can use multiple linear gradients to create lines, or SVG. Let's keep it simple. */
-}
-
 .color-box {
     width: 12px;
     height: 12px;

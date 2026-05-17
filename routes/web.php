@@ -62,6 +62,15 @@ Route::get('/dashboard', function () {
 
     $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->limit(4)->get();
 
+    // Category Performance
+    $categoryPerformance = \Illuminate\Support\Facades\DB::table('transaction_items')
+        ->join('products', 'transaction_items.product_id', '=', 'products.id')
+        ->join('categories', 'products.category_id', '=', 'categories.id')
+        ->select('categories.name', \Illuminate\Support\Facades\DB::raw('SUM(transaction_items.qty) as total_sold'))
+        ->groupBy('categories.id', 'categories.name')
+        ->orderByDesc('total_sold')
+        ->get();
+
     return Inertia::render('Dashboard', [
         'stats' => [
             'totalRevenue' => $totalRevenue,
@@ -74,6 +83,7 @@ Route::get('/dashboard', function () {
         ],
         'recentTransactions' => $recentTransactions,
         'lowStockAlerts' => $lowStockAlerts,
+        'categoryPerformance' => $categoryPerformance,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
