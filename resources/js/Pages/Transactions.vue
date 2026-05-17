@@ -259,9 +259,9 @@ const checkout = () => {
                     </v-number-input>
 
                     <v-text-field
-                        readonly
                         v-if="paymentMethod === 'cash'"
-                        :value="formatPrice(change)"
+                        :model-value="formatPrice(change)"
+                        readonly
                         label="Kembalian"
                         variant="outlined"
                         density="compact"
