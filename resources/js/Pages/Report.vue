@@ -6,6 +6,7 @@ import { ref } from 'vue';
 const props = defineProps({
     transactions: Array,
     stats: Object,
+    inventoryMovements: Array,
 });
 
 const user = usePage().props.auth.user;
@@ -210,10 +211,48 @@ const getPaymentColor = (type) => {
                 </v-window-item>
                 
                 <v-window-item v-if="isAdmin" value="inventory_report">
-                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4" color="primary">mdi-clipboard-text-outline</v-icon>
-                        <div class="text-h6 text-primary">Inventory Report Placeholder</div>
-                        <div class="text-body-1 mt-2" style="color: #6B7280;">Inventory detailed reports will go here.</div>
+                    <v-card flat class="rounded-xl border mb-6 bg-surface">
+                        <v-card-title class="text-subtitle-1 font-weight-medium pt-5 px-6 text-grey-darken-1" style="font-size: 0.9rem !important;">
+                            Inventory Status
+                        </v-card-title>
+                        
+                        <v-divider class="mt-3 mb-0"></v-divider>
+                        
+                        <v-table hover density="comfortable">
+                            <thead>
+                                <tr>
+                                    <th class="text-left font-weight-bold text-grey-darken-3 pl-6" style="font-size: 0.85rem;">Movement ID</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Date</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Type</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Product</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Quantity</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Reference</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3 pr-6" style="font-size: 0.85rem;">Supplier/Customer</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="movement in inventoryMovements" :key="movement.id" style="font-size: 0.85rem;">
+                                    <td class="pl-6 font-weight-medium text-grey-darken-3">{{ movement.id }}</td>
+                                    <td class="text-grey-darken-1">{{ movement.date }}</td>
+                                    <td>
+                                        <div class="d-flex align-center" :class="movement.type.toLowerCase() === 'incoming' ? 'text-success' : 'text-error'">
+                                            <v-icon size="small" class="mr-1">
+                                                {{ movement.type.toLowerCase() === 'incoming' ? 'mdi-package-down' : 'mdi-package-up' }}
+                                            </v-icon>
+                                            {{ movement.type }}
+                                        </div>
+                                    </td>
+                                    <td class="text-grey-darken-3">{{ movement.product_name }}</td>
+                                    <td>
+                                        <span :class="movement.type.toLowerCase() === 'incoming' ? 'text-success' : 'text-error'">
+                                            {{ movement.type.toLowerCase() === 'incoming' ? '+' : '-' }}{{ movement.qty }} {{ movement.unit }}
+                                        </span>
+                                    </td>
+                                    <td class="text-grey-darken-1">{{ movement.reference }}</td>
+                                    <td class="pr-6 text-grey-darken-1">{{ movement.supplier }}</td>
+                                </tr>
+                            </tbody>
+                        </v-table>
                     </v-card>
                 </v-window-item>
                 

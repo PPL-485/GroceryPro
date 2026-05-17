@@ -48,9 +48,26 @@ class ReportController extends Controller
             'avgTransaction' => $transactionsCount > 0 ? ($totalRevenue / $transactionsCount) : 0,
         ];
 
+        $stockMovements = \App\Models\StockMovement::with('product')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($movement) {
+                return [
+                    'id' => 'INV-' . str_pad($movement->id, 3, '0', STR_PAD_LEFT),
+                    'date' => $movement->created_at ? Carbon::parse($movement->created_at)->format('Y-m-d') : 'N/A',
+                    'type' => ucfirst($movement->type), // Incoming or Outgoing
+                    'product_name' => $movement->product ? $movement->product->name : 'Unknown',
+                    'unit' => $movement->product ? $movement->product->unit : '',
+                    'qty' => $movement->qty,
+                    'reference' => $movement->reference_id ?? '-',
+                    'supplier' => $movement->supplier ?? '-',
+                ];
+            });
+
         return Inertia::render('Report', [
             'transactions' => $transactions,
-            'stats' => $stats
+            'stats' => $stats,
+            'inventoryMovements' => $stockMovements,
         ]);
     }
 }
