@@ -16,6 +16,7 @@ class Transaction extends Model
         'trx_code',
         'payment_method',
         'total_amount',
+        'change',
         'created_at',
     ];
 
