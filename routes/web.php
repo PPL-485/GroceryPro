@@ -60,7 +60,7 @@ Route::get('/dashboard', function () {
         ];
     });
 
-    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->limit(4)->get();
+    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->get();
 
     // Category Performance
     $categoryPerformance = \Illuminate\Support\Facades\DB::table('transaction_items')
