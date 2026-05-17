@@ -65,9 +65,9 @@ const getPaymentColor = (type) => {
                                     <div class="text-h5 font-weight-bold">
                                         {{ formatCurrency(stats.totalRevenue || 0) }}
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +20.1% <span class="text-grey ml-1 font-weight-regular">from last month</span>
+                                    <div :class="['text-caption mt-2 font-weight-medium d-flex align-center', stats.revenueTrend >= 0 ? 'text-success' : 'text-error']">
+                                        <v-icon size="small" class="mr-1">{{ stats.revenueTrend >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}</v-icon>
+                                        {{ stats.revenueTrend >= 0 ? '+' : '' }}{{ stats.revenueTrend }}% <span class="text-grey ml-1 font-weight-regular">from last month</span>
                                     </div>
                                 </div>
                                 <v-avatar color="primary" size="40" rounded>
@@ -89,8 +89,8 @@ const getPaymentColor = (type) => {
                                         {{ formatNumber(stats.totalProducts || 0) }}
                                     </div>
                                     <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +180 <span class="text-grey ml-1 font-weight-regular">from last month</span>
+                                        <v-icon size="small" class="mr-1">mdi-plus</v-icon>
+                                        +{{ stats.productsTrend || 0 }} <span class="text-grey ml-1 font-weight-regular">added this month</span>
                                     </div>
                                 </div>
                                 <v-avatar color="primary" size="40" rounded>
@@ -111,9 +111,9 @@ const getPaymentColor = (type) => {
                                     <div class="text-h5 font-weight-bold">
                                         {{ formatNumber(stats.transactionsToday || 0) }}
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +12.5% <span class="text-grey ml-1 font-weight-regular">from last month</span>
+                                    <div :class="['text-caption mt-2 font-weight-medium d-flex align-center', stats.transactionsTrend >= 0 ? 'text-success' : 'text-error']">
+                                        <v-icon size="small" class="mr-1">{{ stats.transactionsTrend >= 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}</v-icon>
+                                        {{ stats.transactionsTrend >= 0 ? '+' : '' }}{{ stats.transactionsTrend }}% <span class="text-grey ml-1 font-weight-regular">vs yesterday</span>
                                     </div>
                                 </div>
                                 <v-avatar color="primary" size="40" rounded>
@@ -134,9 +134,9 @@ const getPaymentColor = (type) => {
                                     <div class="text-h5 font-weight-bold">
                                         {{ formatNumber(stats.lowStockItemsCount || 0) }}
                                     </div>
-                                    <div class="text-caption mt-2 text-error font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-down</v-icon>
-                                        -3 <span class="text-grey ml-1 font-weight-regular">from last month</span>
+                                    <div class="text-caption mt-2 text-grey font-weight-medium d-flex align-center">
+                                        <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
+                                        Requires restock
                                     </div>
                                 </div>
                                 <v-avatar color="error" size="40" rounded>
