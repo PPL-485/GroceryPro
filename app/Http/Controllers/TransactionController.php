@@ -39,6 +39,7 @@ class TransactionController extends Controller
             'items.*.subtotal' => 'required|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,qris',
+            'change' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -56,6 +57,7 @@ class TransactionController extends Controller
                 'trx_code' => $trxCode,
                 'payment_method' => $validated['payment_method'],
                 'total_amount' => (int) round($validated['total_amount']),
+                'change' => (int) round($validated['change']),
             ]);
 
             // Create Items & Update Stock

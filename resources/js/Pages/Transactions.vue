@@ -47,6 +47,13 @@ const total = computed(() => {
     return Math.round(subtotal.value + tax.value);
 });
 
+const change = computed(() => {
+    if (paymentMethod.value !== 'cash') {
+        return 0;
+    }
+    return Math.max(amountPaid.value - total.value, 0);
+});
+
 import { watch } from 'vue';
 watch(paymentMethod, (newVal) => {
     if (newVal === 'cash' && amountPaid.value === 0) {
@@ -100,6 +107,7 @@ const form = useForm({
     items: [],
     payment_method: 'cash',
     total_amount: 0,
+    change: 0,
 });
 
 const checkout = () => {
@@ -123,6 +131,7 @@ const checkout = () => {
     }));
     form.payment_method = paymentMethod.value;
     form.total_amount = total.value; // Store the final total with tax
+    form.change = change.value;
 
     form.post(route('transactions.store'), {
         preserveScroll: true,
@@ -248,6 +257,16 @@ const checkout = () => {
                             <span class="mr-1">Rp</span>
                         </template>
                     </v-number-input>
+
+                    <v-text-field
+                        v-if="paymentMethod === 'cash'"
+                        :model-value="formatPrice(change)"
+                        readonly
+                        label="Kembalian"
+                        variant="outlined"
+                        density="compact"
+                        class="mb-3"
+                    ></v-text-field>
 
                     <v-btn
                         block
