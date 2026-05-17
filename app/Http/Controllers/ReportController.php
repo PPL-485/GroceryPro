@@ -9,12 +9,27 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $query = Transaction::query();
 
         if (auth()->user()->role === 'cashier') {
             $query->where('user_id', auth()->id());
+        }
+
+        $filter = $request->input('filter', 'All Time');
+        if ($filter === 'Daily') {
+            $query->whereDate('created_at', Carbon::today());
+        } elseif ($filter === 'Weekly') {
+            $query->whereBetween('created_at', [Carbon::now()->subDays(7)->startOfDay(), Carbon::now()->endOfDay()]);
+        } elseif ($filter === 'Monthly') {
+            $query->whereMonth('created_at', Carbon::now()->month)
+                  ->whereYear('created_at', Carbon::now()->year);
+        } elseif ($filter === 'Custom' && $request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
         }
 
         $transactions = (clone $query)->with(['items.product', 'user'])
@@ -50,7 +65,12 @@ class ReportController extends Controller
 
         return Inertia::render('Report', [
             'transactions' => $transactions,
-            'stats' => $stats
+            'stats' => $stats,
+            'filters' => [
+                'filter' => $request->input('filter', 'All Time'),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+            ]
         ]);
     }
 }
