@@ -31,6 +31,25 @@ Route::get('/dashboard', function () {
     $transactionsToday = \App\Models\Transaction::whereDate('created_at', today())->count();
     $lowStockItemsCount = \App\Models\Product::whereColumn('stock_qty', '<=', 'min_stock')->count();
     
+    // Revenue Trend (This month vs last month)
+    $revenueThisMonth = \App\Models\Transaction::whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)->sum('total_amount');
+    $revenueLastMonth = \App\Models\Transaction::whereMonth('created_at', now()->subMonth()->month)
+        ->whereYear('created_at', now()->subMonth()->year)->sum('total_amount');
+    $revenueTrend = $revenueLastMonth > 0 
+        ? round((($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100, 1) 
+        : ($revenueThisMonth > 0 ? 100 : 0);
+
+    // Products Trend (Added this month)
+    $productsTrend = \App\Models\Product::whereMonth('created_at', now()->month)
+        ->whereYear('created_at', now()->year)->count();
+
+    // Transactions Trend (Today vs Yesterday)
+    $transactionsYesterday = \App\Models\Transaction::whereDate('created_at', today()->subDay())->count();
+    $transactionsTrend = $transactionsYesterday > 0 
+        ? round((($transactionsToday - $transactionsYesterday) / $transactionsYesterday) * 100, 1)
+        : ($transactionsToday > 0 ? 100 : 0);
+
     $recentTransactions = \App\Models\Transaction::with('items')->orderBy('created_at', 'desc')->limit(4)->get()->map(function($trx) {
         return [
             'id' => $trx->trx_code,
@@ -41,7 +60,16 @@ Route::get('/dashboard', function () {
         ];
     });
 
-    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->limit(4)->get();
+    $lowStockAlerts = \App\Models\Product::with('category')->whereColumn('stock_qty', '<=', 'min_stock')->get();
+
+    // Category Performance
+    $categoryPerformance = \Illuminate\Support\Facades\DB::table('transaction_items')
+        ->join('products', 'transaction_items.product_id', '=', 'products.id')
+        ->join('categories', 'products.category_id', '=', 'categories.id')
+        ->select('categories.name', \Illuminate\Support\Facades\DB::raw('SUM(transaction_items.qty) as total_sold'))
+        ->groupBy('categories.id', 'categories.name')
+        ->orderByDesc('total_sold')
+        ->get();
 
     return Inertia::render('Dashboard', [
         'stats' => [
@@ -49,9 +77,13 @@ Route::get('/dashboard', function () {
             'totalProducts' => $totalProducts,
             'transactionsToday' => $transactionsToday,
             'lowStockItemsCount' => $lowStockItemsCount,
+            'revenueTrend' => $revenueTrend,
+            'productsTrend' => $productsTrend,
+            'transactionsTrend' => $transactionsTrend,
         ],
         'recentTransactions' => $recentTransactions,
         'lowStockAlerts' => $lowStockAlerts,
+        'categoryPerformance' => $categoryPerformance,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

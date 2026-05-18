@@ -1,18 +1,57 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, usePage } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, usePage, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
     transactions: Array,
     stats: Object,
     inventoryMovements: Array,
+    filters: Object,
 });
 
 const user = usePage().props.auth.user;
 const isAdmin = user.role === 'admin';
 
 const tab = ref('transaction_history');
+
+const selectedFilter = ref(props.filters?.filter || 'All Time');
+const dateDialog = ref(false);
+
+const parseInitialDates = () => {
+    const dates = [];
+    if (props.filters?.start_date) {
+        dates.push(new Date(props.filters.start_date));
+    }
+    if (props.filters?.end_date && props.filters.end_date !== props.filters.start_date) {
+        dates.push(new Date(props.filters.end_date));
+    }
+    return dates;
+};
+
+const customDates = ref(parseInitialDates());
+
+watch(selectedFilter, (newVal) => {
+    if (newVal !== 'Custom') {
+        router.get(route('report'), { filter: newVal }, { preserveState: true });
+    }
+});
+
+const applyDate = () => {
+    if (customDates.value && customDates.value.length > 0) {
+        const sorted = [...customDates.value].sort((a, b) => a - b);
+        const start_date = new Date(sorted[0].getTime() - (sorted[0].getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        const end_date = new Date(sorted[sorted.length - 1].getTime() - (sorted[sorted.length - 1].getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
+        selectedFilter.value = 'Custom';
+        router.get(route('report'), { 
+            filter: 'Custom', 
+            start_date: start_date,
+            end_date: end_date
+        }, { preserveState: true });
+        dateDialog.value = false;
+    }
+};
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {
@@ -160,16 +199,17 @@ const getPaymentColor = (type) => {
                 
                 <div class="d-flex align-center ga-3 pl-4 flex-grow-0">
                     <v-select
-                        :items="['Daily', 'Weekly', 'Monthly']"
-                        model-value="Daily"
+                        v-model="selectedFilter"
+                        :items="['All Time', 'Daily', 'Weekly', 'Monthly', 'Custom']"
                         variant="outlined"
                         density="compact"
                         hide-details
                         bg-color="surface"
                         class="rounded-lg"
-                        style="width: 130px;"
+                        style="width: 150px;"
                     ></v-select>
                     <v-btn
+                        @click="dateDialog = true"
                         variant="outlined"
                         color="primary"
                         prepend-icon="mdi-calendar-range"
@@ -313,5 +353,40 @@ const getPaymentColor = (type) => {
                 </v-window-item>
             </v-window>
         </div>
+
+        <v-dialog v-model="dateDialog" max-width="400">
+            <v-card class="rounded-xl">
+                <v-card-title class="pa-4 font-weight-bold border-b">
+                    Custom Date
+                </v-card-title>
+                <v-card-text class="pa-0">
+                    <v-date-picker
+                        v-model="customDates"
+                        multiple="range"
+                        color="primary"
+                        hide-header
+                        width="100%"
+                    ></v-date-picker>
+                </v-card-text>
+                <v-card-actions class="pa-4 border-t">
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        variant="text"
+                        class="text-none mr-2"
+                        @click="dateDialog = false"
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        color="primary"
+                        variant="flat"
+                        class="text-none px-6"
+                        @click="applyDate"
+                    >
+                        Apply
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </AuthenticatedLayout>
 </template>
