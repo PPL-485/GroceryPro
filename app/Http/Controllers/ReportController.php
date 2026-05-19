@@ -63,7 +63,23 @@ class ReportController extends Controller
             'avgTransaction' => $transactionsCount > 0 ? ($totalRevenue / $transactionsCount) : 0,
         ];
 
-        $stockMovements = \App\Models\StockMovement::with('product')
+        $stockQuery = \App\Models\StockMovement::query();
+
+        if ($filter === 'Daily') {
+            $stockQuery->whereDate('created_at', Carbon::today());
+        } elseif ($filter === 'Weekly') {
+            $stockQuery->whereBetween('created_at', [Carbon::now()->subDays(7)->startOfDay(), Carbon::now()->endOfDay()]);
+        } elseif ($filter === 'Monthly') {
+            $stockQuery->whereMonth('created_at', Carbon::now()->month)
+                  ->whereYear('created_at', Carbon::now()->year);
+        } elseif ($filter === 'Custom' && $request->has('start_date') && $request->has('end_date')) {
+            $stockQuery->whereBetween('created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        }
+
+        $stockMovements = $stockQuery->with('product')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($movement) {
