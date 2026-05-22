@@ -114,11 +114,66 @@ class ReportController extends Controller
                 ];
             });
 
+        // Calculate Product Performance
+        $productQuery = \App\Models\TransactionItem::query()
+            ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+            ->join('products', 'transaction_items.product_id', '=', 'products.id')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id');
+
+        if (auth()->user()->role === 'cashier') {
+            $productQuery->where('transactions.user_id', auth()->id());
+        }
+
+        if ($filter === 'Daily') {
+            $productQuery->whereDate('transactions.created_at', Carbon::today());
+        } elseif ($filter === 'Weekly') {
+            $productQuery->whereBetween('transactions.created_at', [Carbon::now()->subDays(7)->startOfDay(), Carbon::now()->endOfDay()]);
+        } elseif ($filter === 'Monthly') {
+            $productQuery->whereMonth('transactions.created_at', Carbon::now()->month)
+                         ->whereYear('transactions.created_at', Carbon::now()->year);
+        } elseif ($filter === 'Custom' && $request->has('start_date') && $request->has('end_date')) {
+            $productQuery->whereBetween('transactions.created_at', [
+                Carbon::parse($request->start_date)->startOfDay(),
+                Carbon::parse($request->end_date)->endOfDay()
+            ]);
+        }
+
+        $productPerformance = $productQuery
+            ->select(
+                'products.id as product_id',
+                'products.sku',
+                'products.name as product_name',
+                'categories.name as category_name',
+                'products.stock_qty as current_stock',
+                'products.min_stock',
+                'products.unit',
+                \Illuminate\Support\Facades\DB::raw('SUM(transaction_items.qty) as units_sold'),
+                \Illuminate\Support\Facades\DB::raw('SUM(transaction_items.subtotal) as total_revenue'),
+                \Illuminate\Support\Facades\DB::raw('SUM(transaction_items.subtotal - (transaction_items.qty * COALESCE(products.buy_price, 0))) as total_profit')
+            )
+            ->groupBy('products.id', 'products.sku', 'products.name', 'categories.name', 'products.stock_qty', 'products.min_stock', 'products.unit')
+            ->orderByDesc('units_sold')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'sku' => $item->sku,
+                    'product_name' => $item->product_name,
+                    'category_name' => $item->category_name ?? 'Uncategorized',
+                    'current_stock' => (float)$item->current_stock,
+                    'min_stock' => (float)$item->min_stock,
+                    'unit' => $item->unit,
+                    'units_sold' => (float)$item->units_sold,
+                    'total_revenue' => (float)$item->total_revenue,
+                    'total_profit' => (float)$item->total_profit,
+                ];
+            });
+
         return Inertia::render('Report', [
             'transactions' => $transactions,
             'stats' => $stats,
             'inventoryMovements' => $stockMovements,
             'dailySales' => $dailySales,
+            'productPerformance' => $productPerformance,
             'filters' => [
                 'filter' => $request->input('filter', 'All Time'),
                 'start_date' => $request->input('start_date'),
@@ -127,3 +182,4 @@ class ReportController extends Controller
         ]);
     }
 }
+
