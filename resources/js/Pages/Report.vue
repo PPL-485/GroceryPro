@@ -263,6 +263,54 @@ const exportInventoryReport = () => {
     showToast('Laporan Inventory Report berhasil diekspor!');
 };
 
+const exportTransactionHistory = () => {
+    const headers = [
+        'Transaction ID',
+        'Date',
+        'Cashier',
+        'Payment Method',
+        'Item Name',
+        'Quantity',
+        'Price',
+        'Subtotal',
+        'Transaction Total'
+    ];
+    
+    const rows = [];
+    (props.transactions || []).forEach(trx => {
+        if (trx.items && trx.items.length > 0) {
+            trx.items.forEach(item => {
+                rows.push([
+                    trx.id,
+                    trx.date,
+                    trx.cashier,
+                    trx.payment_method,
+                    item.name,
+                    item.qty,
+                    item.price,
+                    item.subtotal,
+                    trx.total
+                ]);
+            });
+        } else {
+            rows.push([
+                trx.id,
+                trx.date,
+                trx.cashier,
+                trx.payment_method,
+                '-',
+                0,
+                0,
+                0,
+                trx.total
+            ]);
+        }
+    });
+
+    downloadCSV('grocerypro_transaction_history', headers, rows);
+    showToast('Laporan Transaction History berhasil diekspor!');
+};
+
 const handleExport = () => {
     if (tab.value === 'sales_report') {
         exportSalesReport();
@@ -271,7 +319,7 @@ const handleExport = () => {
     } else if (tab.value === 'inventory_report') {
         exportInventoryReport();
     } else if (tab.value === 'transaction_history') {
-        showToast('Export untuk tab Transaction History belum diimplementasikan.');
+        exportTransactionHistory();
     }
 };
 </script>
