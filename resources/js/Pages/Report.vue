@@ -205,11 +205,43 @@ const exportSalesReport = () => {
     showToast('Laporan Sales Report berhasil diekspor!');
 };
 
+const exportProductPerformance = () => {
+    const headers = [
+        'SKU',
+        'Product Name',
+        'Category',
+        'Current Stock',
+        'Unit',
+        'Min Stock',
+        'Stock Status',
+        'Units Sold',
+        'Revenue',
+        'Profit',
+        'Margin (%)'
+    ];
+    const rows = (filteredProductPerformance.value || []).map(item => [
+        item.sku,
+        item.product_name,
+        item.category_name,
+        item.current_stock,
+        item.unit,
+        item.min_stock,
+        item.current_stock <= item.min_stock ? 'Low Stock' : 'Optimal',
+        item.units_sold,
+        item.total_revenue,
+        item.total_profit,
+        item.total_revenue > 0 ? ((item.total_profit / item.total_revenue) * 100).toFixed(2) + '%' : '0%'
+    ]);
+
+    downloadCSV('grocerypro_product_performance', headers, rows);
+    showToast('Laporan Product Performance berhasil diekspor!');
+};
+
 const handleExport = () => {
     if (tab.value === 'sales_report') {
         exportSalesReport();
     } else if (tab.value === 'product_performance') {
-        showToast('Export untuk tab Product Performance belum diimplementasikan.');
+        exportProductPerformance();
     } else if (tab.value === 'inventory_report') {
         showToast('Export untuk tab Inventory Report belum diimplementasikan.');
     } else if (tab.value === 'transaction_history') {
