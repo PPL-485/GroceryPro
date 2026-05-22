@@ -8,11 +8,71 @@ const props = defineProps({
     stats: Object,
     inventoryMovements: Array,
     dailySales: Array,
+    productPerformance: Array,
     filters: Object,
 });
 
 const user = usePage().props.auth.user;
 const isAdmin = user.role === 'admin';
+
+// Product Performance state & computation
+const productSearch = ref('');
+const productSortBy = ref('units_sold');
+const productSortDesc = ref(true);
+
+const filteredProductPerformance = computed(() => {
+    let result = props.productPerformance || [];
+    
+    if (productSearch.value) {
+        const query = productSearch.value.toLowerCase();
+        result = result.filter(item => 
+            item.product_name?.toLowerCase().includes(query) || 
+            item.sku?.toLowerCase().includes(query) ||
+            item.category_name?.toLowerCase().includes(query)
+        );
+    }
+    
+    // Sort
+    result = [...result].sort((a, b) => {
+        let fieldA = a[productSortBy.value];
+        let fieldB = b[productSortBy.value];
+        
+        if (typeof fieldA === 'string') {
+            return productSortDesc.value 
+                ? fieldB.localeCompare(fieldA) 
+                : fieldA.localeCompare(fieldB);
+        } else {
+            return productSortDesc.value 
+                ? (fieldB - fieldA) 
+                : (fieldA - fieldB);
+        }
+    });
+    
+    return result;
+});
+
+const maxUnitsSold = computed(() => {
+    if (!props.productPerformance || props.productPerformance.length === 0) return 1;
+    return Math.max(...props.productPerformance.map(item => item.units_sold), 1);
+});
+
+const topSoldProduct = computed(() => {
+    if (!props.productPerformance || props.productPerformance.length === 0) return null;
+    return props.productPerformance.reduce((prev, current) => (prev.units_sold > current.units_sold) ? prev : current);
+});
+
+const topRevenueProduct = computed(() => {
+    if (!props.productPerformance || props.productPerformance.length === 0) return null;
+    return props.productPerformance.reduce((prev, current) => (prev.total_revenue > current.total_revenue) ? prev : current);
+});
+
+const averageProfitMargin = computed(() => {
+    if (!props.productPerformance || props.productPerformance.length === 0) return 0;
+    const totalRev = props.productPerformance.reduce((sum, item) => sum + item.total_revenue, 0);
+    const totalProf = props.productPerformance.reduce((sum, item) => sum + item.total_profit, 0);
+    return totalRev > 0 ? (totalProf / totalRev) * 100 : 0;
+});
+
 
 const tab = ref('transaction_history');
 
@@ -277,10 +337,199 @@ const getPaymentColor = (type) => {
                 </v-window-item>
                 
                 <v-window-item v-if="isAdmin" value="product_performance">
-                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4" color="primary">mdi-package-variant-closed</v-icon>
-                        <div class="text-h6 text-primary">Product Performance Placeholder</div>
-                        <div class="text-body-1 mt-2" style="color: #6B7280;">Product performance stats will go here.</div>
+                    <!-- Product Insights Summary Grid -->
+                    <v-row class="mb-6">
+                        <v-col cols="12" md="4">
+                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
+                                <v-card-text class="d-flex align-center py-4">
+                                    <v-avatar color="amber-lighten-4" class="mr-4" rounded size="48">
+                                        <v-icon color="amber-darken-2" size="28">mdi-crown</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="text-caption text-grey font-weight-medium">Best Seller (Qty)</div>
+                                        <div class="text-subtitle-1 font-weight-bold text-truncate" style="max-width: 220px;" :title="topSoldProduct ? topSoldProduct.product_name : 'N/A'">
+                                            {{ topSoldProduct ? topSoldProduct.product_name : 'N/A' }}
+                                        </div>
+                                        <div class="text-caption text-primary font-weight-medium">
+                                            {{ topSoldProduct ? formatNumber(topSoldProduct.units_sold) : 0 }} {{ topSoldProduct ? topSoldProduct.unit : 'pcs' }} sold
+                                        </div>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
+                                <v-card-text class="d-flex align-center py-4">
+                                    <v-avatar color="blue-lighten-4" class="mr-4" rounded size="48">
+                                        <v-icon color="blue-darken-2" size="28">mdi-currency-usd</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="text-caption text-grey font-weight-medium">Top Earner (Revenue)</div>
+                                        <div class="text-subtitle-1 font-weight-bold text-truncate" style="max-width: 220px;" :title="topRevenueProduct ? topRevenueProduct.product_name : 'N/A'">
+                                            {{ topRevenueProduct ? topRevenueProduct.product_name : 'N/A' }}
+                                        </div>
+                                        <div class="text-caption text-success font-weight-medium">
+                                            {{ topRevenueProduct ? formatCurrency(topRevenueProduct.total_revenue) : formatCurrency(0) }}
+                                        </div>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
+                                <v-card-text class="d-flex align-center py-4">
+                                    <v-avatar color="green-lighten-4" class="mr-4" rounded size="48">
+                                        <v-icon color="green-darken-2" size="28">mdi-percent</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="text-caption text-grey font-weight-medium">Avg Profit Margin</div>
+                                        <div class="text-subtitle-1 font-weight-bold">
+                                            {{ averageProfitMargin.toFixed(1) }}%
+                                        </div>
+                                        <div class="text-caption text-success font-weight-medium">
+                                            Overall profitability rate
+                                        </div>
+                                    </div>
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Product Table Card -->
+                    <v-card flat class="rounded-xl border mb-6 bg-surface">
+                        <!-- Search and Controls inside the card header -->
+                        <div class="px-6 py-4 d-flex flex-column flex-sm-row justify-space-between align-sm-center border-b ga-3">
+                            <div>
+                                <v-card-title class="text-subtitle-1 font-weight-bold pa-0 text-grey-darken-3">
+                                    Product Sales & Profitability List
+                                </v-card-title>
+                                <span class="text-caption text-grey-darken-1">Interactive ranking table of product performance</span>
+                            </div>
+                            
+                            <div class="d-flex align-center ga-3">
+                                <v-text-field
+                                    v-model="productSearch"
+                                    prepend-inner-icon="mdi-magnify"
+                                    placeholder="Cari produk..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    bg-color="surface"
+                                    class="rounded-lg"
+                                    style="width: 250px;"
+                                ></v-text-field>
+                            </div>
+                        </div>
+                        
+                        <v-table hover density="comfortable">
+                            <thead>
+                                <tr>
+                                    <th @click="productSortBy === 'product_name' ? productSortDesc = !productSortDesc : (productSortBy = 'product_name', productSortDesc = false)" class="text-left font-weight-bold text-grey-darken-3 pl-6" style="font-size: 0.85rem; cursor: pointer; user-select: none;">
+                                        Product Details
+                                        <v-icon size="small" class="ml-1" v-if="productSortBy === 'product_name'">
+                                            {{ productSortDesc ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                                        </v-icon>
+                                    </th>
+                                    <th @click="productSortBy === 'current_stock' ? productSortDesc = !productSortDesc : (productSortBy = 'current_stock', productSortDesc = true)" class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem; cursor: pointer; user-select: none;">
+                                        Stock Status
+                                        <v-icon size="small" class="ml-1" v-if="productSortBy === 'current_stock'">
+                                            {{ productSortDesc ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                                        </v-icon>
+                                    </th>
+                                    <th @click="productSortBy === 'units_sold' ? productSortDesc = !productSortDesc : (productSortBy = 'units_sold', productSortDesc = true)" class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem; cursor: pointer; user-select: none;">
+                                        Units Sold
+                                        <v-icon size="small" class="ml-1" v-if="productSortBy === 'units_sold'">
+                                            {{ productSortDesc ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                                        </v-icon>
+                                    </th>
+                                    <th @click="productSortBy === 'total_revenue' ? productSortDesc = !productSortDesc : (productSortBy = 'total_revenue', productSortDesc = true)" class="text-right font-weight-bold text-grey-darken-3" style="font-size: 0.85rem; cursor: pointer; user-select: none;">
+                                        Revenue
+                                        <v-icon size="small" class="ml-1" v-if="productSortBy === 'total_revenue'">
+                                            {{ productSortDesc ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                                        </v-icon>
+                                    </th>
+                                    <th @click="productSortBy === 'total_profit' ? productSortDesc = !productSortDesc : (productSortBy = 'total_profit', productSortDesc = true)" class="text-right font-weight-bold text-grey-darken-3" style="font-size: 0.85rem; cursor: pointer; user-select: none;">
+                                        Profit
+                                        <v-icon size="small" class="ml-1" v-if="productSortBy === 'total_profit'">
+                                            {{ productSortDesc ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                                        </v-icon>
+                                    </th>
+                                    <th class="text-right font-weight-bold text-grey-darken-3 pr-6" style="font-size: 0.85rem; user-select: none;">
+                                        Margin
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="item in filteredProductPerformance" :key="item.sku" style="font-size: 0.85rem;">
+                                    <!-- Product Details -->
+                                    <td class="pl-6 py-3">
+                                        <div class="d-flex flex-column">
+                                            <span class="font-weight-bold text-grey-darken-3">{{ item.product_name }}</span>
+                                            <span class="text-caption text-grey d-flex align-center mt-1">
+                                                <span class="font-weight-medium bg-grey-lighten-3 px-1 rounded mr-2">{{ item.sku }}</span>
+                                                <span>{{ item.category_name }}</span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Stock Status -->
+                                    <td>
+                                        <div class="d-flex align-center">
+                                            <div class="d-flex flex-column mr-3">
+                                                <span :class="item.current_stock <= item.min_stock ? 'text-error font-weight-bold' : 'text-grey-darken-3'">
+                                                    {{ formatNumber(item.current_stock) }} {{ item.unit }}
+                                                </span>
+                                                <span class="text-caption text-grey">Min: {{ formatNumber(item.min_stock) }}</span>
+                                            </div>
+                                            <v-chip
+                                                v-if="item.current_stock <= item.min_stock"
+                                                color="error"
+                                                size="x-small"
+                                                variant="flat"
+                                                class="font-weight-bold"
+                                            >
+                                                Low Stock
+                                            </v-chip>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Units Sold -->
+                                    <td>
+                                        <div class="d-flex align-center" style="min-width: 140px;">
+                                            <span class="font-weight-bold mr-2 text-grey-darken-3">{{ formatNumber(item.units_sold) }}</span>
+                                            <v-progress-linear
+                                                :model-value="(item.units_sold / maxUnitsSold) * 100"
+                                                color="primary"
+                                                height="6"
+                                                rounded
+                                                class="flex-grow-1"
+                                            ></v-progress-linear>
+                                        </div>
+                                    </td>
+                                    
+                                    <!-- Revenue -->
+                                    <td class="text-right font-weight-medium text-grey-darken-3">
+                                        {{ formatCurrency(item.total_revenue) }}
+                                    </td>
+                                    
+                                    <!-- Profit -->
+                                    <td class="text-right font-weight-medium text-success">
+                                        {{ formatCurrency(item.total_profit) }}
+                                    </td>
+                                    
+                                    <!-- Margin -->
+                                    <td class="text-right pr-6 font-weight-bold" :class="item.total_revenue > 0 ? 'text-primary' : 'text-grey'">
+                                        {{ item.total_revenue > 0 ? ((item.total_profit / item.total_revenue) * 100).toFixed(1) + '%' : '0%' }}
+                                    </td>
+                                </tr>
+                                <tr v-if="filteredProductPerformance.length === 0">
+                                    <td colspan="6" class="text-center pa-10 text-grey">
+                                        <v-icon size="36" class="mb-2" color="grey-lighten-1">mdi-alert-circle-outline</v-icon>
+                                        <div>Tidak ada data performa produk.</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </v-table>
                     </v-card>
                 </v-window-item>
                 
