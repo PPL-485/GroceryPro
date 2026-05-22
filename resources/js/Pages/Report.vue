@@ -7,6 +7,7 @@ const props = defineProps({
     transactions: Array,
     stats: Object,
     inventoryMovements: Array,
+    dailySales: Array,
     filters: Object,
 });
 
@@ -235,10 +236,43 @@ const getPaymentColor = (type) => {
                 
                 <!-- Placeholders for other tabs -->
                 <v-window-item v-if="isAdmin" value="sales_report">
-                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4" color="primary">mdi-chart-line</v-icon>
-                        <div class="text-h6 text-primary">Sales Report Placeholder</div>
-                        <div class="text-body-1 mt-2" style="color: #6B7280;">Sales detailed statistics will go here.</div>
+                    <v-card flat class="rounded-xl border mb-6 bg-surface">
+                        <v-card-title class="text-subtitle-1 font-weight-medium pt-5 px-6 text-grey-darken-1" style="font-size: 0.9rem !important;">
+                            Daily Sales Overview
+                        </v-card-title>
+                        
+                        <v-divider class="mt-3 mb-0"></v-divider>
+                        
+                        <v-table hover density="comfortable">
+                            <thead>
+                                <tr>
+                                    <th class="text-left font-weight-bold text-grey-darken-3 pl-6" style="font-size: 0.85rem;">Date</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Transactions</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Revenue</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3" style="font-size: 0.85rem;">Profit</th>
+                                    <th class="text-left font-weight-bold text-grey-darken-3 pr-6" style="font-size: 0.85rem;">Avg Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(day, idx) in dailySales" :key="idx" style="font-size: 0.85rem;">
+                                    <td class="pl-6 font-weight-medium text-grey-darken-3">{{ day.date }}</td>
+                                    <td class="text-grey-darken-1">{{ formatNumber(day.transactions) }}</td>
+                                    <td class="text-grey-darken-3">{{ formatCurrency(day.revenue) }}</td>
+                                    <td class="text-success">{{ formatCurrency(day.profit) }}</td>
+                                    <td class="pr-6 text-grey-darken-1">{{ formatCurrency(day.avg_value) }}</td>
+                                </tr>
+                                <tr v-if="dailySales && dailySales.length > 0" class="bg-grey-lighten-4" style="font-size: 0.85rem;">
+                                    <td class="pl-6 font-weight-bold text-grey-darken-3">Total Penjualan</td>
+                                    <td class="font-weight-bold text-grey-darken-1">{{ formatNumber(stats.transactionsCount) }}</td>
+                                    <td class="font-weight-bold text-primary">{{ formatCurrency(stats.totalRevenue) }}</td>
+                                    <td class="font-weight-bold text-success">{{ formatCurrency(stats.totalProfit) }}</td>
+                                    <td class="pr-6 font-weight-bold text-grey-darken-1">-</td>
+                                </tr>
+                                <tr v-if="!dailySales || dailySales.length === 0">
+                                    <td colspan="5" class="text-center pa-4 text-grey">No sales data available.</td>
+                                </tr>
+                            </tbody>
+                        </v-table>
                     </v-card>
                 </v-window-item>
                 
