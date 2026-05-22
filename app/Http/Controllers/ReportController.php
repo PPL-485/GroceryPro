@@ -63,6 +63,25 @@ class ReportController extends Controller
             'avgTransaction' => $transactionsCount > 0 ? ($totalRevenue / $transactionsCount) : 0,
         ];
 
+        $dailySales = (clone $query)
+            ->get()
+            ->groupBy(function ($trx) {
+                return $trx->created_at ? Carbon::parse($trx->created_at)->format('Y-m-d') : 'Unknown';
+            })
+            ->map(function ($dayTransactions, $date) {
+                $revenue = $dayTransactions->sum('total_amount');
+                $count = $dayTransactions->count();
+                return [
+                    'date' => $date,
+                    'transactions' => $count,
+                    'revenue' => $revenue,
+                    'profit' => $revenue * 0.25,
+                    'avg_value' => $count > 0 ? $revenue / $count : 0,
+                ];
+            })
+            ->sortByDesc('date')
+            ->values();
+
         $stockQuery = \App\Models\StockMovement::query();
 
         if ($filter === 'Daily') {
@@ -99,6 +118,7 @@ class ReportController extends Controller
             'transactions' => $transactions,
             'stats' => $stats,
             'inventoryMovements' => $stockMovements,
+            'dailySales' => $dailySales,
             'filters' => [
                 'filter' => $request->input('filter', 'All Time'),
                 'start_date' => $request->input('start_date'),
