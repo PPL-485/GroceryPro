@@ -237,13 +237,39 @@ const exportProductPerformance = () => {
     showToast('Laporan Product Performance berhasil diekspor!');
 };
 
+const exportInventoryReport = () => {
+    const headers = [
+        'Movement ID',
+        'Date',
+        'Type',
+        'Product Name',
+        'Quantity',
+        'Unit',
+        'Reference',
+        'Supplier/Customer'
+    ];
+    const rows = (props.inventoryMovements || []).map(movement => [
+        movement.id,
+        movement.date,
+        movement.type,
+        movement.product_name,
+        movement.qty,
+        movement.unit,
+        movement.reference,
+        movement.supplier
+    ]);
+
+    downloadCSV('grocerypro_inventory_report', headers, rows);
+    showToast('Laporan Inventory Report berhasil diekspor!');
+};
+
 const handleExport = () => {
     if (tab.value === 'sales_report') {
         exportSalesReport();
     } else if (tab.value === 'product_performance') {
         exportProductPerformance();
     } else if (tab.value === 'inventory_report') {
-        showToast('Export untuk tab Inventory Report belum diimplementasikan.');
+        exportInventoryReport();
     } else if (tab.value === 'transaction_history') {
         showToast('Export untuk tab Transaction History belum diimplementasikan.');
     }
