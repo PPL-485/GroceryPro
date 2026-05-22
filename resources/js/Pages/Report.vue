@@ -149,6 +149,179 @@ const getPaymentColor = (type) => {
     if (type?.toLowerCase() === 'qris') return 'success';
     return 'default';
 };
+
+// --- Export Report Logic ---
+const snackbar = ref(false);
+const snackbarText = ref('');
+const showToast = (msg) => {
+    snackbarText.value = msg;
+    snackbar.value = true;
+};
+
+const downloadCSV = (filename, headers, rows) => {
+    const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '""';
+        let str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+    };
+
+    const headerLine = headers.map(escapeCSV).join(';');
+    const contentLines = rows.map(row => row.map(escapeCSV).join(';'));
+    const csvContent = "\uFEFF" + "sep=;\n" + [headerLine, ...contentLines].join('\n'); // Add UTF-8 BOM and sep=; for Excel compatibility
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const exportSalesReport = () => {
+    const headers = ['Date', 'Transactions', 'Revenue', 'Profit', 'Avg Value'];
+    const rows = (props.dailySales || []).map(day => [
+        day.date,
+        day.transactions,
+        day.revenue,
+        day.profit,
+        day.avg_value
+    ]);
+    
+    // Add total row at the end
+    rows.push([
+        'Total Penjualan',
+        props.stats?.transactionsCount || 0,
+        props.stats?.totalRevenue || 0,
+        props.stats?.totalProfit || 0,
+        '-'
+    ]);
+    
+    downloadCSV('grocerypro_sales_report', headers, rows);
+    showToast('Laporan Sales Report berhasil diekspor!');
+};
+
+const exportProductPerformance = () => {
+    const headers = [
+        'SKU',
+        'Product Name',
+        'Category',
+        'Current Stock',
+        'Unit',
+        'Min Stock',
+        'Stock Status',
+        'Units Sold',
+        'Revenue',
+        'Profit',
+        'Margin (%)'
+    ];
+    const rows = (filteredProductPerformance.value || []).map(item => [
+        item.sku,
+        item.product_name,
+        item.category_name,
+        item.current_stock,
+        item.unit,
+        item.min_stock,
+        item.current_stock <= item.min_stock ? 'Low Stock' : 'Optimal',
+        item.units_sold,
+        item.total_revenue,
+        item.total_profit,
+        item.total_revenue > 0 ? ((item.total_profit / item.total_revenue) * 100).toFixed(2) + '%' : '0%'
+    ]);
+
+    downloadCSV('grocerypro_product_performance', headers, rows);
+    showToast('Laporan Product Performance berhasil diekspor!');
+};
+
+const exportInventoryReport = () => {
+    const headers = [
+        'Movement ID',
+        'Date',
+        'Type',
+        'Product Name',
+        'Quantity',
+        'Unit',
+        'Reference',
+        'Supplier/Customer'
+    ];
+    const rows = (props.inventoryMovements || []).map(movement => [
+        movement.id,
+        movement.date,
+        movement.type,
+        movement.product_name,
+        movement.qty,
+        movement.unit,
+        movement.reference,
+        movement.supplier
+    ]);
+
+    downloadCSV('grocerypro_inventory_report', headers, rows);
+    showToast('Laporan Inventory Report berhasil diekspor!');
+};
+
+const exportTransactionHistory = () => {
+    const headers = [
+        'Transaction ID',
+        'Date',
+        'Cashier',
+        'Payment Method',
+        'Item Name',
+        'Quantity',
+        'Price',
+        'Subtotal',
+        'Transaction Total'
+    ];
+    
+    const rows = [];
+    (props.transactions || []).forEach(trx => {
+        if (trx.items && trx.items.length > 0) {
+            trx.items.forEach(item => {
+                rows.push([
+                    trx.id,
+                    trx.date,
+                    trx.cashier,
+                    trx.payment_method,
+                    item.name,
+                    item.qty,
+                    item.price,
+                    item.subtotal,
+                    trx.total
+                ]);
+            });
+        } else {
+            rows.push([
+                trx.id,
+                trx.date,
+                trx.cashier,
+                trx.payment_method,
+                '-',
+                0,
+                0,
+                0,
+                trx.total
+            ]);
+        }
+    });
+
+    downloadCSV('grocerypro_transaction_history', headers, rows);
+    showToast('Laporan Transaction History berhasil diekspor!');
+};
+
+const handleExport = () => {
+    if (tab.value === 'sales_report') {
+        exportSalesReport();
+    } else if (tab.value === 'product_performance') {
+        exportProductPerformance();
+    } else if (tab.value === 'inventory_report') {
+        exportInventoryReport();
+    } else if (tab.value === 'transaction_history') {
+        exportTransactionHistory();
+    }
+};
 </script>
 
 <template>
@@ -482,6 +655,7 @@ const getPaymentColor = (type) => {
                         Date Range
                     </v-btn>
                     <v-btn
+                        @click="handleExport"
                         variant="flat"
                         color="primary"
                         prepend-icon="mdi-export"
@@ -815,5 +989,28 @@ const getPaymentColor = (type) => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Notification Snackbar -->
+        <v-snackbar
+            v-model="snackbar"
+            timeout="3000"
+            color="success"
+            rounded="lg"
+            elevation="3"
+        >
+            <div class="d-flex align-center ga-2">
+                <v-icon color="white">mdi-check-circle</v-icon>
+                <span class="font-weight-medium text-white">{{ snackbarText }}</span>
+            </div>
+            <template #actions>
+                <v-btn
+                    variant="text"
+                    color="white"
+                    icon="mdi-close"
+                    size="small"
+                    @click="snackbar = false"
+                ></v-btn>
+            </template>
+        </v-snackbar>
     </AuthenticatedLayout>
 </template>
