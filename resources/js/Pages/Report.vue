@@ -149,6 +149,73 @@ const getPaymentColor = (type) => {
     if (type?.toLowerCase() === 'qris') return 'success';
     return 'default';
 };
+
+// --- Export Report Logic ---
+const snackbar = ref(false);
+const snackbarText = ref('');
+const showToast = (msg) => {
+    snackbarText.value = msg;
+    snackbar.value = true;
+};
+
+const downloadCSV = (filename, headers, rows) => {
+    const escapeCSV = (val) => {
+        if (val === null || val === undefined) return '""';
+        let str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+    };
+
+    const headerLine = headers.map(escapeCSV).join(';');
+    const contentLines = rows.map(row => row.map(escapeCSV).join(';'));
+    const csvContent = "\uFEFF" + "sep=;\n" + [headerLine, ...contentLines].join('\n'); // Add UTF-8 BOM and sep=; for Excel compatibility
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const exportSalesReport = () => {
+    const headers = ['Date', 'Transactions', 'Revenue', 'Profit', 'Avg Value'];
+    const rows = (props.dailySales || []).map(day => [
+        day.date,
+        day.transactions,
+        day.revenue,
+        day.profit,
+        day.avg_value
+    ]);
+    
+    // Add total row at the end
+    rows.push([
+        'Total Penjualan',
+        props.stats?.transactionsCount || 0,
+        props.stats?.totalRevenue || 0,
+        props.stats?.totalProfit || 0,
+        '-'
+    ]);
+    
+    downloadCSV('grocerypro_sales_report', headers, rows);
+    showToast('Laporan Sales Report berhasil diekspor!');
+};
+
+const handleExport = () => {
+    if (tab.value === 'sales_report') {
+        exportSalesReport();
+    } else if (tab.value === 'product_performance') {
+        showToast('Export untuk tab Product Performance belum diimplementasikan.');
+    } else if (tab.value === 'inventory_report') {
+        showToast('Export untuk tab Inventory Report belum diimplementasikan.');
+    } else if (tab.value === 'transaction_history') {
+        showToast('Export untuk tab Transaction History belum diimplementasikan.');
+    }
+};
 </script>
 
 <template>
@@ -482,6 +549,7 @@ const getPaymentColor = (type) => {
                         Date Range
                     </v-btn>
                     <v-btn
+                        @click="handleExport"
                         variant="flat"
                         color="primary"
                         prepend-icon="mdi-export"
@@ -815,5 +883,28 @@ const getPaymentColor = (type) => {
                 </v-card-actions>
             </v-card>
         </v-dialog>
+
+        <!-- Notification Snackbar -->
+        <v-snackbar
+            v-model="snackbar"
+            timeout="3000"
+            color="success"
+            rounded="lg"
+            elevation="3"
+        >
+            <div class="d-flex align-center ga-2">
+                <v-icon color="white">mdi-check-circle</v-icon>
+                <span class="font-weight-medium text-white">{{ snackbarText }}</span>
+            </div>
+            <template #actions>
+                <v-btn
+                    variant="text"
+                    color="white"
+                    icon="mdi-close"
+                    size="small"
+                    @click="snackbar = false"
+                ></v-btn>
+            </template>
+        </v-snackbar>
     </AuthenticatedLayout>
 </template>
