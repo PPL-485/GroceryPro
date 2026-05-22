@@ -73,6 +73,23 @@ const averageProfitMargin = computed(() => {
     return totalRev > 0 ? (totalProf / totalRev) * 100 : 0;
 });
 
+const lowStockCount = computed(() => {
+    if (!props.productPerformance) return 0;
+    return props.productPerformance.filter(item => item.current_stock <= item.min_stock).length;
+});
+
+const inventoryStats = computed(() => {
+    const movements = props.inventoryMovements || [];
+    const incoming = movements.filter(m => {
+        const t = m.type?.toLowerCase() || '';
+        return t === 'incoming' || t === 'in' || t === 'masuk';
+    }).length;
+    const outgoing = movements.filter(m => {
+        const t = m.type?.toLowerCase() || '';
+        return t === 'outgoing' || t === 'out' || t === 'keluar';
+    }).length;
+    return { total: movements.length, incoming, outgoing };
+});
 
 const tab = ref('transaction_history');
 
@@ -148,99 +165,284 @@ const getPaymentColor = (type) => {
         
         <div class="px-2 pb-6 max-w-7xl mx-auto mt-4">
 
-            <!-- Summary Cards -->
+            <!-- Dynamic Summary Cards based on Tab -->
             <v-row class="mb-6">
-                <!-- Total Revenue -->
-                <v-col cols="12" sm="6" md="3">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
-                        <v-card-text>
-                            <div class="d-flex justify-space-between align-start">
-                                <div>
-                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Revenue</div>
-                                    <div class="text-h5 font-weight-bold">
-                                        {{ formatCurrency(stats.totalRevenue) }}
+                <!-- Default Cards (Sales & Transactions) -->
+                <template v-if="tab === 'sales_report' || tab === 'transaction_history'">
+                    <!-- Total Revenue -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Revenue</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ formatCurrency(stats.totalRevenue) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
+                                            +12.5% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
+                                        </div>
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +12.5% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
-                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-currency-usd</v-icon>
+                                    </v-avatar>
                                 </div>
-                                <v-avatar color="primary" size="40" rounded>
-                                    <v-icon color="white">mdi-currency-usd</v-icon>
-                                </v-avatar>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
 
-                <!-- Total Profit -->
-                <v-col cols="12" sm="6" md="3">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
-                        <v-card-text>
-                            <div class="d-flex justify-space-between align-start">
-                                <div>
-                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Profit</div>
-                                    <div class="text-h5 font-weight-bold">
-                                        {{ formatCurrency(stats.totalProfit) }}
+                    <!-- Total Profit -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Profit</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ formatCurrency(stats.totalProfit) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
+                                            +8.3% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
+                                        </div>
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +8.3% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
-                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-trending-up</v-icon>
+                                    </v-avatar>
                                 </div>
-                                <v-avatar color="primary" size="40" rounded>
-                                    <v-icon color="white">mdi-trending-up</v-icon>
-                                </v-avatar>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
 
-                <!-- Transactions -->
-                <v-col cols="12" sm="6" md="3">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
-                        <v-card-text>
-                            <div class="d-flex justify-space-between align-start">
-                                <div>
-                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Transactions</div>
-                                    <div class="text-h5 font-weight-bold">
-                                        {{ formatNumber(stats.transactionsCount) }}
+                    <!-- Transactions -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Transactions</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ formatNumber(stats.transactionsCount) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
+                                            +5.2% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
+                                        </div>
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +5.2% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
-                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-cart-outline</v-icon>
+                                    </v-avatar>
                                 </div>
-                                <v-avatar color="primary" size="40" rounded>
-                                    <v-icon color="white">mdi-cart-outline</v-icon>
-                                </v-avatar>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
 
-                <!-- Avg Transaction -->
-                <v-col cols="12" sm="6" md="3">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
-                        <v-card-text>
-                            <div class="d-flex justify-space-between align-start">
-                                <div>
-                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Avg Transaction</div>
-                                    <div class="text-h5 font-weight-bold">
-                                        {{ formatCurrency(stats.avgTransaction) }}
+                    <!-- Avg Transaction -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Avg Transaction</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ formatCurrency(stats.avgTransaction) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
+                                            +3.1% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
+                                        </div>
                                     </div>
-                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
-                                        <v-icon size="small" class="mr-1">mdi-trending-up</v-icon>
-                                        +3.1% <span class="text-grey ml-1 font-weight-regular">vs last period</span>
-                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-package-variant</v-icon>
+                                    </v-avatar>
                                 </div>
-                                <v-avatar color="primary" size="40" rounded>
-                                    <v-icon color="white">mdi-package-variant</v-icon>
-                                </v-avatar>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </template>
+
+                <!-- Product Performance Cards -->
+                <template v-else-if="tab === 'product_performance'">
+                    <!-- Best Seller -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div style="width: calc(100% - 48px)">
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Best Seller (Qty)</div>
+                                        <div class="text-subtitle-1 font-weight-bold text-truncate" :title="topSoldProduct ? topSoldProduct.product_name : 'N/A'">
+                                            {{ topSoldProduct ? topSoldProduct.product_name : 'N/A' }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-primary font-weight-medium d-flex align-center">
+                                            {{ topSoldProduct ? formatNumber(topSoldProduct.units_sold) : 0 }} {{ topSoldProduct ? topSoldProduct.unit : 'pcs' }} sold
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-crown</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Top Earner -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div style="width: calc(100% - 48px)">
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Top Earner (Revenue)</div>
+                                        <div class="text-subtitle-1 font-weight-bold text-truncate" :title="topRevenueProduct ? topRevenueProduct.product_name : 'N/A'">
+                                            {{ topRevenueProduct ? topRevenueProduct.product_name : 'N/A' }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            {{ topRevenueProduct ? formatCurrency(topRevenueProduct.total_revenue) : formatCurrency(0) }}
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-cash-multiple</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Avg Profit Margin -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Avg Profit Margin</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ averageProfitMargin.toFixed(1) }}%
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            Overall profitability rate
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-percent</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Low Stock Items -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Low Stock Items</div>
+                                        <div class="text-h5 font-weight-bold" :class="lowStockCount > 0 ? 'text-error' : ''">
+                                            {{ lowStockCount }}
+                                        </div>
+                                        <div class="text-caption mt-2 font-weight-medium d-flex align-center" :class="lowStockCount > 0 ? 'text-error' : 'text-grey'">
+                                            {{ lowStockCount > 0 ? 'Needs restock' : 'All stock optimal' }}
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-alert-octagon</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </template>
+
+                <!-- Inventory Report Cards -->
+                <template v-else-if="tab === 'inventory_report'">
+                    <!-- Total Movements -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Movements</div>
+                                        <div class="text-h5 font-weight-bold">
+                                            {{ formatNumber(inventoryStats.total) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-primary font-weight-medium d-flex align-center">
+                                            Inventory activities
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-swap-horizontal</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Incoming Items -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Incoming Items</div>
+                                        <div class="text-h5 font-weight-bold text-success">
+                                            {{ formatNumber(inventoryStats.incoming) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                            Stock additions
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-package-down</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Outgoing Items -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Outgoing Items</div>
+                                        <div class="text-h5 font-weight-bold text-error">
+                                            {{ formatNumber(inventoryStats.outgoing) }}
+                                        </div>
+                                        <div class="text-caption mt-2 text-error font-weight-medium d-flex align-center">
+                                            Stock deductions
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-package-up</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <!-- Stock Alerts -->
+                    <v-col cols="12" sm="6" md="3">
+                        <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                            <v-card-text>
+                                <div class="d-flex justify-space-between align-start">
+                                    <div>
+                                        <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Low Stock Alerts</div>
+                                        <div class="text-h5 font-weight-bold" :class="lowStockCount > 0 ? 'text-error' : ''">
+                                            {{ lowStockCount }}
+                                        </div>
+                                        <div class="text-caption mt-2 font-weight-medium d-flex align-center" :class="lowStockCount > 0 ? 'text-error' : 'text-grey'">
+                                            Items below minimum
+                                        </div>
+                                    </div>
+                                    <v-avatar color="primary" size="40" rounded>
+                                        <v-icon color="white">mdi-bell-alert</v-icon>
+                                    </v-avatar>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </template>
             </v-row>
 
             <!-- Tabs & Actions -->
@@ -337,64 +539,6 @@ const getPaymentColor = (type) => {
                 </v-window-item>
                 
                 <v-window-item v-if="isAdmin" value="product_performance">
-                    <!-- Product Insights Summary Grid -->
-                    <v-row class="mb-6">
-                        <v-col cols="12" md="4">
-                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
-                                <v-card-text class="d-flex align-center py-4">
-                                    <v-avatar color="amber-lighten-4" class="mr-4" rounded size="48">
-                                        <v-icon color="amber-darken-2" size="28">mdi-crown</v-icon>
-                                    </v-avatar>
-                                    <div>
-                                        <div class="text-caption text-grey font-weight-medium">Best Seller (Qty)</div>
-                                        <div class="text-subtitle-1 font-weight-bold text-truncate" style="max-width: 220px;" :title="topSoldProduct ? topSoldProduct.product_name : 'N/A'">
-                                            {{ topSoldProduct ? topSoldProduct.product_name : 'N/A' }}
-                                        </div>
-                                        <div class="text-caption text-primary font-weight-medium">
-                                            {{ topSoldProduct ? formatNumber(topSoldProduct.units_sold) : 0 }} {{ topSoldProduct ? topSoldProduct.unit : 'pcs' }} sold
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
-                                <v-card-text class="d-flex align-center py-4">
-                                    <v-avatar color="blue-lighten-4" class="mr-4" rounded size="48">
-                                        <v-icon color="blue-darken-2" size="28">mdi-currency-usd</v-icon>
-                                    </v-avatar>
-                                    <div>
-                                        <div class="text-caption text-grey font-weight-medium">Top Earner (Revenue)</div>
-                                        <div class="text-subtitle-1 font-weight-bold text-truncate" style="max-width: 220px;" :title="topRevenueProduct ? topRevenueProduct.product_name : 'N/A'">
-                                            {{ topRevenueProduct ? topRevenueProduct.product_name : 'N/A' }}
-                                        </div>
-                                        <div class="text-caption text-success font-weight-medium">
-                                            {{ topRevenueProduct ? formatCurrency(topRevenueProduct.total_revenue) : formatCurrency(0) }}
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-card class="rounded-lg border bg-surface h-100" variant="flat">
-                                <v-card-text class="d-flex align-center py-4">
-                                    <v-avatar color="green-lighten-4" class="mr-4" rounded size="48">
-                                        <v-icon color="green-darken-2" size="28">mdi-percent</v-icon>
-                                    </v-avatar>
-                                    <div>
-                                        <div class="text-caption text-grey font-weight-medium">Avg Profit Margin</div>
-                                        <div class="text-subtitle-1 font-weight-bold">
-                                            {{ averageProfitMargin.toFixed(1) }}%
-                                        </div>
-                                        <div class="text-caption text-success font-weight-medium">
-                                            Overall profitability rate
-                                        </div>
-                                    </div>
-                                </v-card-text>
-                            </v-card>
-                        </v-col>
-                    </v-row>
-
                     <!-- Product Table Card -->
                     <v-card flat class="rounded-xl border mb-6 bg-surface">
                         <!-- Search and Controls inside the card header -->
@@ -558,17 +702,17 @@ const getPaymentColor = (type) => {
                                     <td class="pl-6 font-weight-medium text-grey-darken-3">{{ movement.id }}</td>
                                     <td class="text-grey-darken-1">{{ movement.date }}</td>
                                     <td>
-                                        <div class="d-flex align-center" :class="movement.type.toLowerCase() === 'incoming' ? 'text-success' : 'text-error'">
+                                        <div class="d-flex align-center" :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
                                             <v-icon size="small" class="mr-1">
-                                                {{ movement.type.toLowerCase() === 'incoming' ? 'mdi-package-down' : 'mdi-package-up' }}
+                                                {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'mdi-package-down' : 'mdi-package-up' }}
                                             </v-icon>
                                             {{ movement.type }}
                                         </div>
                                     </td>
                                     <td class="text-grey-darken-3">{{ movement.product_name }}</td>
                                     <td>
-                                        <span :class="movement.type.toLowerCase() === 'incoming' ? 'text-success' : 'text-error'">
-                                            {{ movement.type.toLowerCase() === 'incoming' ? '+' : '-' }}{{ movement.qty }} {{ movement.unit }}
+                                        <span :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
+                                            {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? '+' : '-' }}{{ movement.qty }} {{ movement.unit }}
                                         </span>
                                     </td>
                                     <td class="text-grey-darken-1">{{ movement.reference }}</td>
