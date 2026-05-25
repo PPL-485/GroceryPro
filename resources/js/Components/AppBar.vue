@@ -55,10 +55,6 @@
     </v-menu>
 
     <!-- Actions -->
-    <v-btn icon @click="toggleTheme" class="mr-1">
-      <v-icon>{{ themeIcon }}</v-icon>
-      <v-tooltip activator="parent" location="bottom">Toggle theme</v-tooltip>
-    </v-btn>
 
     <v-btn
       v-if="hasTransactionsSidebar"
@@ -102,18 +98,6 @@ onMounted(() => {
   }
 })
 
-const themeIcon = computed(() => {
-  if (theme.global.name.value === 'dark') return 'mdi-weather-night'
-  if (theme.global.name.value === 'brand') return 'mdi-leaf'
-  return 'mdi-theme-light-dark'
-})
-
-function toggleTheme() {
-  const currentIndex = themes.indexOf(theme.global.name.value)
-  const nextIndex = (currentIndex + 1) % themes.length
-  theme.global.name.value = themes[nextIndex]
-  localStorage.setItem(THEME_KEY, theme.global.name.value)
-}
 
 // Injected from AuthenticatedLayout — controls the right panel
 const transactionsDrawer = inject('transactionsDrawer', null)

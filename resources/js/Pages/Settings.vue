@@ -1,22 +1,53 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useTheme } from 'vuetify';
 
 const user = usePage().props.auth.user;
 
 const tab = ref('info_settings');
 const lowStockAlerts = ref(true);
 
+const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success'
+});
+
 const form = useForm({
     name: user.name,
     phone: user.phone || '',
     email: user.email,
+    profile_photo: null,
+    _method: 'patch'
 });
 
+const photoInput = ref(null);
+const photoPreview = ref(null);
+
+const handlePhotoUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    form.profile_photo = file;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
 const submitProfile = () => {
-    form.patch(route('profile.update'), {
+    form.post(route('profile.update'), {
         preserveScroll: true,
+        onSuccess: () => {
+            snackbar.value = { show: true, text: 'Profile updated successfully!', color: 'success' };
+        },
+        onError: () => {
+            snackbar.value = { show: true, text: 'Failed to update profile.', color: 'error' };
+        }
     });
 };
 
@@ -29,7 +60,10 @@ const passwordForm = useForm({
 const updatePassword = () => {
     passwordForm.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => passwordForm.reset(),
+        onSuccess: () => {
+            passwordForm.reset();
+            snackbar.value = { show: true, text: 'Password updated successfully!', color: 'success' };
+        },
         onError: () => {
             if (passwordForm.errors.password) {
                 passwordForm.reset('password', 'password_confirmation');
@@ -37,6 +71,7 @@ const updatePassword = () => {
             if (passwordForm.errors.current_password) {
                 passwordForm.reset('current_password');
             }
+            snackbar.value = { show: true, text: 'Failed to update password.', color: 'error' };
         },
     });
 };
@@ -55,11 +90,11 @@ const handleFileUpload = (event) => {
         restoreForm.post(route('restore'), {
             preserveScroll: true,
             onSuccess: () => {
-                alert('Database restored successfully!');
+                snackbar.value = { show: true, text: 'Database restored successfully!', color: 'success' };
                 event.target.value = null;
             },
             onError: () => {
-                alert('Failed to restore database.');
+                snackbar.value = { show: true, text: 'Failed to restore database.', color: 'error' };
                 event.target.value = null;
             }
         });
@@ -67,6 +102,29 @@ const handleFileUpload = (event) => {
         event.target.value = null;
     }
 };
+
+const theme = useTheme();
+const themes = ['brand', 'dark'];
+const THEME_KEY = 'grocerypro-theme';
+
+const themeIcon = computed(() => {
+    if (theme.global.name.value === 'dark') return 'mdi-weather-night';
+    if (theme.global.name.value === 'brand') return 'mdi-leaf';
+    return 'mdi-theme-light-dark';
+});
+
+const themeNameDisplay = computed(() => {
+    if (theme.global.name.value === 'dark') return 'Dark Mode';
+    if (theme.global.name.value === 'brand') return 'Brand Mode';
+    return 'Light Mode';
+});
+
+function toggleTheme() {
+    const currentIndex = themes.indexOf(theme.global.name.value);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    theme.global.name.value = themes[nextIndex];
+    localStorage.setItem(THEME_KEY, theme.global.name.value);
+}
 </script>
 
 <template>
@@ -321,10 +379,35 @@ const handleFileUpload = (event) => {
                 </v-window-item>
 
                 <v-window-item value="appearance">
-                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4" color="primary">mdi-palette-outline</v-icon>
-                        <div class="text-h6 text-primary">Appearance Settings</div>
-                        <div class="text-body-1 mt-2" style="color: #6B7280;">Customize the look and feel.</div>
+                    <v-card hover flat class="rounded-xl border">
+                        <!-- Card Header -->
+                        <div class="d-flex align-center px-8 pt-8 pb-4">
+                            <v-icon icon="mdi-palette-outline" size="28" class="mr-4" color="primary"></v-icon>
+                            <span class="text-h6 font-weight-medium text-primary">Appearance Settings</span>
+                        </div>
+
+                        <!-- Card Content -->
+                        <v-card-text class="px-8 pb-8 pt-4">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <div>
+                                    <div class="text-subtitle-1 font-weight-medium">App Theme</div>
+                                    <div class="text-body-1 mt-1" style="color: #6B7280;">Change the application's color theme</div>
+                                </div>
+                                <div class="d-flex align-center">
+                                    <span class="mr-4 text-subtitle-2 text-primary font-weight-bold">{{ themeNameDisplay }}</span>
+                                    <v-btn
+                                        variant="tonal"
+                                        color="primary"
+                                        class="rounded-lg text-none font-weight-medium"
+                                        height="44"
+                                        @click="toggleTheme"
+                                    >
+                                        <v-icon start>{{ themeIcon }}</v-icon>
+                                        Toggle Theme
+                                    </v-btn>
+                                </div>
+                            </div>
+                        </v-card-text>
                     </v-card>
                 </v-window-item>
 
