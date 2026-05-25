@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use Illuminate\Http\Request;
@@ -76,6 +77,18 @@ class TransactionController extends Controller
                     'qty' => $item['qty'],
                     'unit_price' => (int) round($item['unit_price']),
                     'subtotal' => (int) round($item['subtotal']),
+                ]);
+
+                // Create Stock Movement
+                StockMovement::create([
+                    'product_id' => $item['product_id'],
+                    'user_id' => auth()->id(),
+                    'type' => 'out',
+                    'qty' => $item['qty'],
+                    'reference_id' => $transaction->trx_code,
+                    'supplier' => 'Customer (POS)',
+                    'total_cost' => (int) round($item['subtotal']),
+                    'created_at' => now(),
                 ]);
             }
 
