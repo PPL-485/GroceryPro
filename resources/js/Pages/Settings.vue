@@ -131,9 +131,12 @@ function toggleTheme() {
     <Head title="store_info" />
 
     <AuthenticatedLayout>
-        <!-- Provide title/description slots to the layout's AppBar if desired, 
-             but we will render a prominent header inside the page content to match the design. -->
         <template #header-title>Settings</template>
+        <template #header-description>
+            <p class="text-sm text-grey-darken-1">
+                Manage your account preferences and application settings
+            </p>
+        </template>
         
         <div class="px-2 pb-6 max-w-5xl mx-auto">
             <!-- Tabs -->
