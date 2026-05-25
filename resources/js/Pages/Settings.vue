@@ -35,7 +35,6 @@ const form = useForm({
     phone: user.phone || '',
     email: user.email,
     profile_photo: null,
-    _method: 'patch'
 });
 
 const photoInput = ref(null);

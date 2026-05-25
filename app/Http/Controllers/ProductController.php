@@ -76,7 +76,7 @@ class ProductController extends Controller
 
         // Create initial stock movement if stock > 0
         if ($validated['stock_qty'] > 0) {
-            StockMovement::create([
+            $movement = StockMovement::create([
                 'product_id' => $product->id,
                 'user_id' => auth()->id(),
                 'type' => 'in',
@@ -84,6 +84,10 @@ class ProductController extends Controller
                 'supplier' => $validated['supplier'] ?? null,
                 'total_cost' => $validated['buy_price'] * $validated['stock_qty'],
                 'created_at' => now(),
+            ]);
+            
+            $movement->update([
+                'reference_id' => 'INV-IN-' . str_pad($movement->id, 4, '0', STR_PAD_LEFT)
             ]);
         }
 
@@ -106,7 +110,7 @@ class ProductController extends Controller
         $product->increment('stock_qty', $validated['qty']);
 
         // Create stock movement record
-        StockMovement::create([
+        $movement = StockMovement::create([
             'product_id' => $validated['product_id'],
             'user_id' => auth()->id(),
             'type' => 'in',
@@ -114,6 +118,10 @@ class ProductController extends Controller
             'supplier' => $validated['supplier'],
             'total_cost' => $validated['total_cost'],
             'created_at' => $validated['date_received'],
+        ]);
+
+        $movement->update([
+            'reference_id' => 'INV-IN-' . str_pad($movement->id, 4, '0', STR_PAD_LEFT)
         ]);
 
         return redirect()->back()->with('success', 'Stock added successfully.');
