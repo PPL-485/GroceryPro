@@ -28,8 +28,8 @@ class ProductObserver
             $originalStock = $product->getOriginal('stock_qty');
             
             if ($product->stock_qty <= $product->min_stock && $originalStock > $product->min_stock) {
-                // Dispatch notification to admins
-                $admins = User::where('role', 'admin')->get();
+                // Dispatch notification only to admins who have alerts enabled
+                $admins = User::where('role', 'admin')->where('receive_low_stock_alerts', true)->get();
                 try {
                     Notification::send($admins, new LowStockNotification($product));
                 } catch (\Exception $e) {
