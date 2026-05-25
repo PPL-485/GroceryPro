@@ -7,7 +7,22 @@ import { useTheme } from 'vuetify';
 const user = usePage().props.auth.user;
 
 const tab = ref('info_settings');
-const lowStockAlerts = ref(true);
+
+const preferencesForm = useForm({
+    receive_low_stock_alerts: user.receive_low_stock_alerts ?? true,
+});
+
+const submitPreferences = () => {
+    preferencesForm.patch(route('profile.preferences.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            snackbar.value = { show: true, text: 'Preferences updated successfully!', color: 'success' };
+        },
+        onError: () => {
+            snackbar.value = { show: true, text: 'Failed to update preferences.', color: 'error' };
+        }
+    });
+};
 
 const snackbar = ref({
     show: false,
@@ -266,9 +281,10 @@ function toggleTheme() {
                                     <div class="text-body-1 mt-1">Get notified when products are running low</div>
                                 </div>
                                 <v-switch
-                                    v-model="lowStockAlerts"
+                                    v-model="preferencesForm.receive_low_stock_alerts"
                                     inset
                                     hide-details
+                                    color="primary"
                                     density="compact"
                                 ></v-switch>
                             </div>
@@ -283,6 +299,7 @@ function toggleTheme() {
                                 variant="flat"
                                 class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                 height="44"
+                                @click="preferencesForm.reset()"
                             >
                                 Reset to Default
                             </v-btn>
@@ -291,6 +308,8 @@ function toggleTheme() {
                                 color="primary"
                                 class="text-none px-6 rounded-lg text-white font-weight-medium"
                                 height="44"
+                                :loading="preferencesForm.processing"
+                                @click="submitPreferences"
                             >
                                 Save Preferences
                             </v-btn>
