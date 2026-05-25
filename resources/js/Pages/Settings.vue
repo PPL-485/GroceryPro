@@ -30,12 +30,6 @@ const snackbar = ref({
     color: 'success'
 });
 
-const snackbar = ref({
-    show: false,
-    text: '',
-    color: 'success'
-});
-
 const form = useForm({
     name: user.name,
     phone: user.phone || '',
