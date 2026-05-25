@@ -1,12 +1,34 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useTheme } from 'vuetify';
 
 const user = usePage().props.auth.user;
 
 const tab = ref('info_settings');
-const lowStockAlerts = ref(true);
+
+const preferencesForm = useForm({
+    receive_low_stock_alerts: user.receive_low_stock_alerts ?? true,
+});
+
+const submitPreferences = () => {
+    preferencesForm.patch(route('profile.preferences.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            snackbar.value = { show: true, text: 'Preferences updated successfully!', color: 'success' };
+        },
+        onError: () => {
+            snackbar.value = { show: true, text: 'Failed to update preferences.', color: 'error' };
+        }
+    });
+};
+
+const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success'
+});
 
 const snackbar = ref({
     show: false,
@@ -101,15 +123,41 @@ const handleFileUpload = (event) => {
         event.target.value = null;
     }
 };
+
+const theme = useTheme();
+const themes = ['brand', 'dark'];
+const THEME_KEY = 'grocerypro-theme';
+
+const themeIcon = computed(() => {
+    if (theme.global.name.value === 'dark') return 'mdi-weather-night';
+    if (theme.global.name.value === 'brand') return 'mdi-leaf';
+    return 'mdi-theme-light-dark';
+});
+
+const themeNameDisplay = computed(() => {
+    if (theme.global.name.value === 'dark') return 'Dark Mode';
+    if (theme.global.name.value === 'brand') return 'Brand Mode';
+    return 'Light Mode';
+});
+
+function toggleTheme() {
+    const currentIndex = themes.indexOf(theme.global.name.value);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    theme.global.name.value = themes[nextIndex];
+    localStorage.setItem(THEME_KEY, theme.global.name.value);
+}
 </script>
 
 <template>
     <Head title="store_info" />
 
     <AuthenticatedLayout>
-        <!-- Provide title/description slots to the layout's AppBar if desired, 
-             but we will render a prominent header inside the page content to match the design. -->
         <template #header-title>Settings</template>
+        <template #header-description>
+            <p class="text-sm text-grey-darken-1">
+                Manage your account preferences and application settings
+            </p>
+        </template>
         
         <div class="px-2 pb-6 max-w-5xl mx-auto">
             <!-- Tabs -->
@@ -264,9 +312,10 @@ const handleFileUpload = (event) => {
                                     <div class="text-body-1 mt-1">Get notified when products are running low</div>
                                 </div>
                                 <v-switch
-                                    v-model="lowStockAlerts"
+                                    v-model="preferencesForm.receive_low_stock_alerts"
                                     inset
                                     hide-details
+                                    color="primary"
                                     density="compact"
                                 ></v-switch>
                             </div>
@@ -281,6 +330,7 @@ const handleFileUpload = (event) => {
                                 variant="flat"
                                 class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                 height="44"
+                                @click="preferencesForm.reset()"
                             >
                                 Reset to Default
                             </v-btn>
@@ -289,6 +339,8 @@ const handleFileUpload = (event) => {
                                 color="primary"
                                 class="text-none px-6 rounded-lg text-white font-weight-medium"
                                 height="44"
+                                :loading="preferencesForm.processing"
+                                @click="submitPreferences"
                             >
                                 Save Preferences
                             </v-btn>
@@ -380,10 +432,35 @@ const handleFileUpload = (event) => {
                 </v-window-item>
 
                 <v-window-item value="appearance">
-                    <v-card hover flat class="rounded-xl border pa-10 text-center text-grey">
-                        <v-icon size="48" class="mb-4" color="primary">mdi-palette-outline</v-icon>
-                        <div class="text-h6 text-primary">Appearance Settings</div>
-                        <div class="text-body-1 mt-2" style="color: #6B7280;">Customize the look and feel.</div>
+                    <v-card hover flat class="rounded-xl border">
+                        <!-- Card Header -->
+                        <div class="d-flex align-center px-8 pt-8 pb-4">
+                            <v-icon icon="mdi-palette-outline" size="28" class="mr-4" color="primary"></v-icon>
+                            <span class="text-h6 font-weight-medium text-primary">Appearance Settings</span>
+                        </div>
+
+                        <!-- Card Content -->
+                        <v-card-text class="px-8 pb-8 pt-4">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <div>
+                                    <div class="text-subtitle-1 font-weight-medium">App Theme</div>
+                                    <div class="text-body-1 mt-1" style="color: #6B7280;">Change the application's color theme</div>
+                                </div>
+                                <div class="d-flex align-center">
+                                    <span class="mr-4 text-subtitle-2 text-primary font-weight-bold">{{ themeNameDisplay }}</span>
+                                    <v-btn
+                                        variant="tonal"
+                                        color="primary"
+                                        class="rounded-lg text-none font-weight-medium"
+                                        height="44"
+                                        @click="toggleTheme"
+                                    >
+                                        <v-icon start>{{ themeIcon }}</v-icon>
+                                        Toggle Theme
+                                    </v-btn>
+                                </div>
+                            </div>
+                        </v-card-text>
                     </v-card>
                 </v-window-item>
 

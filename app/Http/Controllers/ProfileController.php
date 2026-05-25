@@ -50,6 +50,22 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update user preferences.
+     */
+    public function updatePreferences(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'receive_low_stock_alerts' => ['required', 'boolean'],
+        ]);
+
+        $request->user()->update([
+            'receive_low_stock_alerts' => $validated['receive_low_stock_alerts'],
+        ]);
+
+        return Redirect::back()->with('status', 'preferences-updated');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

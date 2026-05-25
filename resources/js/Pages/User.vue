@@ -132,32 +132,36 @@ const executeDelete = () => {
             </p>
         </template>
         
-        <div class="overflow-hidden shadow-sm sm:rounded-lg">
-            <v-card>
-                <v-card-text>
-                    <div class="d-flex align-center mb-4 gap-4">
-                        <v-text-field
-                            label="Search"
-                            prepend-inner-icon="mdi-magnify"
-                            variant="outlined"
-                            rounded="lg"
-                            v-model="search"
-                            density="comfortable"
-                            clearable
-                            hide-details
-                            class="flex-grow-1"
-                        ></v-text-field>
-                        <v-btn
-                            color="primary"
-                            prepend-icon="mdi-plus"
-                            @click="isAddUserModalOpen = true"
-                            height="48"
-                            class="ml-4"
-                        >
-                            Add User
-                        </v-btn>
-                    </div>
-                    <v-table>
+        <v-container fluid class="pa-0 mt-4">
+            <!-- Search and Action Buttons -->
+            <v-row class="mb-4" align="center">
+                <v-col cols="12" md="6">
+                    <v-text-field
+                        placeholder="Search users..."
+                        prepend-inner-icon="mdi-magnify"
+                        variant="outlined"
+                        rounded="lg"
+                        v-model="search"
+                        density="compact"
+                        hide-details
+                    ></v-text-field>
+                </v-col>
+                <v-spacer></v-spacer>
+                <v-col cols="auto">
+                    <v-btn
+                        color="primary"
+                        rounded="lg"
+                        class="text-none"
+                        @click="isAddUserModalOpen = true"
+                    >
+                        <v-icon start size="small">mdi-plus</v-icon>
+                        Add User
+                    </v-btn>
+                </v-col>
+            </v-row>
+
+            <v-card class="rounded-xl border" elevation="0">
+                <v-table hover>
                         <thead>
                             <tr>
                                 <th class="text-left">Name</th>
@@ -215,7 +219,6 @@ const executeDelete = () => {
                             </tr>
                         </tbody>
                     </v-table>
-                </v-card-text>
             </v-card>
 
             <v-dialog v-model="isAddUserModalOpen" max-width="500">
@@ -377,6 +380,6 @@ const executeDelete = () => {
                     </v-btn>
                 </template>
             </v-snackbar>
-        </div>
+        </v-container>
     </AuthenticatedLayout>
 </template>
