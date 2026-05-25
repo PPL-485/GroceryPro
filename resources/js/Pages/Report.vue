@@ -704,9 +704,13 @@ const handleExport = () => {
                                     <td class="font-weight-bold text-success">{{ formatCurrency(stats.totalProfit) }}</td>
                                     <td class="pr-6 font-weight-bold text-grey-darken-1">-</td>
                                 </tr>
-                                <tr v-if="!dailySales || dailySales.length === 0">
-                                    <td colspan="5" class="text-center pa-4 text-grey">No sales data available.</td>
-                                </tr>
+                                 <tr v-if="!dailySales || dailySales.length === 0">
+                                     <td colspan="5" class="text-center py-10">
+                                         <v-icon size="48" color="grey-lighten-2" class="mb-3">mdi-chart-bar-stacked</v-icon>
+                                         <div class="text-subtitle-2 text-grey-darken-1 font-weight-medium">No sales data available</div>
+                                         <div class="text-caption text-grey mt-1">Try selecting a different date range</div>
+                                     </td>
+                                 </tr>
                             </tbody>
                         </v-table>
                     </v-card>
@@ -872,33 +876,49 @@ const handleExport = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="movement in inventoryMovements" :key="movement.id" style="font-size: 0.85rem;">
-                                    <td class="pl-6 font-weight-medium text-grey-darken-3">{{ movement.id }}</td>
-                                    <td class="text-grey-darken-1">{{ movement.date }}</td>
-                                    <td>
-                                        <div class="d-flex align-center" :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
-                                            <v-icon size="small" class="mr-1">
-                                                {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'mdi-package-down' : 'mdi-package-up' }}
-                                            </v-icon>
-                                            {{ movement.type }}
-                                        </div>
-                                    </td>
-                                    <td class="text-grey-darken-3">{{ movement.product_name }}</td>
-                                    <td>
-                                        <span :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
-                                            {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? '+' : '-' }}{{ movement.qty }} {{ movement.unit }}
-                                        </span>
-                                    </td>
-                                    <td class="text-grey-darken-1">{{ movement.reference }}</td>
-                                    <td class="pr-6 text-grey-darken-1">{{ movement.supplier }}</td>
-                                </tr>
-                            </tbody>
+                                 <tr v-for="movement in inventoryMovements" :key="movement.id" style="font-size: 0.85rem;">
+                                     <td class="pl-6 font-weight-medium text-grey-darken-3">{{ movement.id }}</td>
+                                     <td class="text-grey-darken-1">{{ movement.date }}</td>
+                                     <td>
+                                         <div class="d-flex align-center" :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
+                                             <v-icon size="small" class="mr-1">
+                                                 {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'mdi-package-down' : 'mdi-package-up' }}
+                                             </v-icon>
+                                             {{ movement.type }}
+                                         </div>
+                                     </td>
+                                     <td class="text-grey-darken-3">{{ movement.product_name }}</td>
+                                     <td>
+                                         <span :class="['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? 'text-success' : 'text-error'">
+                                             {{ ['incoming', 'in', 'masuk'].includes(movement.type.toLowerCase()) ? '+' : '-' }}{{ movement.qty }} {{ movement.unit }}
+                                         </span>
+                                     </td>
+                                     <td class="text-grey-darken-1">{{ movement.reference }}</td>
+                                     <td class="pr-6 text-grey-darken-1">{{ movement.supplier }}</td>
+                                 </tr>
+                                 <tr v-if="!inventoryMovements || inventoryMovements.length === 0">
+                                     <td colspan="7" class="text-center py-10">
+                                         <v-icon size="48" color="grey-lighten-2" class="mb-3">mdi-package-variant-closed</v-icon>
+                                         <div class="text-subtitle-2 text-grey-darken-1 font-weight-medium">No inventory movements found</div>
+                                         <div class="text-caption text-grey mt-1">Try selecting a different date range</div>
+                                     </td>
+                                 </tr>
+                             </tbody>
                         </v-table>
                     </v-card>
                 </v-window-item>
                 
                 <!-- Transaction History Tab -->
                 <v-window-item value="transaction_history">
+                    <!-- Empty state -->
+                    <v-card v-if="!transactions || transactions.length === 0" flat class="rounded-xl border mb-6 bg-surface">
+                        <div class="text-center py-16">
+                            <v-icon size="64" color="grey-lighten-2" class="mb-4">mdi-receipt-text-outline</v-icon>
+                            <div class="text-subtitle-1 font-weight-medium text-grey-darken-1">No transactions found</div>
+                            <div class="text-caption text-grey mt-1">Try selecting a different date range</div>
+                        </div>
+                    </v-card>
+
                     <v-card flat class="rounded-xl border mb-6 bg-surface px-6 py-6" v-for="trx in transactions" :key="trx.id">
                         
                         <!-- Header of Transaction Card -->
