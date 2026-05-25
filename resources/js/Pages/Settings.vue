@@ -30,6 +30,12 @@ const snackbar = ref({
     color: 'success'
 });
 
+const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success'
+});
+
 const form = useForm({
     name: user.name,
     phone: user.phone || '',
@@ -185,6 +191,30 @@ function toggleTheme() {
 
                             <!-- Card Content -->
                             <v-card-text class="px-8 pb-4 pt-4">
+                                <div class="d-flex align-center justify-center mb-8">
+                                    <div class="position-relative">
+                                        <v-avatar size="120" color="grey-lighten-2" class="border">
+                                            <v-img v-if="photoPreview" :src="photoPreview" cover></v-img>
+                                            <v-img v-else-if="user.profile_photo_path" :src="'/storage/' + user.profile_photo_path" cover></v-img>
+                                            <v-icon v-else size="48" color="grey">mdi-account</v-icon>
+                                        </v-avatar>
+                                        <v-btn
+                                            icon="mdi-camera"
+                                            size="small"
+                                            color="primary"
+                                            class="position-absolute"
+                                            style="bottom: 0; right: 0; z-index: 10;"
+                                            @click="photoInput.click()"
+                                        ></v-btn>
+                                        <input
+                                            type="file"
+                                            ref="photoInput"
+                                            accept="image/*"
+                                            class="d-none"
+                                            @change="handlePhotoUpload"
+                                        >
+                                    </div>
+                                </div>
                                 <v-row>
                                     <v-col cols="12" md="6" class="pb-2">
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Full Name</div>
@@ -201,6 +231,7 @@ function toggleTheme() {
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Phone Number</div>
                                         <v-text-field
                                             v-model="form.phone"
+                                            @update:model-value="val => form.phone = val ? val.replace(/\D/g, '') : ''"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -513,6 +544,25 @@ function toggleTheme() {
                 </v-window-item>
             </v-window>
         </div>
+
+        <!-- Global Snackbar for Settings -->
+        <v-snackbar
+            v-model="snackbar.show"
+            :color="snackbar.color"
+            timeout="3000"
+            location="bottom right"
+        >
+            {{ snackbar.text }}
+            <template v-slot:actions>
+                <v-btn
+                    color="white"
+                    variant="text"
+                    @click="snackbar.show = false"
+                >
+                    Close
+                </v-btn>
+            </template>
+        </v-snackbar>
     </AuthenticatedLayout>
 </template>
 
