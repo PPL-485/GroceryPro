@@ -35,7 +35,7 @@ const menus = [
     >
         <v-list>
             <v-list-item
-                prepend-avatar="https://randomuser.me/api/portraits/women/85.jpg"
+                :prepend-avatar="user.profile_photo_path ? '/storage/' + user.profile_photo_path : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`"
                 :title="user.name"
                 :subtitle="user.email"
             ></v-list-item>

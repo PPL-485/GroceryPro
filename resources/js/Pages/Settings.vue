@@ -8,15 +8,45 @@ const user = usePage().props.auth.user;
 const tab = ref('info_settings');
 const lowStockAlerts = ref(true);
 
+const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success'
+});
+
 const form = useForm({
     name: user.name,
     phone: user.phone || '',
     email: user.email,
+    profile_photo: null,
+    _method: 'patch'
 });
 
+const photoInput = ref(null);
+const photoPreview = ref(null);
+
+const handlePhotoUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    form.profile_photo = file;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        photoPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
 const submitProfile = () => {
-    form.patch(route('profile.update'), {
+    form.post(route('profile.update'), {
         preserveScroll: true,
+        onSuccess: () => {
+            snackbar.value = { show: true, text: 'Profile updated successfully!', color: 'success' };
+        },
+        onError: () => {
+            snackbar.value = { show: true, text: 'Failed to update profile.', color: 'error' };
+        }
     });
 };
 
@@ -29,7 +59,10 @@ const passwordForm = useForm({
 const updatePassword = () => {
     passwordForm.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => passwordForm.reset(),
+        onSuccess: () => {
+            passwordForm.reset();
+            snackbar.value = { show: true, text: 'Password updated successfully!', color: 'success' };
+        },
         onError: () => {
             if (passwordForm.errors.password) {
                 passwordForm.reset('password', 'password_confirmation');
@@ -37,6 +70,7 @@ const updatePassword = () => {
             if (passwordForm.errors.current_password) {
                 passwordForm.reset('current_password');
             }
+            snackbar.value = { show: true, text: 'Failed to update password.', color: 'error' };
         },
     });
 };
@@ -55,11 +89,11 @@ const handleFileUpload = (event) => {
         restoreForm.post(route('restore'), {
             preserveScroll: true,
             onSuccess: () => {
-                alert('Database restored successfully!');
+                snackbar.value = { show: true, text: 'Database restored successfully!', color: 'success' };
                 event.target.value = null;
             },
             onError: () => {
-                alert('Failed to restore database.');
+                snackbar.value = { show: true, text: 'Failed to restore database.', color: 'error' };
                 event.target.value = null;
             }
         });
@@ -109,6 +143,30 @@ const handleFileUpload = (event) => {
 
                             <!-- Card Content -->
                             <v-card-text class="px-8 pb-4 pt-4">
+                                <div class="d-flex align-center justify-center mb-8">
+                                    <div class="position-relative">
+                                        <v-avatar size="120" color="grey-lighten-2" class="border">
+                                            <v-img v-if="photoPreview" :src="photoPreview" cover></v-img>
+                                            <v-img v-else-if="user.profile_photo_path" :src="'/storage/' + user.profile_photo_path" cover></v-img>
+                                            <v-icon v-else size="48" color="grey">mdi-account</v-icon>
+                                        </v-avatar>
+                                        <v-btn
+                                            icon="mdi-camera"
+                                            size="small"
+                                            color="primary"
+                                            class="position-absolute"
+                                            style="bottom: 0; right: 0; z-index: 10;"
+                                            @click="photoInput.click()"
+                                        ></v-btn>
+                                        <input
+                                            type="file"
+                                            ref="photoInput"
+                                            accept="image/*"
+                                            class="d-none"
+                                            @change="handlePhotoUpload"
+                                        >
+                                    </div>
+                                </div>
                                 <v-row>
                                     <v-col cols="12" md="6" class="pb-2">
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Full Name</div>
@@ -125,6 +183,7 @@ const handleFileUpload = (event) => {
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Phone Number</div>
                                         <v-text-field
                                             v-model="form.phone"
+                                            @update:model-value="val => form.phone = val ? val.replace(/\D/g, '') : ''"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
@@ -408,6 +467,25 @@ const handleFileUpload = (event) => {
                 </v-window-item>
             </v-window>
         </div>
+
+        <!-- Global Snackbar for Settings -->
+        <v-snackbar
+            v-model="snackbar.show"
+            :color="snackbar.color"
+            timeout="3000"
+            location="bottom right"
+        >
+            {{ snackbar.text }}
+            <template v-slot:actions>
+                <v-btn
+                    color="white"
+                    variant="text"
+                    @click="snackbar.show = false"
+                >
+                    Close
+                </v-btn>
+            </template>
+        </v-snackbar>
     </AuthenticatedLayout>
 </template>
 
