@@ -19,7 +19,7 @@ const features = [
 </script>
 
 <template>
-    <Head title="Welcome to FreshStock" />
+    <Head title="Welcome to GroceryPro" />
 
     <v-app>
         <div class="lp-root">
@@ -30,7 +30,7 @@ const features = [
                     <div class="lp-logo-icon">
                         <v-icon icon="mdi-package-variant-closed" size="22" color="white"></v-icon>
                     </div>
-                    <span class="lp-logo-text">FreshStock</span>
+                    <span class="lp-logo-text">GroceryPro</span>
                 </div>
 
                 <div v-if="canLogin" v-motion-fade>
@@ -155,7 +155,7 @@ const features = [
             <section class="lp-cta">
                 <div class="lp-container lp-cta-inner" v-motion-slide-visible-bottom>
                     <h2 class="lp-cta-title">Ready to Transform Your Store?</h2>
-                    <p class="lp-cta-sub">Join hundreds of grocery stores already using FreshStock to streamline their operations.</p>
+                    <p class="lp-cta-sub">Join hundreds of grocery stores already using GroceryPro to streamline their operations.</p>
                     <Link v-if="canRegister" :href="route('register')">
                         <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
                             Start Your Journey
@@ -170,9 +170,9 @@ const features = [
                 <div class="lp-container lp-footer-inner">
                     <div class="lp-footer-brand">
                         <v-icon icon="mdi-package-variant-closed" color="#D38865" size="20"></v-icon>
-                        <span class="lp-footer-name">FreshStock</span>
+                        <span class="lp-footer-name">GroceryPro</span>
                     </div>
-                    <p class="lp-footer-copy">&copy; 2026 FreshStock. All rights reserved.</p>
+                    <p class="lp-footer-copy">&copy; 2026 GroceryPro. All rights reserved.</p>
                 </div>
             </footer>
 
