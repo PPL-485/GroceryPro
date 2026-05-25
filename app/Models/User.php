@@ -24,6 +24,8 @@ class User extends Authenticatable
         'password',
         'status',
         'role',
+        'profile_photo_path',
+        'receive_low_stock_alerts',
     ];
 
     /**
@@ -44,5 +46,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'receive_low_stock_alerts' => 'boolean',
     ];
 }
