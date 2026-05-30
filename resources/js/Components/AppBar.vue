@@ -57,6 +57,7 @@
     <!-- Actions -->
 
     <v-btn
+      id="btn-toggle-cart"
       v-if="hasTransactionsSidebar"
       icon
       @click="toggleTransactionsDrawer"

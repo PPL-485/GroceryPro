@@ -245,6 +245,7 @@ const checkout = () => {
                     </v-select>
 
                     <v-number-input
+                        id="input-amount-paid"
                         clearable
                         v-if="paymentMethod === 'cash'"
                         v-model="amountPaid"
@@ -269,6 +270,7 @@ const checkout = () => {
                     ></v-text-field>
 
                     <v-btn
+                        id="btn-complete-transaction"
                         block
                         size="large"
                         @click="checkout"
@@ -288,6 +290,7 @@ const checkout = () => {
         <div class="d-flex flex-column" style="height: calc(100vh - 80px);">
             <!-- Search & Filter -->
             <v-text-field
+                id="input-search-product"
                 label="Search"
                 prepend-inner-icon="mdi-magnify"
                 variant="outlined"
@@ -322,7 +325,7 @@ const checkout = () => {
                             :key="product.id"
                             cols="12" sm="6" md="4" lg="2"
                         >
-                            <v-card @click="addToCart(product)" hover flat class="h-100 d-flex flex-column rounded-xl border">
+                            <v-card :id="'product-card-' + product.id" class="test-product-card h-100 d-flex flex-column rounded-xl border" @click="addToCart(product)" hover flat>
                                 <div class="d-flex align-center justify-center overflow-hidden cover" style="height: 160px;">
                                     <v-img v-if="product.image_url" :src="product.image_url" cover height="100%" width="100%"></v-img>
                                 </div>
