@@ -54,6 +54,7 @@ const submit = () => {
                 <div class="mb-5">
                     <label class="text-caption font-weight-bold d-block mb-1" style="color: #444;">Email</label>
                     <v-text-field
+                        id="input-email"
                         v-model="form.email"
                         placeholder="Enter your email"
                         prepend-inner-icon="mdi-email-outline"
@@ -70,6 +71,7 @@ const submit = () => {
                 <div class="mb-2">
                     <label class="text-caption font-weight-bold d-block mb-1" style="color: #444;">Password</label>
                     <v-text-field
+                        id="input-password"
                         v-model="form.password"
                         :type="showPassword ? 'text' : 'password'"
                         placeholder="Enter your password"
@@ -96,6 +98,7 @@ const submit = () => {
                 </div>
 
                 <v-btn
+                    id="btn-login"
                     type="submit"
                     block
                     height="48"
