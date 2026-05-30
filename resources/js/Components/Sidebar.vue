@@ -59,6 +59,7 @@ const menus = [
             <v-divider></v-divider>
             <v-list density="compact" nav>
                 <v-list-item
+                    id="btn-logout"
                     prepend-icon="mdi-logout"
                     title="Log Out"
                     @click="logout"
