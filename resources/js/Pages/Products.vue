@@ -73,6 +73,23 @@ const validationErrors = ref({
     stockSupplier: '',
 });
 
+// Rules for greater than zero validation
+const greaterThanZeroRule = [
+    v => {
+        if (!v && v !== 0) return 'This field is required';
+        const val = parseNumberDecimal(v);
+        return val > 0 || 'Value must be greater than 0';
+    }
+];
+
+const priceGreaterThanZeroRule = [
+    v => {
+        if (!v && v !== 0) return 'This field is required';
+        const val = parseNumber(v);
+        return val > 0 || 'Value must be greater than 0';
+    }
+];
+
 // Validate name (must contain at least one letter)
 const validateName = (value, field) => {
     if (!value) {
@@ -91,6 +108,29 @@ watch(() => productForm.name, (val) => validateName(val, 'productName'));
 watch(() => productForm.supplier, (val) => validateName(val, 'productSupplier'));
 watch(() => editForm.name, (val) => validateName(val, 'editName'));
 watch(() => stockForm.supplier, (val) => validateName(val, 'stockSupplier'));
+
+// Watch for product unit changes to handle decimal rules dynamically
+watch(() => productForm.unit, (newUnit) => {
+    const lowerUnit = String(newUnit || '').toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    if (!isDecimalAllowed) {
+        productForm.stock_qty = Math.round(productForm.stock_qty);
+        productForm.min_stock = Math.round(productForm.min_stock);
+        stockQtyDisplay.value = String(productForm.stock_qty);
+        minStockDisplay.value = String(productForm.min_stock);
+    }
+});
+
+watch(() => editForm.unit, (newUnit) => {
+    const lowerUnit = String(newUnit || '').toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    if (!isDecimalAllowed) {
+        editForm.stock_qty = Math.round(editForm.stock_qty);
+        editForm.min_stock = Math.round(editForm.min_stock);
+        editStockQtyDisplay.value = String(editForm.stock_qty);
+        editMinStockDisplay.value = String(editForm.min_stock);
+    }
+});
 
 // Computed color for stock filter icon
 const stockFilterColor = computed(() => {
@@ -154,39 +194,72 @@ const parseNumber = (str) => {
     return parseFloat(String(str).replace(/\./g, '').replace(',', '.')) || 0;
 };
 
+// Sanitize decimal input (allows digits, converts dot to comma, max one comma)
+const sanitizeDecimalInput = (val) => {
+    let cleaned = val.replace(/\./g, ',');
+    cleaned = cleaned.replace(/[^0-9,]/g, '');
+    const firstCommaIndex = cleaned.indexOf(',');
+    if (firstCommaIndex !== -1) {
+        const before = cleaned.slice(0, firstCommaIndex + 1);
+        const after = cleaned.slice(firstCommaIndex + 1).replace(/,/g, '');
+        cleaned = before + after;
+    }
+    return cleaned;
+};
+
+// Sanitize integer input (allows only digits)
+const sanitizeIntegerInput = (val) => {
+    return val.replace(/[^0-9]/g, '');
+};
+
 // Handle input for buy_price
 const onBuyPriceInput = (e) => {
-    const raw = parseNumber(e.target.value);
+    const cleaned = sanitizeIntegerInput(e.target.value);
+    const raw = parseInt(cleaned, 10) || 0;
     productForm.buy_price = raw;
-    buyPriceDisplay.value = formatNumber(raw);
+    const formatted = formatNumber(raw);
+    buyPriceDisplay.value = formatted;
+    e.target.value = formatted;
 };
 
 // Handle input for sell_price
 const onSellPriceInput = (e) => {
-    const raw = parseNumber(e.target.value);
+    const cleaned = sanitizeIntegerInput(e.target.value);
+    const raw = parseInt(cleaned, 10) || 0;
     productForm.sell_price = raw;
-    sellPriceDisplay.value = formatNumber(raw);
+    const formatted = formatNumber(raw);
+    sellPriceDisplay.value = formatted;
+    e.target.value = formatted;
 };
 
 // Handle input for total_cost
 const onTotalCostInput = (e) => {
-    const raw = parseNumber(e.target.value);
+    const cleaned = sanitizeIntegerInput(e.target.value);
+    const raw = parseInt(cleaned, 10) || 0;
     stockForm.total_cost = raw;
-    totalCostDisplay.value = formatNumber(raw);
+    const formatted = formatNumber(raw);
+    totalCostDisplay.value = formatted;
+    e.target.value = formatted;
 };
 
 // Handle input for edit buy_price
 const onEditBuyPriceInput = (e) => {
-    const raw = parseNumber(e.target.value);
+    const cleaned = sanitizeIntegerInput(e.target.value);
+    const raw = parseInt(cleaned, 10) || 0;
     editForm.buy_price = raw;
-    editBuyPriceDisplay.value = formatNumber(raw);
+    const formatted = formatNumber(raw);
+    editBuyPriceDisplay.value = formatted;
+    e.target.value = formatted;
 };
 
 // Handle input for edit sell_price
 const onEditSellPriceInput = (e) => {
-    const raw = parseNumber(e.target.value);
+    const cleaned = sanitizeIntegerInput(e.target.value);
+    const raw = parseInt(cleaned, 10) || 0;
     editForm.sell_price = raw;
-    editSellPriceDisplay.value = formatNumber(raw);
+    const formatted = formatNumber(raw);
+    editSellPriceDisplay.value = formatted;
+    e.target.value = formatted;
 };
 
 // Format number with decimal support (for stock quantities)
@@ -207,39 +280,131 @@ const parseNumberDecimal = (str) => {
     return parseFloat(cleaned) || 0;
 };
 
-// Handle input for edit min_stock - supports decimal with thousand separator
+// Format stock quantity helper
+const formatStockQty = (qty, unit) => {
+    const num = parseFloat(qty);
+    if (isNaN(num)) return '0';
+    const lowerUnit = String(unit || 'pcs').toLowerCase();
+    if (lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l') {
+        if (num % 1 !== 0) {
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(num);
+        }
+        return num.toString();
+    }
+    // For pcs or other units, round to nearest integer
+    return Math.round(num).toString();
+};
+
+// Blur handlers to auto-multiply prices by 1000 if user types a small number like 12
+const onBuyPriceBlur = () => {
+    let val = productForm.buy_price;
+    if (val > 0 && val < 1000) {
+        val = val * 1000;
+        productForm.buy_price = val;
+        buyPriceDisplay.value = formatNumber(val);
+    }
+};
+
+const onSellPriceBlur = () => {
+    let val = productForm.sell_price;
+    if (val > 0 && val < 1000) {
+        val = val * 1000;
+        productForm.sell_price = val;
+        sellPriceDisplay.value = formatNumber(val);
+    }
+};
+
+const onEditBuyPriceBlur = () => {
+    let val = editForm.buy_price;
+    if (val > 0 && val < 1000) {
+        val = val * 1000;
+        editForm.buy_price = val;
+        editBuyPriceDisplay.value = formatNumber(val);
+    }
+};
+
+const onEditSellPriceBlur = () => {
+    let val = editForm.sell_price;
+    if (val > 0 && val < 1000) {
+        val = val * 1000;
+        editForm.sell_price = val;
+        editSellPriceDisplay.value = formatNumber(val);
+    }
+};
+
+const onTotalCostBlur = () => {
+    let val = stockForm.total_cost;
+    if (val > 0 && val < 1000) {
+        val = val * 1000;
+        stockForm.total_cost = val;
+        totalCostDisplay.value = formatNumber(val);
+    }
+};
+
+// Handle input for edit min_stock
 const onEditMinStockInput = (e) => {
-    const raw = parseNumberDecimal(e.target.value);
+    const unit = editForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    
+    const cleaned = isDecimalAllowed ? sanitizeDecimalInput(e.target.value) : sanitizeIntegerInput(e.target.value);
+    e.target.value = cleaned;
+    const raw = isDecimalAllowed ? parseNumberDecimal(cleaned) : (parseInt(cleaned, 10) || 0);
     editForm.min_stock = raw;
-    editMinStockDisplay.value = formatNumberDecimal(raw);
+    editMinStockDisplay.value = cleaned;
 };
 
-// Handle input for min_stock (Add Product) - supports decimal with thousand separator
+// Handle input for min_stock (Add Product)
 const onMinStockInput = (e) => {
-    const raw = parseNumberDecimal(e.target.value);
+    const unit = productForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    
+    const cleaned = isDecimalAllowed ? sanitizeDecimalInput(e.target.value) : sanitizeIntegerInput(e.target.value);
+    e.target.value = cleaned;
+    const raw = isDecimalAllowed ? parseNumberDecimal(cleaned) : (parseInt(cleaned, 10) || 0);
     productForm.min_stock = raw;
-    minStockDisplay.value = formatNumberDecimal(raw);
+    minStockDisplay.value = cleaned;
 };
 
-// Handle input for stock_qty (Add Product) - supports decimal with thousand separator
+// Handle input for stock_qty (Add Product)
 const onStockQtyInput = (e) => {
-    const raw = parseNumberDecimal(e.target.value);
+    const unit = productForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    
+    const cleaned = isDecimalAllowed ? sanitizeDecimalInput(e.target.value) : sanitizeIntegerInput(e.target.value);
+    e.target.value = cleaned;
+    const raw = isDecimalAllowed ? parseNumberDecimal(cleaned) : (parseInt(cleaned, 10) || 0);
     productForm.stock_qty = raw;
-    stockQtyDisplay.value = formatNumberDecimal(raw);
+    stockQtyDisplay.value = cleaned;
 };
 
-// Handle input for qty (Add Stock) - supports decimal with thousand separator
+// Handle input for qty (Add Stock)
 const onQtyInput = (e) => {
-    const raw = parseNumberDecimal(e.target.value);
+    const product = props.products.find(p => p.id === stockForm.product_id);
+    const unit = product?.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    
+    const cleaned = isDecimalAllowed ? sanitizeDecimalInput(e.target.value) : sanitizeIntegerInput(e.target.value);
+    e.target.value = cleaned;
+    const raw = isDecimalAllowed ? parseNumberDecimal(cleaned) : (parseInt(cleaned, 10) || 0);
     stockForm.qty = raw;
-    qtyDisplay.value = formatNumberDecimal(raw);
+    qtyDisplay.value = cleaned;
 };
 
-// Handle input for edit stock_qty - supports decimal with thousand separator
+// Handle input for edit stock_qty
 const onEditStockQtyInput = (e) => {
-    const raw = parseNumberDecimal(e.target.value);
+    const unit = editForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    const isDecimalAllowed = lowerUnit === 'kg' || lowerUnit === 'liter' || lowerUnit === 'l';
+    
+    const cleaned = isDecimalAllowed ? sanitizeDecimalInput(e.target.value) : sanitizeIntegerInput(e.target.value);
+    e.target.value = cleaned;
+    const raw = isDecimalAllowed ? parseNumberDecimal(cleaned) : (parseInt(cleaned, 10) || 0);
     editForm.stock_qty = raw;
-    editStockQtyDisplay.value = formatNumberDecimal(raw);
+    editStockQtyDisplay.value = cleaned;
 };
 
 // Open edit dialog
@@ -289,6 +454,27 @@ const getStatusLabel = (product) => {
 };
 
 const submitProduct = () => {
+    // Auto multiply by 1000 if less than 1000 (e.g. 12 becomes 12000)
+    if (productForm.buy_price > 0 && productForm.buy_price < 1000) {
+        productForm.buy_price *= 1000;
+    }
+    if (productForm.sell_price > 0 && productForm.sell_price < 1000) {
+        productForm.sell_price *= 1000;
+    }
+    // Auto round stock quantities if unit is not kg/liter/l
+    const unit = productForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    if (lowerUnit !== 'kg' && lowerUnit !== 'liter' && lowerUnit !== 'l') {
+        productForm.stock_qty = Math.round(productForm.stock_qty);
+        productForm.min_stock = Math.round(productForm.min_stock);
+    }
+
+    if (productForm.stock_qty <= 0 || productForm.min_stock <= 0 || productForm.buy_price <= 0 || productForm.sell_price <= 0) {
+        snackbarMessage.value = 'Stock and pricing values must be greater than 0.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+        return;
+    }
     productForm.post(route('products.store'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -311,6 +497,24 @@ const submitProduct = () => {
 };
 
 const submitStock = () => {
+    // Auto multiply by 1000 if less than 1000
+    if (stockForm.total_cost > 0 && stockForm.total_cost < 1000) {
+        stockForm.total_cost *= 1000;
+    }
+    // Auto round quantity if selected product unit is not kg/liter/l
+    const product = props.products.find(p => p.id === stockForm.product_id);
+    const unit = product?.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    if (lowerUnit !== 'kg' && lowerUnit !== 'liter' && lowerUnit !== 'l') {
+        stockForm.qty = Math.round(stockForm.qty);
+    }
+
+    if (stockForm.qty <= 0 || stockForm.total_cost <= 0) {
+        snackbarMessage.value = 'Quantity and total cost must be greater than 0.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+        return;
+    }
     stockForm.post(route('products.add-stock'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -331,6 +535,27 @@ const submitStock = () => {
 };
 
 const submitEditProduct = () => {
+    // Auto multiply by 1000 if less than 1000 (e.g. 12 becomes 12000)
+    if (editForm.buy_price > 0 && editForm.buy_price < 1000) {
+        editForm.buy_price *= 1000;
+    }
+    if (editForm.sell_price > 0 && editForm.sell_price < 1000) {
+        editForm.sell_price *= 1000;
+    }
+    // Auto round stock quantities if unit is not kg/liter/l
+    const unit = editForm.unit || 'pcs';
+    const lowerUnit = String(unit).toLowerCase();
+    if (lowerUnit !== 'kg' && lowerUnit !== 'liter' && lowerUnit !== 'l') {
+        editForm.stock_qty = Math.round(editForm.stock_qty);
+        editForm.min_stock = Math.round(editForm.min_stock);
+    }
+
+    if (editForm.stock_qty <= 0 || editForm.min_stock <= 0 || editForm.buy_price <= 0 || editForm.sell_price <= 0) {
+        snackbarMessage.value = 'Stock and pricing values must be greater than 0.';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+        return;
+    }
     editForm.put(route('products.update', editingProduct.value.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -524,7 +749,7 @@ const deleteProduct = () => {
                                 </div>
                             </td>
                             <td class="text-grey-darken-1">{{ product.category?.name || '-' }}</td>
-                            <td>{{ product.stock_qty }} {{ product.unit || 'pcs' }}</td>
+                            <td>{{ formatStockQty(product.stock_qty, product.unit) }} {{ product.unit || 'pcs' }}</td>
                             <td>{{ formatPrice(product.buy_price) }}</td>
                             <td class="font-weight-medium">{{ formatPrice(product.sell_price) }}</td>
                             <td>
@@ -582,7 +807,7 @@ const deleteProduct = () => {
                                     {{ movement.product?.name || '-' }}
                                 </div>
                             </td>
-                            <td class="text-success font-weight-medium">+{{ movement.qty }} {{ movement.product?.unit || 'pcs' }}</td>
+                            <td class="text-success font-weight-medium">+{{ formatStockQty(movement.qty, movement.product?.unit) }} {{ movement.product?.unit || 'pcs' }}</td>
                             <td>{{ movement.supplier || '-' }}</td>
                             <td class="font-weight-medium">{{ formatPrice(movement.total_cost || 0) }}</td>
                         </tr>
@@ -653,6 +878,7 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="stockQtyDisplay"
                                 @input="onStockQtyInput"
+                                :rules="greaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -665,6 +891,7 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="minStockDisplay"
                                 @input="onMinStockInput"
+                                :rules="greaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -697,6 +924,8 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="buyPriceDisplay"
                                 @input="onBuyPriceInput"
+                                @blur="onBuyPriceBlur"
+                                :rules="priceGreaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -710,6 +939,8 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="sellPriceDisplay"
                                 @input="onSellPriceInput"
+                                @blur="onSellPriceBlur"
+                                :rules="priceGreaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -755,7 +986,7 @@ const deleteProduct = () => {
                         color="primary"
                         @click="submitProduct"
                         :loading="productForm.processing"
-                        :disabled="!!validationErrors.productName || !!validationErrors.productSupplier"
+                        :disabled="!!validationErrors.productName || !!validationErrors.productSupplier || productForm.stock_qty <= 0 || productForm.min_stock <= 0 || productForm.buy_price <= 0 || productForm.sell_price <= 0"
                         rounded="lg"
                         class="px-4 text-none"
                         variant="flat"
@@ -821,6 +1052,7 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="editStockQtyDisplay"
                                 @input="onEditStockQtyInput"
+                                :rules="greaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -833,6 +1065,7 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="editMinStockDisplay"
                                 @input="onEditMinStockInput"
+                                :rules="greaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -865,6 +1098,8 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="editBuyPriceDisplay"
                                 @input="onEditBuyPriceInput"
+                                @blur="onEditBuyPriceBlur"
+                                :rules="priceGreaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -878,6 +1113,8 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="editSellPriceDisplay"
                                 @input="onEditSellPriceInput"
+                                @blur="onEditSellPriceBlur"
+                                :rules="priceGreaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -903,7 +1140,7 @@ const deleteProduct = () => {
                         color="primary"
                         @click="submitEditProduct"
                         :loading="editForm.processing"
-                        :disabled="!!validationErrors.editName"
+                        :disabled="!!validationErrors.editName || editForm.stock_qty <= 0 || editForm.min_stock <= 0 || editForm.buy_price <= 0 || editForm.sell_price <= 0"
                         rounded="lg"
                         class="px-4 text-none"
                         variant="flat"
@@ -953,6 +1190,7 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="qtyDisplay"
                                 @input="onQtyInput"
+                                :rules="greaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -997,6 +1235,8 @@ const deleteProduct = () => {
                             <v-text-field
                                 :model-value="totalCostDisplay"
                                 @input="onTotalCostInput"
+                                @blur="onTotalCostBlur"
+                                :rules="priceGreaterThanZeroRule"
                                 variant="outlined"
                                 density="comfortable"
                                 placeholder="0"
@@ -1022,7 +1262,7 @@ const deleteProduct = () => {
                         color="primary"
                         @click="submitStock"
                         :loading="stockForm.processing"
-                        :disabled="!!validationErrors.stockSupplier"
+                        :disabled="!!validationErrors.stockSupplier || stockForm.qty <= 0 || stockForm.total_cost <= 0"
                         rounded="lg"
                         class="px-4 text-none"
                         variant="flat"
