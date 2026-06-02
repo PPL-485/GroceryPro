@@ -46,11 +46,11 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100', 'unique:products,name', 'regex:/[a-zA-Z]/'],
             'category_id' => 'required|exists:categories,id',
-            'stock_qty' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
+            'stock_qty' => 'required|numeric|gt:0',
+            'min_stock' => 'required|numeric|gt:0',
             'unit' => 'nullable|string|max:50',
-            'buy_price' => 'required|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
+            'buy_price' => 'required|numeric|gt:0',
+            'sell_price' => 'required|numeric|gt:0',
             'supplier' => ['nullable', 'string', 'max:100', 'regex:/[a-zA-Z]/'],
         ], [
             'name.regex' => 'Product name must contain at least one letter.',
@@ -98,10 +98,10 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
-            'qty' => 'required|numeric|min:0.01',
+            'qty' => 'required|numeric|gt:0',
             'supplier' => 'nullable|string|max:100',
             'date_received' => 'required|date',
-            'total_cost' => 'required|numeric|min:0',
+            'total_cost' => 'required|numeric|gt:0',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -133,10 +133,10 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:100', 'unique:products,name,' . $product->id, 'regex:/[a-zA-Z]/'],
             'category_id' => 'required|exists:categories,id',
             'unit' => 'nullable|string|max:50',
-            'buy_price' => 'required|numeric|min:0',
-            'sell_price' => 'required|numeric|min:0',
-            'min_stock' => 'required|numeric|min:0',
-            'stock_qty' => 'required|numeric|min:0',
+            'buy_price' => 'required|numeric|gt:0',
+            'sell_price' => 'required|numeric|gt:0',
+            'min_stock' => 'required|numeric|gt:0',
+            'stock_qty' => 'required|numeric|gt:0',
         ], [
             'name.regex' => 'Product name must contain at least one letter.',
         ]);
