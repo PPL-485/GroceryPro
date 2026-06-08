@@ -77,7 +77,7 @@ const getPaymentColor = (type) => {
             <!-- Top Stats Row -->
             <v-row class="mb-6">
                 <!-- Total Revenue -->
-                <v-col cols="12" sm="6" md="3">
+                <v-col cols="12" sm="6" md="3" v-if="$page.props.auth.user.role === 'admin'">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
@@ -100,7 +100,7 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Total Products -->
-                <v-col cols="12" sm="6" md="3">
+                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
@@ -123,7 +123,7 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Transactions Today -->
-                <v-col cols="12" sm="6" md="3">
+                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
@@ -146,7 +146,7 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Low Stock Items -->
-                <v-col cols="12" sm="6" md="3">
+                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
@@ -171,7 +171,7 @@ const getPaymentColor = (type) => {
 
             <v-row class="mb-6">
                 <!-- Recent Transactions -->
-                <v-col cols="12" md="8">
+                <v-col cols="12" :md="$page.props.auth.user.role === 'admin' ? 8 : 12">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
                             Transactions Today
@@ -214,7 +214,7 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Category Performance -->
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="4" v-if="$page.props.auth.user.role === 'admin'">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
                             Category Performance
