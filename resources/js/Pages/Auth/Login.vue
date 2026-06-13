@@ -1,15 +1,23 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
     },
     status: {
         type: String,
     },
+});
+
+const snackbar = ref(false);
+
+onMounted(() => {
+    if (props.status) {
+        snackbar.value = true;
+    }
 });
 
 const form = useForm({
@@ -31,6 +39,14 @@ const submit = () => {
     <GuestLayout>
         <Head title="Log in" />
 
+        <!-- Back to Home (fixed bottom-left) -->
+        <div class="back-home-wrapper">
+            <Link href="/" class="back-home-link">
+                <v-icon icon="mdi-arrow-left" size="small"></v-icon>
+                Back to Home
+            </Link>
+        </div>
+
         <v-card class="pa-8 pa-sm-8" elevation="2" rounded="xl" color="white">
             <div class="text-center mb-8">
                 <v-sheet color="#386641" rounded="lg" width="48" height="48" class="d-flex align-center justify-center mx-auto mb-4">
@@ -40,15 +56,23 @@ const submit = () => {
                 <p class="text-body-2 mb-0" style="color: #666; letter-spacing: 0.2px;">Sign in to your inventory management system</p>
             </div>
 
-            <v-alert
-                v-if="status"
-                type="success"
-                variant="tonal"
-                class="mb-6"
-                density="comfortable"
-            >
-                {{ status }}
-            </v-alert>
+        <!-- Success Snackbar (after password reset) -->
+        <v-snackbar
+            v-model="snackbar"
+            color="#2E6B3B"
+            rounded="lg"
+            timeout="5000"
+            location="top"
+            elevation="4"
+        >
+            <div class="d-flex align-center gap-3">
+                <v-icon icon="mdi-check-circle" color="white"></v-icon>
+                <span style="font-weight: 600;">{{ status }}</span>
+            </div>
+            <template #actions>
+                <v-btn icon="mdi-close" size="small" color="white" variant="text" @click="snackbar = false"></v-btn>
+            </template>
+        </v-snackbar>
 
             <form @submit.prevent="submit">
                 <div class="mb-5">
@@ -115,3 +139,32 @@ const submit = () => {
         </v-card>
     </GuestLayout>
 </template>
+
+<style scoped>
+.back-home-wrapper {
+    position: fixed;
+    bottom: 1.75rem;
+    left: 1.75rem;
+    z-index: 100;
+}
+.back-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #2E6B3B;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #E8F5E9;
+    border: 1px solid #C8E6C9;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+.back-home-link:hover {
+    background: #C8E6C9;
+    color: #1B5E20;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+</style>
