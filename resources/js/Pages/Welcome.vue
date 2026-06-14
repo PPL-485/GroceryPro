@@ -4,7 +4,6 @@ import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
     canLogin: { type: Boolean },
-    canRegister: { type: Boolean },
     laravelVersion: { type: String, required: true },
     phpVersion: { type: String, required: true },
 });
@@ -81,9 +80,15 @@ const toggleFaq = (index) => {
                             From point-of-sale to analytics, everything you need in one place.
                         </p>
                         <div style="margin-top: 2rem;">
-                            <Link v-if="canRegister" :href="route('register')">
+                            <Link v-if="$page.props.auth.user" :href="route('dashboard')">
                                 <v-btn color="#D38865" variant="flat" class="lp-btn-cta">
-                                    Get Started
+                                    Open Dashboard
+                                    <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
+                                </v-btn>
+                            </Link>
+                            <Link v-else-if="canLogin" :href="route('login')">
+                                <v-btn color="#D38865" variant="flat" class="lp-btn-cta">
+                                    Sign In
                                     <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
                                 </v-btn>
                             </Link>
@@ -239,9 +244,15 @@ const toggleFaq = (index) => {
                 <div class="lp-container lp-cta-inner" v-motion-slide-visible-bottom>
                     <h2 class="lp-cta-title">Ready to Transform Your Store?</h2>
                     <p class="lp-cta-sub">Join hundreds of grocery stores already using GroceryPro to streamline their operations.</p>
-                    <Link v-if="canRegister" :href="route('register')">
+                    <Link v-if="$page.props.auth.user" :href="route('dashboard')">
                         <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
-                            Start Your Journey
+                            Open Dashboard
+                            <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
+                        </v-btn>
+                    </Link>
+                    <Link v-else-if="canLogin" :href="route('login')">
+                        <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
+                            Sign In
                             <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
                         </v-btn>
                     </Link>

@@ -1,11 +1,24 @@
 <template>
   <v-toolbar flat border="b" height="64" color="surface">
+    <v-btn
+      v-if="!mdAndUp"
+      icon
+      variant="text"
+      size="small"
+      class="appbar-menu-btn ml-2 mr-1"
+      @click="toggleNavigationDrawer"
+      aria-label="Open navigation menu"
+    >
+      <v-icon>mdi-menu</v-icon>
+      <v-tooltip activator="parent" location="bottom">Open navigation</v-tooltip>
+    </v-btn>
+
     <!-- Custom title+description area (manual layout avoids v-toolbar-title constraints) -->
     <div class="appbar-title-area">
-      <div class="text-subtitle-1 font-weight-bold">
+      <div class="appbar-title text-subtitle-1 font-weight-bold">
         <slot name="title">{{ title }}</slot>
       </div>
-      <div v-if="$slots.description || description" class="text-caption text-medium-emphasis mt-n1">
+      <div v-if="mdAndUp && ($slots.description || description)" class="text-caption text-medium-emphasis mt-n1">
         <slot name="description">{{ description }}</slot>
       </div>
     </div>
@@ -65,16 +78,23 @@
       :color="transactionsDrawer ? 'primary' : undefined"
       class="mr-2"
     >
-      <v-icon>{{ transactionsDrawer ? 'mdi-cart' : 'mdi-cart-outline' }}</v-icon>
+      <v-badge
+        v-if="cartItemCount > 0"
+        :content="cartItemCount"
+        color="error"
+      >
+        <v-icon>{{ transactionsDrawer ? 'mdi-cart' : 'mdi-cart-outline' }}</v-icon>
+      </v-badge>
+      <v-icon v-else>{{ transactionsDrawer ? 'mdi-cart' : 'mdi-cart-outline' }}</v-icon>
       <v-tooltip activator="parent" location="bottom">
-        {{ transactionsDrawer ? 'Close cart panel' : 'Open cart panel' }}
+        {{ transactionsDrawer ? 'Close cart panel' : 'Open cart panel' }}<span v-if="cartItemCount > 0"> · {{ cartItemCount }} product{{ cartItemCount !== 1 ? 's' : '' }} · {{ formatCurrency(cartSubtotal) }}</span>
       </v-tooltip>
     </v-btn>
   </v-toolbar>
 </template>
 
 <script setup>
-import { useTheme } from 'vuetify'
+import { useTheme, useDisplay } from 'vuetify'
 import { computed, inject, onMounted } from 'vue'
 import { usePage, router } from '@inertiajs/vue3'
 
@@ -88,6 +108,7 @@ function deleteNotification(id) {
 }
 
 const theme = useTheme()
+const { mdAndUp } = useDisplay()
 const themes = ['brand', 'dark']
 const THEME_KEY = 'grocerypro-theme'
 
@@ -104,11 +125,22 @@ onMounted(() => {
 const transactionsDrawer = inject('transactionsDrawer', null)
 const toggleTransactionsDrawer = inject('toggleTransactionsDrawer', () => {})
 const hasTransactionsSidebar = inject('hasTransactionsSidebar', false)
+const toggleNavigationDrawer = inject('toggleNavigationDrawer', () => {})
 
 defineProps({
   title: { type: String, default: '' },
-  description: { type: String, default: '' }
+  description: { type: String, default: '' },
+  cartItemCount: { type: Number, default: 0 },
+  cartSubtotal: { type: Number, default: 0 }
 })
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(value || 0)
+}
 </script>
 
 <style scoped>
@@ -123,9 +155,25 @@ defineProps({
   overflow: hidden;
 }
 
+.appbar-menu-btn {
+  flex: 0 0 auto;
+}
+
+.appbar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Strip margin/padding from any block elements passed in via the description slot */
 .appbar-title-area :deep(p) {
   margin: 0;
   padding: 0;
+}
+
+@media (max-width: 959px) {
+  .appbar-title-area {
+    padding-left: 8px;
+  }
 }
 </style>

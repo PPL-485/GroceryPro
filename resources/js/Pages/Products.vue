@@ -13,7 +13,14 @@ const props = defineProps({
 const search = ref(props.filters?.search || '');
 const tab = ref('products');
 const selectedCategory = ref(null);
-const selectedStockFilter = ref(null);
+const productSortBy = ref('created_at');
+const productSortDesc = ref(true);
+const productPage = ref(1);
+const itemsPerPage = ref(10);
+const stockSortBy = ref('created_at');
+const stockSortDesc = ref(true);
+const stockPage = ref(1);
+const stockItemsPerPage = ref(10);
 const addProductDialog = ref(false);
 const editProductDialog = ref(false);
 const addStockDialog = ref(false);
@@ -72,6 +79,61 @@ const validationErrors = ref({
     editName: '',
     stockSupplier: '',
 });
+
+const productSortOptions = {
+    sku: product => product.sku || '',
+    name: product => product.name || '',
+    category: product => product.category?.name || '',
+    stock_qty: product => Number(product.stock_qty || 0),
+    min_stock: product => Number(product.min_stock || 0),
+    buy_price: product => Number(product.buy_price || 0),
+    sell_price: product => Number(product.sell_price || 0),
+    status: product => getStatusLabel(product),
+    created_at: product => product.created_at || '',
+};
+
+const stockSortOptions = {
+    id: movement => Number(movement.id || 0),
+    created_at: movement => movement.created_at || '',
+    product_name: movement => movement.product?.name || '',
+    qty: movement => Number(movement.qty || 0),
+    supplier: movement => movement.supplier || '',
+    total_cost: movement => Number(movement.total_cost || 0),
+};
+
+const showSnackbar = (message, color = 'success') => {
+    snackbarMessage.value = message;
+    snackbarColor.value = color;
+    snackbar.value = true;
+};
+
+const sortProducts = (field) => {
+    if (productSortBy.value === field) {
+        productSortDesc.value = !productSortDesc.value;
+    } else {
+        productSortBy.value = field;
+        productSortDesc.value = false;
+    }
+};
+
+const getSortIcon = (field) => {
+    if (productSortBy.value !== field) return 'mdi-swap-vertical';
+    return productSortDesc.value ? 'mdi-arrow-down' : 'mdi-arrow-up';
+};
+
+const sortStockMovements = (field) => {
+    if (stockSortBy.value === field) {
+        stockSortDesc.value = !stockSortDesc.value;
+    } else {
+        stockSortBy.value = field;
+        stockSortDesc.value = false;
+    }
+};
+
+const getStockSortIcon = (field) => {
+    if (stockSortBy.value !== field) return 'mdi-swap-vertical';
+    return stockSortDesc.value ? 'mdi-arrow-down' : 'mdi-arrow-up';
+};
 
 // Rules for greater than zero validation
 const greaterThanZeroRule = [
@@ -132,17 +194,7 @@ watch(() => editForm.unit, (newUnit) => {
     }
 });
 
-// Computed color for stock filter icon
-const stockFilterColor = computed(() => {
-    switch (selectedStockFilter.value) {
-        case 'available': return '#4A7C4E';
-        case 'low_stock': return 'warning';
-        case 'out_of_stock': return 'error';
-        default: return 'grey-darken-1';
-    }
-});
-
-// Filtered products based on search and category and stock status
+// Filtered products based on search and category
 const filteredProducts = computed(() => {
     return props.products.filter(p => {
         const matchesSearch = !search.value || 
@@ -152,17 +204,53 @@ const filteredProducts = computed(() => {
         const matchesCategory = selectedCategory.value === null || 
             p.category_id === selectedCategory.value;
 
-        let matchesStock = true;
-        if (selectedStockFilter.value === 'out_of_stock') {
-            matchesStock = p.stock_qty <= 0;
-        } else if (selectedStockFilter.value === 'low_stock') {
-            matchesStock = p.stock_qty > 0 && p.stock_qty <= p.min_stock;
-        } else if (selectedStockFilter.value === 'available') {
-            matchesStock = p.stock_qty > p.min_stock;
+        return matchesSearch && matchesCategory;
+    });
+});
+
+const sortedProducts = computed(() => {
+    const getter = productSortOptions[productSortBy.value] || productSortOptions.created_at;
+
+    return [...filteredProducts.value].sort((a, b) => {
+        const valueA = getter(a);
+        const valueB = getter(b);
+
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+            return productSortDesc.value ? valueB - valueA : valueA - valueB;
         }
 
-        return matchesSearch && matchesCategory && matchesStock;
+        return productSortDesc.value
+            ? String(valueB).localeCompare(String(valueA))
+            : String(valueA).localeCompare(String(valueB));
     });
+});
+
+const paginatedProducts = computed(() => {
+    const start = (productPage.value - 1) * itemsPerPage.value;
+    return sortedProducts.value.slice(start, start + itemsPerPage.value);
+});
+
+const productPageCount = computed(() => {
+    return Math.max(1, Math.ceil(sortedProducts.value.length / itemsPerPage.value));
+});
+
+const productRangeStart = computed(() => {
+    if (sortedProducts.value.length === 0) return 0;
+    return ((productPage.value - 1) * itemsPerPage.value) + 1;
+});
+
+const productRangeEnd = computed(() => {
+    return Math.min(productPage.value * itemsPerPage.value, sortedProducts.value.length);
+});
+
+watch([search, selectedCategory, itemsPerPage], () => {
+    productPage.value = 1;
+});
+
+watch(productPageCount, (count) => {
+    if (productPage.value > count) {
+        productPage.value = count;
+    }
 });
 
 // Filtered stock movements based on search
@@ -175,6 +263,51 @@ const filteredStockMovements = computed(() => {
         const supplierName = m.supplier?.toLowerCase() || '';
         return stockId.includes(query) || productName.includes(query) || supplierName.includes(query);
     });
+});
+
+const sortedStockMovements = computed(() => {
+    const getter = stockSortOptions[stockSortBy.value] || stockSortOptions.created_at;
+
+    return [...(filteredStockMovements.value || [])].sort((a, b) => {
+        const valueA = getter(a);
+        const valueB = getter(b);
+
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+            return stockSortDesc.value ? valueB - valueA : valueA - valueB;
+        }
+
+        return stockSortDesc.value
+            ? String(valueB).localeCompare(String(valueA))
+            : String(valueA).localeCompare(String(valueB));
+    });
+});
+
+const paginatedStockMovements = computed(() => {
+    const start = (stockPage.value - 1) * stockItemsPerPage.value;
+    return sortedStockMovements.value.slice(start, start + stockItemsPerPage.value);
+});
+
+const stockPageCount = computed(() => {
+    return Math.max(1, Math.ceil(sortedStockMovements.value.length / stockItemsPerPage.value));
+});
+
+const stockRangeStart = computed(() => {
+    if (sortedStockMovements.value.length === 0) return 0;
+    return ((stockPage.value - 1) * stockItemsPerPage.value) + 1;
+});
+
+const stockRangeEnd = computed(() => {
+    return Math.min(stockPage.value * stockItemsPerPage.value, sortedStockMovements.value.length);
+});
+
+watch([search, stockItemsPerPage], () => {
+    stockPage.value = 1;
+});
+
+watch(stockPageCount, (count) => {
+    if (stockPage.value > count) {
+        stockPage.value = count;
+    }
 });
 
 // Display values with thousand separator
@@ -453,6 +586,78 @@ const getStatusLabel = (product) => {
     return 'Available';
 };
 
+const escapeCSV = (value) => {
+    if (value === null || value === undefined) return '""';
+    return `"${String(value).replace(/"/g, '""')}"`;
+};
+
+const downloadCSV = (filename, headers, rows) => {
+    const headerLine = headers.map(escapeCSV).join(';');
+    const contentLines = rows.map(row => row.map(escapeCSV).join(';'));
+    const csvContent = "\uFEFF" + "sep=;\n" + [headerLine, ...contentLines].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+
+    link.href = url;
+    link.download = `${filename}_${date}.csv`;
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+};
+
+const exportProducts = () => {
+    const rows = sortedProducts.value.map(product => [
+        product.sku,
+        product.name,
+        product.category?.name || '-',
+        formatStockQty(product.stock_qty, product.unit),
+        product.unit || 'pcs',
+        formatStockQty(product.min_stock, product.unit),
+        product.buy_price,
+        product.sell_price,
+        getStatusLabel(product),
+    ]);
+
+    downloadCSV(
+        'grocerypro_products',
+        ['Product ID', 'Name', 'Category', 'Stock', 'Unit', 'Minimum Stock', 'Buy Price', 'Sell Price', 'Status'],
+        rows
+    );
+    showSnackbar(`Exported ${rows.length} product${rows.length !== 1 ? 's' : ''}.`);
+};
+
+const exportIncomingStock = () => {
+    const rows = (sortedStockMovements.value || []).map(movement => [
+        formatStockId(movement.id),
+        formatDate(movement.created_at),
+        movement.product?.name || '-',
+        formatStockQty(movement.qty, movement.product?.unit),
+        movement.product?.unit || 'pcs',
+        movement.supplier || '-',
+        movement.total_cost || 0,
+    ]);
+
+    downloadCSV(
+        'grocerypro_incoming_stock',
+        ['Stock ID', 'Date', 'Product Name', 'Quantity', 'Unit', 'Supplier', 'Total Cost'],
+        rows
+    );
+    showSnackbar(`Exported ${rows.length} incoming stock record${rows.length !== 1 ? 's' : ''}.`);
+};
+
+const handleExport = () => {
+    if (tab.value === 'incoming_stock') {
+        exportIncomingStock();
+        return;
+    }
+
+    exportProducts();
+};
+
 const submitProduct = () => {
     // Auto multiply by 1000 if less than 1000 (e.g. 12 becomes 12000)
     if (productForm.buy_price > 0 && productForm.buy_price < 1000) {
@@ -470,11 +675,10 @@ const submitProduct = () => {
     }
 
     if (productForm.stock_qty <= 0 || productForm.min_stock <= 0 || productForm.buy_price <= 0 || productForm.sell_price <= 0) {
-        snackbarMessage.value = 'Stock and pricing values must be greater than 0.';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar('Stock and pricing values must be greater than 0.', 'error');
         return;
     }
+    const productName = productForm.name;
     productForm.post(route('products.store'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -486,12 +690,10 @@ const submitProduct = () => {
             minStockDisplay.value = '0';
             validationErrors.value.productName = '';
             validationErrors.value.productSupplier = '';
-            snackbarMessage.value = 'Product added successfully!';
-            snackbar.value = true;
+            showSnackbar(`${productName} added successfully.`);
         },
         onError: () => {
-            snackbarMessage.value = 'Failed to add product.';
-            snackbar.value = true;
+            showSnackbar('Failed to add product. Please check the form fields.', 'error');
         }
     });
 };
@@ -510,11 +712,10 @@ const submitStock = () => {
     }
 
     if (stockForm.qty <= 0 || stockForm.total_cost <= 0) {
-        snackbarMessage.value = 'Quantity and total cost must be greater than 0.';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar('Quantity and total cost must be greater than 0.', 'error');
         return;
     }
+    const stockProductName = product?.name || 'Selected product';
     stockForm.post(route('products.add-stock'), {
         preserveScroll: true,
         onSuccess: () => {
@@ -524,12 +725,10 @@ const submitStock = () => {
             totalCostDisplay.value = '0';
             qtyDisplay.value = '0';
             validationErrors.value.stockSupplier = '';
-            snackbarMessage.value = 'Stock added successfully!';
-            snackbar.value = true;
+            showSnackbar(`Incoming stock added for ${stockProductName}.`);
         },
         onError: () => {
-            snackbarMessage.value = 'Failed to add stock.';
-            snackbar.value = true;
+            showSnackbar('Failed to add stock. Please check the form fields.', 'error');
         }
     });
 };
@@ -551,11 +750,10 @@ const submitEditProduct = () => {
     }
 
     if (editForm.stock_qty <= 0 || editForm.min_stock <= 0 || editForm.buy_price <= 0 || editForm.sell_price <= 0) {
-        snackbarMessage.value = 'Stock and pricing values must be greater than 0.';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar('Stock and pricing values must be greater than 0.', 'error');
         return;
     }
+    const editedProductName = editForm.name;
     editForm.put(route('products.update', editingProduct.value.id), {
         preserveScroll: true,
         onSuccess: () => {
@@ -567,13 +765,10 @@ const submitEditProduct = () => {
             editStockQtyDisplay.value = '0';
             editingProduct.value = null;
             validationErrors.value.editName = '';
-            snackbarMessage.value = 'Product updated successfully!';
-            snackbar.value = true;
+            showSnackbar(`${editedProductName} updated successfully.`);
         },
         onError: () => {
-            snackbarMessage.value = 'Failed to update product.';
-            snackbarColor.value = 'error';
-            snackbar.value = true;
+            showSnackbar('Failed to update product. Please check the form fields.', 'error');
         }
     });
 };
@@ -587,22 +782,19 @@ const openDeleteDialog = (product) => {
 // Delete product
 const deleteProduct = () => {
     if (!deletingProduct.value) return;
+    const deletedProductName = deletingProduct.value.name;
     
     router.delete(route('products.destroy', deletingProduct.value.id), {
         preserveScroll: true,
         onSuccess: () => {
             deleteDialog.value = false;
             deletingProduct.value = null;
-            snackbarMessage.value = 'Product deleted successfully!';
-            snackbarColor.value = 'success';
-            snackbar.value = true;
+            showSnackbar(`${deletedProductName} deleted successfully.`);
         },
         onError: (errors) => {
             deleteDialog.value = false;
             deletingProduct.value = null;
-            snackbarMessage.value = errors.delete || 'Failed to delete product.';
-            snackbarColor.value = 'error';
-            snackbar.value = true;
+            showSnackbar(errors.delete || 'Failed to delete product.', 'error');
         }
     });
 };
@@ -623,7 +815,7 @@ const deleteProduct = () => {
         </template>
 
         <template #header-actions>
-            <v-btn variant="outlined" color="grey-darken-2" rounded="lg" class="text-none mr-2" height="40">
+            <v-btn variant="outlined" color="grey-darken-2" rounded="lg" class="text-none mr-2" height="40" @click="handleExport">
                 <v-icon start size="small">mdi-download</v-icon>
                 Export
             </v-btn>
@@ -680,8 +872,8 @@ const deleteProduct = () => {
                 <v-tab value="incoming_stock" :ripple="true">Incoming Stock</v-tab>
             </v-tabs>
             <div v-if="tab === 'products'" class="mb-3">
-                <div class="d-flex align-center overflow-x-auto">
-                    <v-chip-group v-model="selectedCategory" column class="flex-shrink-0" mandatory>
+                <div class="product-filter-row d-flex align-center ga-3">
+                    <v-chip-group v-model="selectedCategory" class="category-chip-scroller" mandatory>
                         <v-chip :value="null" filter variant="outlined" color="primary" class="border text-grey">All</v-chip>
                         <v-chip
                             v-for="cat in categories"
@@ -704,43 +896,19 @@ const deleteProduct = () => {
                         <v-table hover>
                     <thead>
                         <tr>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Product ID</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Name</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Category</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Stock</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Buy Price</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Sell Price</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">
-                                <div class="d-flex align-center">
-                                    Status
-                                    <v-menu location="bottom end">
-                                        <template v-slot:activator="{ props }">
-                                            <v-btn icon v-bind="props" size="small" variant="text" :color="stockFilterColor">
-                                                <v-icon size="16">mdi-filter-variant</v-icon>
-                                            </v-btn>
-                                        </template>
-                                        <v-list density="compact" min-width="150" class="rounded-lg">
-                                            <v-list-item @click="selectedStockFilter = null" :active="selectedStockFilter === null" color="primary">
-                                                <v-list-item-title>All Status</v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item @click="selectedStockFilter = 'available'" :active="selectedStockFilter === 'available'" color="primary">
-                                                <v-list-item-title class="text-success font-weight-medium">Available</v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item @click="selectedStockFilter = 'low_stock'" :active="selectedStockFilter === 'low_stock'" color="primary">
-                                                <v-list-item-title class="text-warning font-weight-medium">Low Stock</v-list-item-title>
-                                            </v-list-item>
-                                            <v-list-item @click="selectedStockFilter = 'out_of_stock'" :active="selectedStockFilter === 'out_of_stock'" color="primary">
-                                                <v-list-item-title class="text-error font-weight-medium">Out of Stock</v-list-item-title>
-                                            </v-list-item>
-                                        </v-list>
-                                    </v-menu>
-                                </div>
-                            </th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('sku')">Product ID <v-icon size="14">{{ getSortIcon('sku') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('name')">Name <v-icon size="14">{{ getSortIcon('name') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('category')">Category <v-icon size="14">{{ getSortIcon('category') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('stock_qty')">Stock <v-icon size="14">{{ getSortIcon('stock_qty') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('min_stock')">Minimum Stock <v-icon size="14">{{ getSortIcon('min_stock') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('buy_price')">Buy Price <v-icon size="14">{{ getSortIcon('buy_price') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('sell_price')">Sell Price <v-icon size="14">{{ getSortIcon('sell_price') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('status')">Status <v-icon size="14">{{ getSortIcon('status') }}</v-icon></th>
                             <th class="text-center font-weight-bold text-grey-darken-2">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="product in filteredProducts" :key="product.id">
+                        <tr v-for="product in paginatedProducts" :key="product.id">
                             <td class="font-weight-medium">{{ product.sku }}</td>
                             <td>
                                 <div class="d-flex align-center">
@@ -750,6 +918,7 @@ const deleteProduct = () => {
                             </td>
                             <td class="text-grey-darken-1">{{ product.category?.name || '-' }}</td>
                             <td>{{ formatStockQty(product.stock_qty, product.unit) }} {{ product.unit || 'pcs' }}</td>
+                            <td>{{ formatStockQty(product.min_stock, product.unit) }} {{ product.unit || 'pcs' }}</td>
                             <td>{{ formatPrice(product.buy_price) }}</td>
                             <td class="font-weight-medium">{{ formatPrice(product.sell_price) }}</td>
                             <td>
@@ -774,12 +943,34 @@ const deleteProduct = () => {
                             </td>
                         </tr>
                         <tr v-if="filteredProducts.length === 0">
-                            <td colspan="8" class="text-center py-8 text-grey">
+                            <td colspan="9" class="text-center py-8 text-grey">
                                 No products found.
                             </td>
                         </tr>
                     </tbody>
                 </v-table>
+                <div class="d-flex align-center justify-space-between flex-wrap ga-3 px-4 py-3 border-t">
+                    <div class="text-caption text-grey-darken-1">
+                        Showing {{ productRangeStart }}-{{ productRangeEnd }} of {{ sortedProducts.length }} products
+                    </div>
+                    <div class="d-flex align-center ga-3">
+                        <v-select
+                            v-model="itemsPerPage"
+                            :items="[10, 25, 50]"
+                            density="compact"
+                            hide-details
+                            variant="outlined"
+                            style="width: 92px;"
+                        ></v-select>
+                        <v-pagination
+                            v-model="productPage"
+                            :length="productPageCount"
+                            density="comfortable"
+                            size="small"
+                            total-visible="5"
+                        ></v-pagination>
+                    </div>
+                </div>
                     </v-card>
                 </v-window-item>
 
@@ -789,16 +980,16 @@ const deleteProduct = () => {
                 <v-table hover>
                     <thead>
                         <tr>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Stock ID</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Date</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Product Name</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Quantity</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Supplier</th>
-                            <th class="text-left font-weight-bold text-grey-darken-2">Total Cost</th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('id')">Stock ID <v-icon size="14">{{ getStockSortIcon('id') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('created_at')">Date <v-icon size="14">{{ getStockSortIcon('created_at') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('product_name')">Product Name <v-icon size="14">{{ getStockSortIcon('product_name') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('qty')">Quantity <v-icon size="14">{{ getStockSortIcon('qty') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('supplier')">Supplier <v-icon size="14">{{ getStockSortIcon('supplier') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortStockMovements('total_cost')">Total Cost <v-icon size="14">{{ getStockSortIcon('total_cost') }}</v-icon></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="movement in filteredStockMovements" :key="movement.id">
+                        <tr v-for="movement in paginatedStockMovements" :key="movement.id">
                             <td class="font-weight-medium">{{ formatStockId(movement.id) }}</td>
                             <td>{{ formatDate(movement.created_at) }}</td>
                             <td>
@@ -818,6 +1009,28 @@ const deleteProduct = () => {
                         </tr>
                     </tbody>
                 </v-table>
+                <div class="d-flex align-center justify-space-between flex-wrap ga-3 px-4 py-3 border-t">
+                    <div class="text-caption text-grey-darken-1">
+                        Showing {{ stockRangeStart }}-{{ stockRangeEnd }} of {{ sortedStockMovements.length }} records
+                    </div>
+                    <div class="d-flex align-center ga-3">
+                        <v-select
+                            v-model="stockItemsPerPage"
+                            :items="[10, 25, 50]"
+                            density="compact"
+                            hide-details
+                            variant="outlined"
+                            style="width: 92px;"
+                        ></v-select>
+                        <v-pagination
+                            v-model="stockPage"
+                            :length="stockPageCount"
+                            density="comfortable"
+                            size="small"
+                            total-visible="5"
+                        ></v-pagination>
+                    </div>
+                </div>
                     </v-card>
                 </v-window-item>
             </v-window>
@@ -1330,4 +1543,41 @@ const deleteProduct = () => {
     </AuthenticatedLayout>
 </template>
 
+<style scoped>
+.sortable-heading {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
 
+.sortable-heading:hover {
+    color: rgb(var(--v-theme-primary)) !important;
+}
+
+.product-filter-row {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.category-chip-scroller {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+.category-chip-scroller :deep(.v-slide-group__container) {
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.category-chip-scroller :deep(.v-slide-group__content) {
+    flex-wrap: nowrap;
+    width: max-content;
+}
+
+.category-chip-scroller :deep(.v-chip) {
+    flex: 0 0 auto;
+}
+</style>

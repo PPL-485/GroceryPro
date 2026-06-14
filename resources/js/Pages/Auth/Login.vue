@@ -53,7 +53,7 @@ const submit = () => {
                     <v-icon icon="mdi-cart-outline" color="white" size="24"></v-icon>
                 </v-sheet>
                 <h1 class="text-h4 font-weight-medium mb-1">Welcome Back</h1>
-                <p class="text-body-2 mb-0" style="color: #666; letter-spacing: 0.2px;">Sign in to your inventory management system</p>
+                <p class="text-body-2 mb-0" style="color: #666; letter-spacing: 0;">Sign in to manage checkout, stock, and reports</p>
             </div>
 
         <!-- Success Snackbar (after password reset) -->
@@ -76,11 +76,11 @@ const submit = () => {
 
             <form @submit.prevent="submit">
                 <div class="mb-5">
-                    <label class="text-caption font-weight-bold d-block mb-1" style="color: #444;">Email</label>
+                    <label class="text-caption font-weight-bold d-block mb-1" style="color: #444;">Email Address</label>
                     <v-text-field
                         id="input-email"
                         v-model="form.email"
-                        placeholder="Enter your email"
+                        placeholder="Enter your account email"
                         prepend-inner-icon="mdi-email-outline"
                         variant="outlined"
                         hide-details="auto"
@@ -98,7 +98,7 @@ const submit = () => {
                         id="input-password"
                         v-model="form.password"
                         :type="showPassword ? 'text' : 'password'"
-                        placeholder="Enter your password"
+                        placeholder="Enter account password"
                         prepend-inner-icon="mdi-lock-outline"
                         :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                         @click:append-inner="showPassword = !showPassword"
@@ -131,10 +131,11 @@ const submit = () => {
                     rounded="lg"
                     :loading="form.processing"
                     :disabled="form.processing"
-                    style="letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(178, 107, 67, 0.2); color: white;"
+                    style="letter-spacing: 0; box-shadow: 0 4px 12px rgba(178, 107, 67, 0.2); color: white;"
                 >
                     Sign In
                 </v-btn>
+
             </form>
         </v-card>
     </GuestLayout>

@@ -1,28 +1,77 @@
 <script setup>
 import Sidebar from '@/Components/Sidebar.vue';
 import AppBar from '@/Components/AppBar.vue';
-import { ref, provide, useSlots, computed } from 'vue';
+import { ref, provide, useSlots, computed, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { useDisplay } from 'vuetify';
+
+defineProps({
+    transactionCartItemCount: {
+        type: Number,
+        default: 0,
+    },
+    transactionCartSubtotal: {
+        type: Number,
+        default: 0,
+    },
+});
 
 // Detect whether the current page fills the transactions-sidebar slot
 const slots = useSlots();
 const hasTransactionsSidebar = computed(() => !!slots['transactions-sidebar']);
+const page = usePage();
+const { mdAndUp } = useDisplay();
+const navigationDrawer = ref(mdAndUp.value);
 
 // Right-panel state — shared with AppBar via provide/inject
 const transactionsDrawer = ref(false);
+const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success',
+});
+
+const flashMessage = computed(() => {
+    const flash = page.props.flash || {};
+    if (flash.success) return { text: flash.success, color: 'success' };
+    if (flash.error) return { text: flash.error, color: 'error' };
+    if (flash.status) return { text: flash.status, color: 'success' };
+    return null;
+});
 
 const toggleTransactionsDrawer = () => {
     transactionsDrawer.value = !transactionsDrawer.value;
 };
 
+const toggleNavigationDrawer = () => {
+    navigationDrawer.value = !navigationDrawer.value;
+};
+
 provide('transactionsDrawer', transactionsDrawer);
 provide('toggleTransactionsDrawer', toggleTransactionsDrawer);
 provide('hasTransactionsSidebar', hasTransactionsSidebar);
+provide('toggleNavigationDrawer', toggleNavigationDrawer);
+
+watch(mdAndUp, (value) => {
+    navigationDrawer.value = value;
+    if (!value) transactionsDrawer.value = false;
+});
+
+watch(flashMessage, (message) => {
+    if (!message) return;
+
+    snackbar.value = {
+        show: true,
+        text: message.text,
+        color: message.color,
+    };
+}, { immediate: true });
 </script>
 
 <template>
     <v-app>
         <!-- Column 1: Left Navigation Sidebar (Vuetify handles offset for v-main) -->
-        <Sidebar />
+        <Sidebar v-model="navigationDrawer" />
 
         <!-- v-main fills the remaining space after the left nav drawer -->
         <v-main class="main-wrapper">
@@ -31,7 +80,7 @@ provide('hasTransactionsSidebar', hasTransactionsSidebar);
                 <!-- Column 2: Center (AppBar + page content) -->
                 <div class="center-column">
                     <!-- AppBar is scoped to this column, not full-width -->
-                    <AppBar>
+                    <AppBar :cart-item-count="transactionCartItemCount" :cart-subtotal="transactionCartSubtotal">
                         <template #title>
                             <slot name="header-title" />
                         </template>
@@ -50,7 +99,7 @@ provide('hasTransactionsSidebar', hasTransactionsSidebar);
 
                 <!-- Column 3: Right Transactions Sidebar (persistent, inline, no overlay) -->
                 <transition name="slide-panel">
-                    <div v-if="transactionsDrawer" class="transactions-panel">
+                    <div v-if="transactionsDrawer && mdAndUp" class="transactions-panel">
                         <slot name="transactions-sidebar">
                             <!-- Default placeholder when no page provides content -->
                             <div class="d-flex flex-column align-center justify-center h-100 text-grey pa-8">
@@ -66,6 +115,42 @@ provide('hasTransactionsSidebar', hasTransactionsSidebar);
 
             </div>
         </v-main>
+
+        <v-navigation-drawer
+            v-if="hasTransactionsSidebar && !mdAndUp"
+            v-model="transactionsDrawer"
+            location="right"
+            temporary
+            width="360"
+        >
+            <slot name="transactions-sidebar">
+                <div class="d-flex flex-column align-center justify-center h-100 text-grey pa-8">
+                    <v-icon size="56" class="mb-4">mdi-receipt-text-outline</v-icon>
+                    <div class="text-subtitle-1 font-weight-medium mb-2">Transactions Panel</div>
+                    <div class="text-caption text-center">
+                        This panel is available on pages that support transaction tracking.
+                    </div>
+                </div>
+            </slot>
+        </v-navigation-drawer>
+
+        <v-snackbar
+            v-model="snackbar.show"
+            :color="snackbar.color"
+            timeout="3000"
+            location="bottom right"
+        >
+            {{ snackbar.text }}
+            <template #actions>
+                <v-btn
+                    color="white"
+                    variant="text"
+                    @click="snackbar.show = false"
+                >
+                    Close
+                </v-btn>
+            </template>
+        </v-snackbar>
     </v-app>
 </template>
 
@@ -107,6 +192,12 @@ provide('hasTransactionsSidebar', hasTransactionsSidebar);
 
 .content-inner {
     padding: 24px 16px;
+}
+
+@media (max-width: 959px) {
+    .content-inner {
+        padding: 16px 10px;
+    }
 }
 
 /* Right sidebar: persistent panel, no overlay, pushes center column */
