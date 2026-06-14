@@ -989,26 +989,30 @@ const handleExport = () => {
                         </div>
                     </v-card>
 
-                    <v-card flat class="rounded-xl border mb-6 bg-surface px-6 py-6" v-for="trx in transactions" :key="trx.id">
+                    <v-card flat class="transaction-card rounded-xl border mb-6 bg-surface px-6 py-6" v-for="trx in transactions" :key="trx.id">
                         
                         <!-- Header of Transaction Card -->
-                        <div class="d-flex justify-space-between mb-4">
-                            <div class="d-flex align-center">
-                                <v-avatar color="green-lighten-4" size="36" rounded="lg" class="mr-4">
+                        <div class="transaction-card-header d-flex justify-space-between mb-4">
+                            <div class="transaction-card-main d-flex align-center">
+                                <v-avatar color="green-lighten-4" size="36" rounded="lg" class="transaction-card-icon mr-4">
                                     <v-icon color="primary" size="small">mdi-cash-register</v-icon>
                                 </v-avatar>
-                                <div>
-                                    <div class="text-subtitle-1 font-weight-bold mb-1">{{ trx.id }}</div>
-                                    <div class="d-flex align-center text-caption text-grey-darken-1">
-                                        <v-icon size="x-small" class="mr-1">mdi-calendar</v-icon>
-                                        {{ trx.date }}
-                                        <span class="mx-2">&bull;</span>
-                                        <v-icon size="x-small" class="mr-1">mdi-account</v-icon>
-                                        Cashier: {{ trx.cashier }}
+                                <div class="transaction-card-copy">
+                                    <div class="transaction-card-id text-subtitle-1 font-weight-bold mb-1">{{ trx.id }}</div>
+                                    <div class="transaction-card-meta d-flex align-center text-caption text-grey-darken-1">
+                                        <div class="transaction-meta-item d-flex align-center">
+                                            <v-icon size="x-small" class="mr-1">mdi-calendar</v-icon>
+                                            <span>{{ trx.date }}</span>
+                                        </div>
+                                        <span class="transaction-meta-separator mx-2">&bull;</span>
+                                        <div class="transaction-meta-item d-flex align-center">
+                                            <v-icon size="x-small" class="mr-1">mdi-account</v-icon>
+                                            <span>Cashier: {{ trx.cashier }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-right">
+                            <div class="transaction-card-total text-right">
                                 <div class="text-caption text-grey-darken-1 mb-1">Total Amount</div>
                                 <div class="text-subtitle-1 font-weight-bold mb-1">{{ formatCurrency(trx.total) }}</div>
                                 <v-chip size="x-small" :color="getPaymentColor(trx.payment_method)" class="font-weight-medium">
@@ -1017,8 +1021,8 @@ const handleExport = () => {
                             </div>
                         </div>
 
-                        <div class="d-flex align-center justify-space-between mb-3">
-                            <div class="text-caption text-grey-darken-1">
+                        <div class="transaction-card-footer d-flex align-center justify-space-between mb-3">
+                            <div class="transaction-product-count text-caption text-grey-darken-1">
                                 {{ trx.items?.length || 0 }} product{{ (trx.items?.length || 0) !== 1 ? 's' : '' }} in this transaction
                             </div>
                             <v-btn
@@ -1159,6 +1163,83 @@ const handleExport = () => {
     .report-actions .v-btn {
         flex: 1 1 120px;
         min-width: 0;
+    }
+
+    .transaction-card {
+        padding: 18px 20px !important;
+    }
+
+    .transaction-card-header {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .transaction-card-main {
+        align-items: flex-start !important;
+        min-width: 0;
+    }
+
+    .transaction-card-icon {
+        width: 32px !important;
+        height: 32px !important;
+        margin-right: 10px !important;
+        margin-top: 2px;
+        flex: 0 0 auto;
+    }
+
+    .transaction-card-copy {
+        min-width: 0;
+    }
+
+    .transaction-card-id {
+        font-size: 0.85rem !important;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .transaction-card-meta {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 0.72rem !important;
+        line-height: 1.25;
+    }
+
+    .transaction-meta-separator {
+        display: none;
+    }
+
+    .transaction-meta-item {
+        max-width: 100%;
+    }
+
+    .transaction-card-total {
+        flex: 0 0 92px;
+    }
+
+    .transaction-card-total .text-caption {
+        font-size: 0.68rem !important;
+        line-height: 1.2;
+    }
+
+    .transaction-card-total .text-subtitle-1 {
+        font-size: 0.88rem !important;
+        line-height: 1.2;
+    }
+
+    .transaction-card-footer {
+        align-items: center !important;
+        gap: 8px;
+    }
+
+    .transaction-product-count {
+        font-size: 0.7rem !important;
+        line-height: 1.25;
+    }
+
+    .transaction-card-footer .v-btn {
+        flex: 0 0 auto;
+        padding-inline: 6px;
     }
 }
 </style>
