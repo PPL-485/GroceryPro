@@ -111,6 +111,7 @@ class TransactionController extends Controller
                         'order_id' => $transaction->trx_code,
                         'gross_amount' => $transaction->total_amount,
                     ),
+                    'enabled_payments' => array('other_qris'),
                     'customer_details' => array(
                         'first_name' => 'Customer',
                         'last_name' => 'POS',
