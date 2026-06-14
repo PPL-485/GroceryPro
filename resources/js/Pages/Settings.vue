@@ -340,10 +340,10 @@ onMounted(() => {
                             <v-divider class="mx-8"></v-divider>
 
                             <!-- Card Actions -->
-                            <v-card-actions class="px-8 py-6 justify-end">
+                            <v-card-actions class="settings-actions settings-security-actions px-8 py-6 justify-end">
                                 <v-btn
                                     variant="flat"
-                                    class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
+                                    class="settings-action-button text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                     height="44"
                                     @click="resetProfileForm"
                                     :disabled="form.processing"
@@ -354,7 +354,7 @@ onMounted(() => {
                                     type="submit"
                                     variant="flat"
                                     color="primary"
-                                    class="text-none px-6 rounded-lg text-white font-weight-medium"
+                                    class="settings-action-button text-none px-6 rounded-lg text-white font-weight-medium"
                                     height="44"
                                     :loading="form.processing"
                                     :disabled="form.processing || (!form.isDirty && !photoPreview)"
@@ -377,7 +377,7 @@ onMounted(() => {
 
                         <!-- Card Content -->
                         <v-card-text class="px-8 pb-8 pt-4">
-                            <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="settings-notification-row d-flex align-center justify-space-between mb-2">
                                 <div>
                                     <div class="text-subtitle-1 font-weight-medium">Low Stock Alerts</div>
                                     <div class="text-body-1 mt-1">Get notified when products are running low</div>
@@ -396,10 +396,10 @@ onMounted(() => {
                         <v-divider class="mx-8" color="#E5E7EB"></v-divider>
 
                         <!-- Card Actions -->
-                        <v-card-actions class="px-8 py-6 justify-end">
+                        <v-card-actions class="settings-actions settings-notification-actions px-8 py-6 justify-end">
                             <v-btn
                                 variant="flat"
-                                class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
+                                class="settings-action-button text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                 height="44"
                                 @click="preferencesForm.reset()"
                                 :disabled="preferencesForm.processing || !preferencesForm.isDirty"
@@ -409,7 +409,7 @@ onMounted(() => {
                             <v-btn
                                 variant="flat"
                                 color="primary"
-                                class="text-none px-6 rounded-lg text-white font-weight-medium"
+                                class="settings-action-button text-none px-6 rounded-lg text-white font-weight-medium"
                                 height="44"
                                 :loading="preferencesForm.processing"
                                 :disabled="preferencesForm.processing || !preferencesForm.isDirty"
@@ -522,12 +522,12 @@ onMounted(() => {
 
                         <!-- Card Content -->
                         <v-card-text class="px-8 pb-8 pt-4">
-                            <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="settings-appearance-row d-flex align-center justify-space-between mb-2">
                                 <div>
                                     <div class="text-subtitle-1 font-weight-medium">App Theme</div>
                                     <div class="text-body-1 mt-1" style="color: #6B7280;">Change the application's color theme</div>
                                 </div>
-                                <div class="d-flex align-center">
+                                <div class="settings-theme-control d-flex align-center">
                                     <span class="mr-4 text-subtitle-2 text-primary font-weight-bold">{{ themeNameDisplay }}</span>
                                     <v-btn
                                         variant="tonal"
@@ -693,5 +693,68 @@ onMounted(() => {
 /* Settings card styling */
 .settings-card {
     background-color: rgb(var(--v-theme-surface));
+}
+
+@media (max-width: 959px) {
+    .settings-notification-row {
+        align-items: flex-start !important;
+        gap: 16px;
+    }
+
+    .settings-notification-row .text-body-1 {
+        font-size: 0.86rem !important;
+        line-height: 1.35;
+    }
+
+    .settings-actions {
+        gap: 12px;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+
+    .settings-actions .settings-action-button {
+        margin-right: 0 !important;
+        min-width: 0;
+    }
+
+    .settings-notification-actions {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .settings-notification-actions .settings-action-button {
+        width: 100%;
+        padding-inline: 10px !important;
+    }
+
+    .settings-security-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .settings-security-actions .settings-action-button {
+        width: 100%;
+    }
+
+    .settings-appearance-row {
+        align-items: flex-start !important;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .settings-theme-control {
+        align-items: stretch !important;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .settings-theme-control .text-subtitle-2 {
+        margin-right: 0 !important;
+    }
+
+    .settings-theme-control .v-btn {
+        width: 100%;
+    }
 }
 </style>
