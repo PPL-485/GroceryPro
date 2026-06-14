@@ -340,7 +340,7 @@ onMounted(() => {
                             <v-divider class="mx-8"></v-divider>
 
                             <!-- Card Actions -->
-                            <v-card-actions class="settings-actions settings-security-actions px-8 py-6 justify-end">
+                            <div class="settings-actions settings-security-actions px-8 py-6">
                                 <v-btn
                                     variant="flat"
                                     class="settings-action-button text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
@@ -361,7 +361,7 @@ onMounted(() => {
                                 >
                                     Save Changes
                                 </v-btn>
-                            </v-card-actions>
+                            </div>
                         </form>
                     </v-card>
                 </v-window-item>
@@ -728,12 +728,25 @@ onMounted(() => {
     }
 
     .settings-security-actions {
+        display: flex !important;
         flex-direction: column;
         align-items: stretch !important;
+        justify-content: flex-start !important;
+        width: 100%;
+    }
+
+    .settings-security-actions :deep(.v-btn) {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        max-width: none !important;
     }
 
     .settings-security-actions .settings-action-button {
+        display: flex;
         width: 100%;
+        max-width: none;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
     .settings-appearance-row {
