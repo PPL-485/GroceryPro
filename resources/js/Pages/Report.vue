@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, usePage, router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 
 const props = defineProps({
     transactions: Array,
@@ -91,7 +91,29 @@ const inventoryStats = computed(() => {
     return { total: movements.length, incoming, outgoing };
 });
 
-const tab = ref('transaction_history');
+const REPORT_TAB_KEY = 'grocerypro-report-tab';
+const availableTabs = computed(() => {
+    return isAdmin
+        ? ['sales_report', 'product_performance', 'inventory_report', 'transaction_history']
+        : ['transaction_history'];
+});
+
+const getInitialTab = () => {
+    if (typeof window === 'undefined') {
+        return isAdmin ? 'sales_report' : 'transaction_history';
+    }
+
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    if (availableTabs.value.includes(urlTab)) return urlTab;
+
+    const savedTab = localStorage.getItem(REPORT_TAB_KEY);
+    if (availableTabs.value.includes(savedTab)) return savedTab;
+
+    return isAdmin ? 'sales_report' : 'transaction_history';
+};
+
+const tab = ref(getInitialTab());
+const expandedTransactions = ref(new Set());
 
 const selectedFilter = ref(props.filters?.filter || 'All Time');
 const dateDialog = ref(false);
@@ -109,10 +131,41 @@ const parseInitialDates = () => {
 
 const customDates = ref(parseInitialDates());
 
+const reportQuery = (overrides = {}) => {
+    const query = {
+        filter: selectedFilter.value,
+        tab: tab.value,
+        ...overrides,
+    };
+
+    if (query.filter === 'Custom') {
+        if (!query.start_date && props.filters?.start_date) {
+            query.start_date = props.filters.start_date;
+        }
+        if (!query.end_date && props.filters?.end_date) {
+            query.end_date = props.filters.end_date;
+        }
+    } else {
+        delete query.start_date;
+        delete query.end_date;
+    }
+
+    return query;
+};
+
 watch(selectedFilter, (newVal) => {
     if (newVal !== 'Custom') {
-        router.get(route('report'), { filter: newVal }, { preserveState: true });
+        router.get(route('report'), reportQuery({ filter: newVal }), { preserveState: true, replace: true });
     }
+});
+
+watch(tab, (newVal) => {
+    localStorage.setItem(REPORT_TAB_KEY, newVal);
+    router.get(route('report'), reportQuery({ tab: newVal }), {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
 });
 
 const applyDate = () => {
@@ -122,14 +175,30 @@ const applyDate = () => {
         const end_date = new Date(sorted[sorted.length - 1].getTime() - (sorted[sorted.length - 1].getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
         selectedFilter.value = 'Custom';
-        router.get(route('report'), { 
-            filter: 'Custom', 
+        router.get(route('report'), reportQuery({
+            filter: 'Custom',
             start_date: start_date,
             end_date: end_date
-        }, { preserveState: true });
+        }), { preserveState: true, replace: true });
         dateDialog.value = false;
     }
 };
+
+const toggleTransaction = (id) => {
+    const next = new Set(expandedTransactions.value);
+    if (next.has(id)) {
+        next.delete(id);
+    } else {
+        next.add(id);
+    }
+    expandedTransactions.value = next;
+};
+
+const isTransactionExpanded = (id) => expandedTransactions.value.has(id);
+
+onMounted(() => {
+    localStorage.setItem(REPORT_TAB_KEY, tab.value);
+});
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {
@@ -619,12 +688,12 @@ const handleExport = () => {
             </v-row>
 
             <!-- Tabs & Actions -->
-            <div class="px-2 d-flex justify-space-between align-center mb-6">
+            <div class="report-toolbar px-2 d-flex justify-space-between align-center mb-6">
                 <v-tabs
                     v-model="tab"
                     color="primary"
                     align-tabs="start"
-                    class="rounded-xl flex-grow-1"
+                    class="report-tabs rounded-xl flex-grow-1"
                     height="48"
                 >
                     <v-tab v-if="isAdmin" value="sales_report" class="text-none font-weight-medium" rounded="xl" :ripple="false">Sales Report</v-tab>
@@ -633,7 +702,7 @@ const handleExport = () => {
                     <v-tab value="transaction_history" class="text-none font-weight-medium" rounded="xl" :ripple="false">Transaction History</v-tab>
                 </v-tabs>
                 
-                <div class="d-flex align-center ga-3 pl-4 flex-grow-0">
+                <div class="report-actions d-flex align-center ga-3 pl-4 flex-grow-0">
                     <v-select
                         v-model="selectedFilter"
                         :items="['All Time', 'Daily', 'Weekly', 'Monthly', 'Custom']"
@@ -641,8 +710,7 @@ const handleExport = () => {
                         density="compact"
                         hide-details
                         bg-color="surface"
-                        class="rounded-lg"
-                        style="width: 150px;"
+                        class="report-filter rounded-lg"
                     ></v-select>
                     <v-btn
                         @click="dateDialog = true"
@@ -652,7 +720,8 @@ const handleExport = () => {
                         class="text-none font-weight-medium bg-surface border-grey-lighten-2 rounded-lg"
                         height="40"
                     >
-                        Date Range
+                        <span class="d-none d-sm-inline">Date Range</span>
+                        <span class="d-sm-none">Range</span>
                     </v-btn>
                     <v-btn
                         @click="handleExport"
@@ -662,7 +731,8 @@ const handleExport = () => {
                         class="text-none font-weight-medium text-white rounded-lg"
                         height="40"
                     >
-                        Export Report
+                        <span class="d-none d-sm-inline">Export Report</span>
+                        <span class="d-sm-none">Export</span>
                     </v-btn>
                 </div>
             </div>
@@ -947,29 +1017,51 @@ const handleExport = () => {
                             </div>
                         </div>
 
-                        <v-divider class="mb-4"></v-divider>
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <div class="text-caption text-grey-darken-1">
+                                {{ trx.items?.length || 0 }} product{{ (trx.items?.length || 0) !== 1 ? 's' : '' }} in this transaction
+                            </div>
+                            <v-btn
+                                size="small"
+                                variant="text"
+                                color="primary"
+                                class="text-none"
+                                @click="toggleTransaction(trx.id)"
+                            >
+                                {{ isTransactionExpanded(trx.id) ? 'Hide details' : 'View details' }}
+                                <v-icon end size="small">
+                                    {{ isTransactionExpanded(trx.id) ? 'mdi-chevron-up' : 'mdi-chevron-down' }}
+                                </v-icon>
+                            </v-btn>
+                        </div>
 
-                        <!-- Items Purchased -->
-                        <div class="text-subtitle-2 font-weight-bold mb-3">Items Purchased:</div>
-                        
-                        <v-table density="compact" class="bg-transparent">
-                            <thead>
-                                <tr>
-                                    <th class="text-left font-weight-medium text-grey-darken-2 pl-0">Product</th>
-                                    <th class="text-left font-weight-medium text-grey-darken-2">Qty</th>
-                                    <th class="text-right font-weight-medium text-grey-darken-2">Price</th>
-                                    <th class="text-right font-weight-medium text-grey-darken-2 pr-0">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, idx) in trx.items" :key="idx">
-                                    <td class="pl-0">{{ item.name }}</td>
-                                    <td class="">{{ item.qty }}x</td>
-                                    <td class=" text-right">{{ formatCurrency(item.price) }}</td>
-                                    <td class="text-right pr-0">{{ formatCurrency(item.subtotal) }}</td>
-                                </tr>
-                            </tbody>
-                        </v-table>
+                        <v-expand-transition>
+                            <div v-if="isTransactionExpanded(trx.id)">
+                                <v-divider class="mb-4"></v-divider>
+
+                                <!-- Items Purchased -->
+                                <div class="text-subtitle-2 font-weight-bold mb-3">Items Purchased:</div>
+                                
+                                <v-table density="compact" class="bg-transparent">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-left font-weight-medium text-grey-darken-2 pl-0">Product</th>
+                                            <th class="text-left font-weight-medium text-grey-darken-2">Qty</th>
+                                            <th class="text-right font-weight-medium text-grey-darken-2">Price</th>
+                                            <th class="text-right font-weight-medium text-grey-darken-2 pr-0">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(item, idx) in trx.items" :key="idx">
+                                            <td class="pl-0">{{ item.name }}</td>
+                                            <td class="">{{ item.qty }}x</td>
+                                            <td class=" text-right">{{ formatCurrency(item.price) }}</td>
+                                            <td class="text-right pr-0">{{ formatCurrency(item.subtotal) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </v-table>
+                            </div>
+                        </v-expand-transition>
                     </v-card>
                 </v-window-item>
             </v-window>
@@ -1034,3 +1126,39 @@ const handleExport = () => {
         </v-snackbar>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.report-filter {
+    width: 150px;
+}
+
+@media (max-width: 959px) {
+    .report-toolbar {
+        align-items: stretch !important;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .report-tabs {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .report-actions {
+        flex-wrap: wrap;
+        padding-left: 0 !important;
+        width: 100%;
+    }
+
+    .report-filter {
+        flex: 1 1 140px;
+        min-width: 140px;
+        width: auto;
+    }
+
+    .report-actions .v-btn {
+        flex: 1 1 120px;
+        min-width: 0;
+    }
+}
+</style>

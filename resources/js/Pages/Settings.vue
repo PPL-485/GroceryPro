@@ -1,12 +1,27 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useTheme } from 'vuetify';
 
 const user = usePage().props.auth.user;
+const isAdmin = user.role === 'admin';
 
-const tab = ref('info_settings');
+const SETTINGS_TAB_KEY = 'grocerypro-settings-tab';
+const availableTabs = computed(() => {
+    const tabs = ['info_settings', 'notifications', 'security', 'appearance'];
+    if (isAdmin) tabs.push('system');
+    return tabs;
+});
+
+const getInitialTab = () => {
+    if (typeof window === 'undefined') return 'info_settings';
+
+    const savedTab = localStorage.getItem(SETTINGS_TAB_KEY);
+    return availableTabs.value.includes(savedTab) ? savedTab : 'info_settings';
+};
+
+const tab = ref(getInitialTab());
 
 const preferencesForm = useForm({
     receive_low_stock_alerts: user.receive_low_stock_alerts ?? true,
@@ -39,12 +54,14 @@ const form = useForm({
 
 const photoInput = ref(null);
 const photoPreview = ref(null);
+const selectedPhotoName = ref('');
 
 const handlePhotoUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     form.profile_photo = file;
+    selectedPhotoName.value = file.name;
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -57,6 +74,7 @@ const submitProfile = () => {
     form.post(route('profile.update'), {
         preserveScroll: true,
         onSuccess: () => {
+            selectedPhotoName.value = '';
             snackbar.value = { show: true, text: 'Profile updated successfully!', color: 'success' };
         },
         onError: () => {
@@ -65,11 +83,23 @@ const submitProfile = () => {
     });
 };
 
+const resetProfileForm = () => {
+    form.reset();
+    form.clearErrors();
+    form.profile_photo = null;
+    photoPreview.value = null;
+    selectedPhotoName.value = '';
+    if (photoInput.value) photoInput.value.value = null;
+};
+
 const passwordForm = useForm({
     current_password: '',
     password: '',
     password_confirmation: '',
 });
+const showCurrentPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const updatePassword = () => {
     passwordForm.put(route('password.update'), {
@@ -94,27 +124,43 @@ const fileInput = ref(null);
 const restoreForm = useForm({
     file: null,
 });
+const restoreDialog = ref(false);
+const selectedRestoreFile = ref(null);
 
 const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (confirm('Are you sure you want to restore the database? This will overwrite all current data and cannot be undone!')) {
-        restoreForm.file = file;
-        restoreForm.post(route('restore'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                snackbar.value = { show: true, text: 'Database restored successfully!', color: 'success' };
-                event.target.value = null;
-            },
-            onError: () => {
-                snackbar.value = { show: true, text: 'Failed to restore database.', color: 'error' };
-                event.target.value = null;
-            }
-        });
-    } else {
-        event.target.value = null;
-    }
+    selectedRestoreFile.value = file;
+    restoreForm.file = file;
+    restoreDialog.value = true;
+};
+
+const clearRestoreFile = () => {
+    selectedRestoreFile.value = null;
+    restoreForm.reset();
+    if (fileInput.value) fileInput.value.value = null;
+};
+
+const cancelRestore = () => {
+    restoreDialog.value = false;
+    clearRestoreFile();
+};
+
+const confirmRestore = () => {
+    if (!restoreForm.file) return;
+
+    restoreForm.post(route('restore'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            snackbar.value = { show: true, text: 'Database restored successfully!', color: 'success' };
+            restoreDialog.value = false;
+            clearRestoreFile();
+        },
+        onError: () => {
+            snackbar.value = { show: true, text: 'Failed to restore database.', color: 'error' };
+        }
+    });
 };
 
 const theme = useTheme();
@@ -139,6 +185,18 @@ function toggleTheme() {
     theme.global.name.value = themes[nextIndex];
     localStorage.setItem(THEME_KEY, theme.global.name.value);
 }
+
+watch(tab, (value) => {
+    if (typeof window === 'undefined') return;
+
+    if (availableTabs.value.includes(value)) {
+        localStorage.setItem(SETTINGS_TAB_KEY, value);
+    }
+});
+
+onMounted(() => {
+    if (!availableTabs.value.includes(tab.value)) tab.value = 'info_settings';
+});
 </script>
 
 <template>
@@ -162,11 +220,26 @@ function toggleTheme() {
                     class="mb-8 custom-tabs rounded-xl"
                     height="48"
                 >
-                    <v-tab value="info_settings" class="text-none custom-tab" rounded="xl" :ripple="false">Info Settings</v-tab>
-                    <v-tab value="notifications" class="text-none custom-tab" rounded="xl" :ripple="false">Notifications</v-tab>
-                    <v-tab value="security" class="text-none custom-tab" rounded="xl" :ripple="false">Security</v-tab>
-                    <v-tab value="appearance" class="text-none custom-tab" rounded="xl" :ripple="false">Appearance</v-tab>
-                    <v-tab value="system" class="text-none custom-tab" rounded="xl" :ripple="false">System</v-tab>
+                    <v-tab value="info_settings" class="text-none custom-tab" rounded="xl" :ripple="false">
+                        <v-icon start>mdi-account-outline</v-icon>
+                        Info Settings
+                    </v-tab>
+                    <v-tab value="notifications" class="text-none custom-tab" rounded="xl" :ripple="false">
+                        <v-icon start>mdi-bell-outline</v-icon>
+                        Notifications
+                    </v-tab>
+                    <v-tab value="security" class="text-none custom-tab" rounded="xl" :ripple="false">
+                        <v-icon start>mdi-lock-outline</v-icon>
+                        Security
+                    </v-tab>
+                    <v-tab value="appearance" class="text-none custom-tab" rounded="xl" :ripple="false">
+                        <v-icon start>mdi-palette-outline</v-icon>
+                        Appearance
+                    </v-tab>
+                    <v-tab v-if="isAdmin" value="system" class="text-none custom-tab" rounded="xl" :ripple="false">
+                        <v-icon start>mdi-database-outline</v-icon>
+                        System
+                    </v-tab>
                 </v-tabs>
             </div>
 
@@ -207,6 +280,9 @@ function toggleTheme() {
                                             @change="handlePhotoUpload"
                                         >
                                     </div>
+                                </div>
+                                <div v-if="selectedPhotoName" class="text-center text-body-2 text-medium-emphasis mb-6">
+                                    Selected photo: {{ selectedPhotoName }}
                                 </div>
                                 <v-row>
                                     <v-col cols="12" md="6" class="pb-2">
@@ -269,7 +345,8 @@ function toggleTheme() {
                                     variant="flat"
                                     class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                     height="44"
-                                    @click="form.reset()"
+                                    @click="resetProfileForm"
+                                    :disabled="form.processing"
                                 >
                                     Cancel
                                 </v-btn>
@@ -280,6 +357,7 @@ function toggleTheme() {
                                     class="text-none px-6 rounded-lg text-white font-weight-medium"
                                     height="44"
                                     :loading="form.processing"
+                                    :disabled="form.processing || (!form.isDirty && !photoPreview)"
                                 >
                                     Save Changes
                                 </v-btn>
@@ -324,6 +402,7 @@ function toggleTheme() {
                                 class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                 height="44"
                                 @click="preferencesForm.reset()"
+                                :disabled="preferencesForm.processing || !preferencesForm.isDirty"
                             >
                                 Reset to Default
                             </v-btn>
@@ -333,6 +412,7 @@ function toggleTheme() {
                                 class="text-none px-6 rounded-lg text-white font-weight-medium"
                                 height="44"
                                 :loading="preferencesForm.processing"
+                                :disabled="preferencesForm.processing || !preferencesForm.isDirty"
                                 @click="submitPreferences"
                             >
                                 Save Preferences
@@ -357,12 +437,14 @@ function toggleTheme() {
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Current Password</div>
                                         <v-text-field
                                             v-model="passwordForm.current_password"
-                                            type="password"
+                                            :type="showCurrentPassword ? 'text' : 'password'"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
                                             :error-messages="passwordForm.errors.current_password"
+                                            :append-inner-icon="showCurrentPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                            @click:append-inner="showCurrentPassword = !showCurrentPassword"
                                         ></v-text-field>
                                     </v-col>
                                 </v-row>
@@ -371,12 +453,14 @@ function toggleTheme() {
                                         <div class="text-subtitle-2 font-weight-medium mb-2">New Password</div>
                                         <v-text-field
                                             v-model="passwordForm.password"
-                                            type="password"
+                                            :type="showNewPassword ? 'text' : 'password'"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
                                             :error-messages="passwordForm.errors.password"
+                                            :append-inner-icon="showNewPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                            @click:append-inner="showNewPassword = !showNewPassword"
                                         ></v-text-field>
                                     </v-col>
                                 </v-row>
@@ -385,12 +469,14 @@ function toggleTheme() {
                                         <div class="text-subtitle-2 font-weight-medium mb-2">Confirm New Password</div>
                                         <v-text-field
                                             v-model="passwordForm.password_confirmation"
-                                            type="password"
+                                            :type="showConfirmPassword ? 'text' : 'password'"
                                             variant="outlined"
                                             density="comfortable"
                                             hide-details="auto"
                                             rounded="lg"
                                             :error-messages="passwordForm.errors.password_confirmation"
+                                            :append-inner-icon="showConfirmPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                                            @click:append-inner="showConfirmPassword = !showConfirmPassword"
                                         ></v-text-field>
                                     </v-col>
                                 </v-row>
@@ -406,6 +492,7 @@ function toggleTheme() {
                                     class="text-none px-6 mr-3 rounded-lg border-grey-lighten-2 font-weight-medium"
                                     height="44"
                                     @click="passwordForm.reset()"
+                                    :disabled="passwordForm.processing || !passwordForm.isDirty"
                                 >
                                     Cancel
                                 </v-btn>
@@ -416,6 +503,7 @@ function toggleTheme() {
                                     class="text-none px-6 rounded-lg text-white font-weight-medium"
                                     height="44"
                                     :loading="passwordForm.processing"
+                                    :disabled="passwordForm.processing || !passwordForm.isDirty"
                                 >
                                     Update Password
                                 </v-btn>
@@ -457,7 +545,7 @@ function toggleTheme() {
                     </v-card>
                 </v-window-item>
 
-                <v-window-item value="system">
+                <v-window-item v-if="isAdmin" value="system">
                     <v-card hover flat class="rounded-xl border">
                         <!-- Card Header -->
                         <div class="d-flex align-center px-8 pt-8 pb-4">
@@ -508,6 +596,7 @@ function toggleTheme() {
                                         height="44"
                                         @click="fileInput.click()"
                                         :loading="restoreForm.processing"
+                                        :disabled="restoreForm.processing"
                                     >
                                         <v-icon start>mdi-upload</v-icon>
                                         Restore Data
@@ -537,6 +626,47 @@ function toggleTheme() {
                 </v-window-item>
             </v-window>
         </div>
+
+        <v-dialog v-model="restoreDialog" max-width="520" persistent>
+            <v-card class="rounded-xl">
+                <v-card-title class="d-flex align-center px-6 pt-6 pb-2">
+                    <v-icon icon="mdi-alert-outline" color="warning" class="mr-3"></v-icon>
+                    Confirm Database Restore
+                </v-card-title>
+                <v-card-text class="px-6 pt-2">
+                    <div class="text-body-1 mb-3">
+                        Restoring a backup will overwrite current database data.
+                    </div>
+                    <v-alert
+                        type="warning"
+                        variant="tonal"
+                        density="comfortable"
+                        class="mb-0"
+                    >
+                        {{ selectedRestoreFile?.name || 'Selected backup file' }}
+                    </v-alert>
+                </v-card-text>
+                <v-card-actions class="px-6 pb-6 justify-end">
+                    <v-btn
+                        variant="text"
+                        class="text-none"
+                        :disabled="restoreForm.processing"
+                        @click="cancelRestore"
+                    >
+                        Cancel
+                    </v-btn>
+                    <v-btn
+                        variant="flat"
+                        color="warning"
+                        class="text-none text-white"
+                        :loading="restoreForm.processing"
+                        @click="confirmRestore"
+                    >
+                        Restore Database
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
         <!-- Global Snackbar for Settings -->
         <v-snackbar

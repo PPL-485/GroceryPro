@@ -16,6 +16,8 @@ class Transaction extends Model
         'trx_code',
         'payment_method',
         'total_amount',
+        'status',
+        'snap_token',
         'change',
         'created_at',
     ];

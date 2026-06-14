@@ -19,7 +19,6 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
@@ -57,6 +56,7 @@ Route::get('/dashboard', function () {
             'items' => $trx->items->sum('qty'),
             'total' => $trx->total_amount,
             'payment_type' => $trx->payment_method,
+            'status' => $trx->status,
         ];
     });
 
@@ -193,6 +193,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('transactions');
     Route::post('/transactions', [\App\Http\Controllers\TransactionController::class, 'store'])->name('transactions.store');
+    Route::post('/transactions/mark-paid', [\App\Http\Controllers\TransactionController::class, 'markPaid'])->name('transactions.mark-paid');
 
     Route::get('/report', [\App\Http\Controllers\ReportController::class, 'index'])->name('report');
 

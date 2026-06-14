@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 
 import { computed } from 'vue';
 
@@ -10,6 +10,10 @@ const props = defineProps({
     lowStockAlerts: Array,
     categoryPerformance: Array,
 });
+
+const page = usePage();
+const userRole = computed(() => page.props.auth.user.role);
+const isAdmin = computed(() => userRole.value === 'admin');
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', {
@@ -57,6 +61,18 @@ const getPaymentColor = (type) => {
     if (type?.toLowerCase() === 'qris') return 'warning';
     return 'default';
 };
+
+const getStatusColor = (status) => {
+    if (status?.toLowerCase() === 'paid') return 'success';
+    if (status?.toLowerCase() === 'pending') return 'warning';
+    if (status?.toLowerCase() === 'failed') return 'error';
+    return 'default';
+};
+
+const formatStatus = (status) => {
+    if (!status) return 'Completed';
+    return status.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+};
 </script>
 
 <template>
@@ -77,8 +93,9 @@ const getPaymentColor = (type) => {
             <!-- Top Stats Row -->
             <v-row class="mb-6">
                 <!-- Total Revenue -->
-                <v-col cols="12" sm="6" md="3" v-if="$page.props.auth.user.role === 'admin'">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                <v-col cols="12" sm="6" md="3" v-if="isAdmin">
+                    <Link :href="route('report')" class="dashboard-card-link">
+                    <v-card class="rounded-lg elevation-1 h-100 dashboard-clickable-card" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
                                 <div>
@@ -97,11 +114,33 @@ const getPaymentColor = (type) => {
                             </div>
                         </v-card-text>
                     </v-card>
+                    </Link>
                 </v-col>
 
                 <!-- Total Products -->
-                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                <v-col cols="12" sm="6" :md="isAdmin ? 3 : 4">
+                    <Link v-if="isAdmin" :href="route('products')" class="dashboard-card-link">
+                    <v-card class="rounded-lg elevation-1 h-100 dashboard-clickable-card" variant="flat">
+                        <v-card-text>
+                            <div class="d-flex justify-space-between align-start">
+                                <div>
+                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Total Products</div>
+                                    <div class="text-h5 font-weight-bold">
+                                        {{ formatNumber(stats.totalProducts || 0) }}
+                                    </div>
+                                    <div class="text-caption mt-2 text-success font-weight-medium d-flex align-center">
+                                        <v-icon size="small" class="mr-1">mdi-plus</v-icon>
+                                        +{{ stats.productsTrend || 0 }} <span class="text-grey ml-1 font-weight-regular">added this month</span>
+                                    </div>
+                                </div>
+                                <v-avatar color="primary" size="40" rounded>
+                                    <v-icon color="white">mdi-package-variant-closed</v-icon>
+                                </v-avatar>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                    </Link>
+                    <v-card v-else class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
                                 <div>
@@ -123,8 +162,9 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Transactions Today -->
-                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                <v-col cols="12" sm="6" :md="isAdmin ? 3 : 4">
+                    <Link :href="route('transactions')" class="dashboard-card-link">
+                    <v-card class="rounded-lg elevation-1 h-100 dashboard-clickable-card" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
                                 <div>
@@ -143,11 +183,33 @@ const getPaymentColor = (type) => {
                             </div>
                         </v-card-text>
                     </v-card>
+                    </Link>
                 </v-col>
 
                 <!-- Low Stock Items -->
-                <v-col cols="12" sm="6" :md="$page.props.auth.user.role === 'admin' ? 3 : 4">
-                    <v-card class="rounded-lg elevation-1 h-100" variant="flat">
+                <v-col cols="12" sm="6" :md="isAdmin ? 3 : 4">
+                    <Link v-if="isAdmin" :href="route('products')" class="dashboard-card-link">
+                    <v-card class="rounded-lg elevation-1 h-100 dashboard-clickable-card" variant="flat">
+                        <v-card-text>
+                            <div class="d-flex justify-space-between align-start">
+                                <div>
+                                    <div class="text-caption text-grey-darken-1 font-weight-medium mb-1">Low Stock Items</div>
+                                    <div class="text-h5 font-weight-bold">
+                                        {{ formatNumber(stats.lowStockItemsCount || 0) }}
+                                    </div>
+                                    <div class="text-caption mt-2 text-grey font-weight-medium d-flex align-center">
+                                        <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
+                                        Requires restock
+                                    </div>
+                                </div>
+                                <v-avatar color="error" size="40" rounded>
+                                    <v-icon color="white">mdi-alert-circle-outline</v-icon>
+                                </v-avatar>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                    </Link>
+                    <v-card v-else class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-text>
                             <div class="d-flex justify-space-between align-start">
                                 <div>
@@ -171,10 +233,17 @@ const getPaymentColor = (type) => {
 
             <v-row class="mb-6">
                 <!-- Recent Transactions -->
-                <v-col cols="12" :md="$page.props.auth.user.role === 'admin' ? 8 : 12">
+                <v-col cols="12" :md="isAdmin ? 8 : 12">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
-                        <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
-                            Transactions Today
+                        <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2 d-flex align-center">
+                            <span>Transactions Today</span>
+                            <v-spacer></v-spacer>
+                            <Link :href="route('report')" class="text-decoration-none">
+                                <v-btn size="small" variant="text" color="primary" class="text-none">
+                                    View report
+                                    <v-icon end size="small">mdi-arrow-right</v-icon>
+                                </v-btn>
+                            </Link>
                         </v-card-title>
                         <v-card-text class="px-0">
                             <v-table hover density="comfortable" class="bg-transparent">
@@ -185,6 +254,7 @@ const getPaymentColor = (type) => {
                                         <th class="text-left font-weight-bold text-grey-darken-2">Items</th>
                                         <th class="text-left font-weight-bold text-grey-darken-2">Total</th>
                                         <th class="text-left font-weight-bold text-grey-darken-2">Payment Type</th>
+                                        <th class="text-left font-weight-bold text-grey-darken-2">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -203,9 +273,19 @@ const getPaymentColor = (type) => {
                                                 {{ trx.payment_type }}
                                             </v-chip>
                                         </td>
+                                        <td>
+                                            <v-chip
+                                                :color="getStatusColor(trx.status)"
+                                                size="small"
+                                                variant="tonal"
+                                                class="font-weight-medium"
+                                            >
+                                                {{ formatStatus(trx.status) }}
+                                            </v-chip>
+                                        </td>
                                     </tr>
                                     <tr v-if="!recentTransactions || recentTransactions.length === 0">
-                                        <td colspan="5" class="text-center text-grey py-4">No recent transactions</td>
+                                        <td colspan="6" class="text-center text-grey py-4">No recent transactions</td>
                                     </tr>
                                 </tbody>
                             </v-table>
@@ -214,7 +294,7 @@ const getPaymentColor = (type) => {
                 </v-col>
 
                 <!-- Category Performance -->
-                <v-col cols="12" md="4" v-if="$page.props.auth.user.role === 'admin'">
+                <v-col cols="12" md="4" v-if="isAdmin">
                     <v-card class="rounded-lg elevation-1 h-100" variant="flat">
                         <v-card-title class="pt-4 px-4 text-subtitle-2 font-weight-medium text-grey-darken-2">
                             Category Performance
@@ -272,8 +352,17 @@ const getPaymentColor = (type) => {
             <!-- Low Stock Alerts -->
             <v-card class="rounded-lg elevation-1 mb-4" color="surface" variant="flat">
                 <v-card-title class="pt-4 px-4 pb-0 text-subtitle-2 font-weight-medium d-flex align-center">
-                    <v-icon color="error" size="small" class="mr-2">mdi-alert-circle-outline</v-icon>
-                    Low Stock Alert
+                    <div class="d-flex align-center">
+                        <v-icon color="error" size="small" class="mr-2">mdi-alert-circle-outline</v-icon>
+                        Low Stock Alert
+                    </div>
+                    <v-spacer></v-spacer>
+                    <Link v-if="isAdmin" :href="route('products')" class="text-decoration-none">
+                        <v-btn size="small" variant="text" color="primary" class="text-none">
+                            Manage stock
+                            <v-icon end size="small">mdi-arrow-right</v-icon>
+                        </v-btn>
+                    </Link>
                 </v-card-title>
                 
                 <v-card-text class="pt-4">
@@ -309,4 +398,19 @@ const getPaymentColor = (type) => {
     border-radius: 2px;
 }
 
+.dashboard-card-link {
+    display: block;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+}
+
+.dashboard-clickable-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dashboard-clickable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
 </style>

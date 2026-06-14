@@ -1,5 +1,10 @@
 <script setup>
-import { Link, router, usePage } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { useDisplay } from 'vuetify'
+
+const drawer = defineModel({ type: Boolean, default: true })
+const { mdAndUp } = useDisplay()
 
 const logout = () => {
     router.post(route('logout'))
@@ -7,6 +12,11 @@ const logout = () => {
 
 const page = usePage()
 const user = page.props.auth.user
+const isActiveMenu = (href) => href === '/dashboard'
+    ? page.url === href
+    : page.url === href || page.url.startsWith(`${href}/`)
+
+const visibleMenus = computed(() => menus.filter(m => m.roles.includes(user.role)))
 
 const menus = [
     { name: 'Dashboard', href: '/dashboard', icon: 'mdi-view-dashboard-outline', roles: ['admin', 'cashier'] },
@@ -28,9 +38,11 @@ const menus = [
 
 <template>
     <v-navigation-drawer
-        expand-on-hover
-        permanent
-        rail
+        v-model="drawer"
+        :expand-on-hover="mdAndUp"
+        :permanent="mdAndUp"
+        :temporary="!mdAndUp"
+        :rail="mdAndUp"
         class="rounded-b-xl rounded-t-xl"
     >
         <v-list>
@@ -45,12 +57,12 @@ const menus = [
 
         <v-list density="compact" nav>
             <v-list-item
-            v-for="menu in menus.filter(m => m.roles.includes(user.role))"
+            v-for="menu in visibleMenus"
             :key="menu.href"
             :href="menu.href"
             :title="menu.name"
             :prepend-icon="menu.icon"
-            :active="page.url.startsWith(menu.href)"
+            :active="isActiveMenu(menu.href)"
             color="primary"
             variant="flat"
             />
