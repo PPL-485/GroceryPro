@@ -158,6 +158,7 @@ watch(flashMessage, (message) => {
 /* Make v-main and its inner Vuetify wrapper fill the full remaining height */
 .main-wrapper {
     height: 100vh;
+    background: rgb(var(--v-theme-surface));
 }
 
 /* Vuetify renders a .v-main__wrap div inside v-main — ensure it stretches too */
@@ -181,6 +182,7 @@ watch(flashMessage, (message) => {
     flex: 1;
     min-width: 0;
     overflow: hidden;
+    background: rgb(var(--v-theme-surface));
 }
 
 /* Scrollable content area below the AppBar */
@@ -188,10 +190,65 @@ watch(flashMessage, (message) => {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    background:
+        radial-gradient(circle at top left, rgba(var(--v-theme-primary), 0.08), transparent 32rem),
+        linear-gradient(180deg, rgba(var(--v-theme-surface), 1), rgba(var(--v-theme-primary), 0.035));
 }
 
 .content-inner {
     padding: 24px 16px;
+}
+
+.content-inner :deep(.v-card) {
+    box-shadow: none !important;
+    border: 1px solid rgba(var(--v-border-color), 0.18) !important;
+    background-color: rgb(var(--v-theme-surface)) !important;
+}
+
+.content-inner :deep(.v-card:hover) {
+    box-shadow: none !important;
+}
+
+.content-inner :deep(.v-card.rounded-lg),
+.content-inner :deep(.v-card.rounded-xl) {
+    border-radius: 18px !important;
+}
+
+.content-inner :deep(.dashboard-clickable-card),
+.content-inner :deep(.test-product-card),
+.content-inner :deep(.v-card[role="button"]) {
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease !important;
+}
+
+.content-inner :deep(.dashboard-clickable-card:hover),
+.content-inner :deep(.test-product-card:hover),
+.content-inner :deep(.v-card[role="button"]:hover) {
+    transform: translateY(-2px);
+    border-color: rgba(var(--v-theme-primary), 0.34) !important;
+    background-color: rgba(var(--v-theme-primary), 0.035) !important;
+}
+
+.content-inner :deep(.v-card-title) {
+    letter-spacing: 0;
+}
+
+.content-inner :deep(.v-table) {
+    background: transparent !important;
+}
+
+.content-inner :deep(.v-table thead th) {
+    background: transparent !important;
+    color: rgba(var(--v-theme-on-surface), 0.72) !important;
+    font-size: 0.78rem;
+    letter-spacing: 0;
+}
+
+.content-inner :deep(.v-table tbody tr:hover) {
+    background: rgba(var(--v-theme-primary), 0.035) !important;
+}
+
+.content-inner :deep(.v-field) {
+    border-radius: 14px;
 }
 
 @media (max-width: 959px) {

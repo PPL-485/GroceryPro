@@ -368,8 +368,8 @@ const formatStatus = (status) => {
                 <v-card-text class="pt-4">
                     <v-row v-if="lowStockAlerts && lowStockAlerts.length > 0">
                         <v-col cols="12" sm="6" md="3" v-for="item in lowStockAlerts" :key="item.id">
-                            <v-card hover flat  :color="item.stock_qty === 0 ? 'error' : 'surface'">
-                                <v-card-text class="d-flex justify-space-between rounded-xl border">
+                            <v-card hover flat class="low-stock-item-card rounded-xl" :color="item.stock_qty === 0 ? 'error' : 'surface'">
+                                <v-card-text class="d-flex justify-space-between">
                                     <div>
                                         <div :class="['font-weight-medium text-body-1', item.stock_qty === 0 ? 'text-white' : 'text-primary']">{{ item.name }}</div>
                                         <div :class="['text-caption', item.stock_qty === 0 ? 'text-white' : 'text-grey']">{{ item.category?.name || 'Category' }}</div>
@@ -406,11 +406,21 @@ const formatStatus = (status) => {
 }
 
 .dashboard-clickable-card {
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
 }
 
 .dashboard-clickable-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(var(--v-theme-primary), 0.34) !important;
+    background-color: rgba(var(--v-theme-primary), 0.035) !important;
+}
+
+.low-stock-item-card {
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.low-stock-item-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--v-theme-primary), 0.34) !important;
 }
 </style>

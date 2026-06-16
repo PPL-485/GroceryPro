@@ -43,7 +43,7 @@ const menus = [
         :permanent="mdAndUp"
         :temporary="!mdAndUp"
         :rail="mdAndUp"
-        class="rounded-b-xl rounded-t-xl"
+        class="sidebar-drawer"
     >
         <v-list>
             <v-list-item
@@ -80,3 +80,13 @@ const menus = [
         </template>
     </v-navigation-drawer>
 </template>
+
+<style scoped>
+.sidebar-drawer {
+    border-radius: 0 24px 24px 0 !important;
+}
+
+.sidebar-drawer :deep(.v-navigation-drawer__content) {
+    border-radius: inherit;
+}
+</style>

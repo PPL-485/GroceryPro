@@ -157,9 +157,9 @@ const openAddDialog = () => {
                     <v-hover v-slot="{ isHovering, props }">
                         <v-card 
                             v-bind="props"
-                            class="rounded-xl border pa-5" 
-                            :elevation="isHovering ? 2 : 0"
-                            :style="`!important; transition: all 0.2s ease; ${isHovering ? 'transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;' : ''}`"
+                            class="category-card rounded-xl border pa-5" 
+                            elevation="0"
+                            :class="{ 'category-card-hover': isHovering }"
                         >
                             <!-- Top Row: Icon & Actions -->
                             <div class="d-flex justify-space-between align-start mb-4">
@@ -305,3 +305,15 @@ const openAddDialog = () => {
 
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.category-card {
+    transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.category-card-hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--v-theme-primary), 0.34) !important;
+    background-color: rgba(var(--v-theme-primary), 0.035) !important;
+}
+</style>
