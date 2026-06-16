@@ -749,7 +749,7 @@ const handleExport = () => {
                         
                         <v-divider class="mt-3 mb-0"></v-divider>
                         
-                        <v-table hover density="comfortable">
+                        <v-table hover density="comfortable" class="sales-report-table">
                             <thead>
                                 <tr>
                                     <th class="text-left font-weight-bold text-grey-darken-3 pl-6" style="font-size: 0.85rem;">Date</th>
@@ -767,7 +767,7 @@ const handleExport = () => {
                                     <td class="text-success">{{ formatCurrency(day.profit) }}</td>
                                     <td class="pr-6 text-grey-darken-1">{{ formatCurrency(day.avg_value) }}</td>
                                 </tr>
-                                <tr v-if="dailySales && dailySales.length > 0" class="bg-grey-lighten-4" style="font-size: 0.85rem;">
+                                <tr v-if="dailySales && dailySales.length > 0" class="sales-report-total-row" style="font-size: 0.85rem;">
                                     <td class="pl-6 font-weight-bold text-grey-darken-3">Total Penjualan</td>
                                     <td class="font-weight-bold text-grey-darken-1">{{ formatNumber(stats.transactionsCount) }}</td>
                                     <td class="font-weight-bold text-primary">{{ formatCurrency(stats.totalRevenue) }}</td>
@@ -1134,6 +1134,15 @@ const handleExport = () => {
 <style scoped>
 .report-filter {
     width: 150px;
+}
+
+.sales-report-table :deep(thead th),
+.sales-report-table :deep(.sales-report-total-row td) {
+    background: rgba(var(--v-theme-on-surface), 0.035) !important;
+}
+
+.sales-report-table :deep(.sales-report-total-row:hover td) {
+    background: rgba(var(--v-theme-on-surface), 0.055) !important;
 }
 
 @media (max-width: 959px) {

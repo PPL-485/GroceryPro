@@ -300,26 +300,27 @@ onBeforeUnmount(() => {
         <template #transactions-sidebar>
             <div class="d-flex flex-column h-100">
                 <!-- Header -->
-                <v-toolbar title="Current Transactions" flat color="surface">
+                <v-toolbar flat color="surface">
                     <template #prepend>
                         <v-icon class="ms-3">mdi-cart-outline</v-icon>
                     </template>
+                    <v-toolbar-title class="text-subtitle-1 font-weight-bold">
+                        Current Transactions
+                    </v-toolbar-title>
                     <template #append>
                         <v-btn
                             v-if="cart.length > 0"
-                            icon="mdi-cart-remove"
+                            icon
                             size="small"
-                            variant="text"
+                            variant="tonal"
                             color="error"
-                            class="mr-1"
+                            class="cart-clear-btn mr-3"
                             :disabled="isCheckoutLocked"
                             @click="clearCartDialog = true"
                         >
+                            <v-icon icon="mdi-cart-remove" size="20" color="error"></v-icon>
                             <v-tooltip activator="parent" location="bottom">Clear cart</v-tooltip>
                         </v-btn>
-                        <v-chip size="small" color="white" class="mr-3" v-if="cartItemCount > 0">
-                            {{ cartItemCount }} item{{ cartItemCount !== 1 ? 's' : '' }}
-                        </v-chip>
                     </template>
                 </v-toolbar>
 
@@ -483,8 +484,11 @@ onBeforeUnmount(() => {
                                 flat
                                 :disabled="isCheckoutLocked"
                             >
-                                <div class="d-flex align-center justify-center overflow-hidden cover" style="height: 160px;">
-                                    <v-img v-if="product.image_url" :src="product.image_url" cover height="100%" width="100%"></v-img>
+                                <div class="product-image-frame">
+                                    <v-img v-if="product.image_url" :src="product.image_url" contain height="100%" width="100%"></v-img>
+                                    <div v-else class="product-image-fallback">
+                                        <v-icon size="42" color="grey-lighten-1">mdi-image-outline</v-icon>
+                                    </div>
                                 </div>
                                 <v-card-text class="flex-grow-1">
                                     <div class="font-weight-bold text-title-medium">{{ product.name }}</div>
@@ -588,5 +592,34 @@ onBeforeUnmount(() => {
 
 .category-chip-scroller :deep(.v-chip) {
   flex: 0 0 auto;
+}
+
+.product-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--v-theme-primary), 0.045);
+}
+
+.product-image-frame {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(var(--v-theme-primary), 0.045);
+}
+
+.cart-clear-btn {
+  border: 1px solid rgba(var(--v-theme-error), 0.28);
+  background: rgba(var(--v-theme-error), 0.1) !important;
+}
+
+.cart-clear-btn :deep(.v-icon) {
+  color: rgb(var(--v-theme-error)) !important;
+  opacity: 1;
 }
 </style>

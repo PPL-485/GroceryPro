@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -8,31 +8,139 @@ defineProps({
     phpVersion: { type: String, required: true },
 });
 
+const scrollY = ref(0);
+const reduceMotion = ref(false);
+let frame = 0;
+
 const features = [
-    { icon: 'mdi-chart-bar', title: 'Smart Dashboard', description: 'Real-time insights into your revenue, transactions, and inventory levels at a glance.' },
-    { icon: 'mdi-cart-outline', title: 'Point of Sale', description: 'Lightning-fast POS system with QRIS payment support for seamless checkout experiences.' },
-    { icon: 'mdi-package-variant-closed', title: 'Stock Management', description: 'Track inventory levels, get low stock alerts, and manage your products effortlessly.' },
-    { icon: 'mdi-trending-up', title: 'Detailed Reports', description: 'Comprehensive transaction history and analytics to make data-driven decisions.' },
-    { icon: 'mdi-account-group-outline', title: 'User Management', description: 'Control access with Owner and Cashier roles, keeping your operations secure.' },
-    { icon: 'mdi-shield-check-outline', title: 'Secure & Reliable', description: 'Built with security in mind, protecting your business data around the clock.' },
+    {
+        icon: 'mdi-chart-line',
+        title: 'Dashboard live',
+        description: 'Pantau omzet, transaksi, stok menipis, dan produk terlaris dari satu layar yang mudah dibaca.',
+    },
+    {
+        icon: 'mdi-qrcode-scan',
+        title: 'Kasir cepat',
+        description: 'Transaksi harian lebih lancar dengan alur POS ringkas, pembayaran QRIS, dan struk yang rapi.',
+    },
+    {
+        icon: 'mdi-package-variant',
+        title: 'Stok terkendali',
+        description: 'Catat barang masuk-keluar, atur satuan produk, dan dapatkan peringatan sebelum rak kosong.',
+    },
+    {
+        icon: 'mdi-file-chart-outline',
+        title: 'Laporan siap pakai',
+        description: 'Ringkasan penjualan membantu pemilik toko mengambil keputusan tanpa membuka spreadsheet manual.',
+    },
+];
+
+const workflow = [
+    { stat: '01', title: 'Catat produk', text: 'Masukkan kategori, harga, satuan, dan stok awal.' },
+    { stat: '02', title: 'Layani pembeli', text: 'Kasir memilih produk, memproses pembayaran, lalu stok otomatis bergerak.' },
+    { stat: '03', title: 'Baca performa', text: 'Pemilik toko melihat tren omzet, stok kritis, dan riwayat transaksi.' },
 ];
 
 const testimonials = [
-    { name: 'Budi Santoso', store: 'Toko Budi Jaya', text: '"GroceryPro has completely transformed how I manage my inventory. The low stock alerts are a lifesaver!"', rating: 5 },
-    { name: 'Siti Aminah', store: 'Warung Barokah', text: '"The POS system is incredibly fast. My customers are happier because checkout is so smooth now."', rating: 5 },
-    { name: 'Ahmad Faisal', store: 'Faisal Minimarket', text: '"I love the detailed reports. I finally understand which products are my best sellers and where my money is going."', rating: 4 },
+    {
+        name: 'Budi Santoso',
+        store: 'Toko Budi Jaya',
+        text: 'Peringatan stok menipis bikin saya tidak lagi telat restock barang harian.',
+        rating: 5,
+    },
+    {
+        name: 'Siti Aminah',
+        store: 'Warung Barokah',
+        text: 'Alur kasirnya cepat. Pelanggan tidak perlu menunggu lama saat jam ramai.',
+        rating: 5,
+    },
+    {
+        name: 'Ahmad Faisal',
+        store: 'Faisal Minimarket',
+        text: 'Laporan penjualan membantu saya tahu produk mana yang benar-benar bergerak.',
+        rating: 4,
+    },
 ];
 
 const faqs = ref([
-    { question: 'Is GroceryPro suitable for a small warung?', answer: 'Absolutely! GroceryPro is designed specifically for small to medium grocery stores and warungs. It\'s easy to use and doesn\'t require expensive hardware.', open: false },
-    { question: 'Do I need a special device for the POS?', answer: 'No, you can use GroceryPro on any modern web browser, tablet, or smartphone. We also support standard barcode scanners if you have one.', open: false },
-    { question: 'How secure is my store data?', answer: 'We take security very seriously. All your data is encrypted and backed up daily. Only authorized users with roles you assign can access sensitive information.', open: false },
-    { question: 'Can I try it before I commit?', answer: 'Yes! We offer a fully-featured free trial so you can experience how GroceryPro can help your business before making a decision.', open: false },
+    {
+        question: 'Apakah GroceryPro cocok untuk warung kecil?',
+        answer: 'Cocok. GroceryPro dirancang untuk toko kelontong, warung, dan minimarket kecil-menengah yang butuh pencatatan stok dan transaksi tanpa sistem yang rumit.',
+        open: false,
+    },
+    {
+        question: 'Perlu perangkat khusus untuk kasir?',
+        answer: 'Tidak. Aplikasi dapat digunakan dari browser modern di laptop, tablet, atau ponsel. Jika toko punya barcode scanner, alurnya juga bisa dibuat lebih cepat.',
+        open: false,
+    },
+    {
+        question: 'Bagaimana data toko diamankan?',
+        answer: 'Akses dapat dibatasi berdasarkan peran pengguna seperti owner dan cashier, sehingga data penting hanya terlihat oleh orang yang berwenang.',
+        open: false,
+    },
+    {
+        question: 'Apa yang terjadi saat stok menipis?',
+        answer: 'Produk dengan stok rendah akan mudah terlihat oleh pemilik toko, sehingga restock bisa dilakukan sebelum barang habis di rak.',
+        open: false,
+    },
 ]);
+
+const parallax = (speed = 0) => {
+    if (reduceMotion.value) {
+        return {};
+    }
+
+    return {
+        transform: `translate3d(0, ${Math.round(scrollY.value * speed)}px, 0)`,
+    };
+};
+
+const updateScroll = () => {
+    scrollY.value = window.scrollY || window.pageYOffset || 0;
+    frame = 0;
+};
+
+const onScroll = () => {
+    if (!frame) {
+        frame = window.requestAnimationFrame(updateScroll);
+    }
+};
+
+const scrollToSection = (id) => {
+    const target = document.getElementById(id);
+
+    if (!target) {
+        return;
+    }
+
+    const headerHeight = document.querySelector('.lp-header')?.getBoundingClientRect().height || 0;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 28;
+
+    window.scrollTo({
+        top,
+        behavior: reduceMotion.value ? 'auto' : 'smooth',
+    });
+
+    window.history.replaceState(null, '', `#${id}`);
+};
 
 const toggleFaq = (index) => {
     faqs.value[index].open = !faqs.value[index].open;
 };
+
+onMounted(() => {
+    reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    updateScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('scroll', onScroll);
+
+    if (frame) {
+        window.cancelAnimationFrame(frame);
+    }
+});
 </script>
 
 <template>
@@ -40,816 +148,1219 @@ const toggleFaq = (index) => {
 
     <v-app>
         <div class="lp-root">
-
-            <!-- ═══════════════════ HEADER ═══════════════════ -->
             <header class="lp-header">
-                <div class="lp-logo" v-motion-fade>
-                    <div class="lp-logo-icon">
-                        <v-icon icon="mdi-package-variant-closed" size="22" color="white"></v-icon>
-                    </div>
+                <Link class="lp-logo" href="/">
+                    <span class="lp-logo-icon">
+                        <v-icon icon="mdi-basket-outline" size="22" color="white"></v-icon>
+                    </span>
                     <span class="lp-logo-text">GroceryPro</span>
-                </div>
+                </Link>
 
-                <div v-if="canLogin" v-motion-fade>
+                <nav class="lp-nav" aria-label="Landing navigation">
+                    <a href="#features" @click.prevent="scrollToSection('features')">Fitur</a>
+                    <a href="#workflow" @click.prevent="scrollToSection('workflow')">Alur</a>
+                    <a href="#faq" @click.prevent="scrollToSection('faq')">FAQ</a>
+                </nav>
+
+                <div v-if="canLogin" class="lp-header-actions">
                     <Link v-if="$page.props.auth.user" :href="route('dashboard')">
-                        <v-btn color="#2E6B3B" variant="flat" class="lp-btn-signin">Dashboard</v-btn>
+                        <v-btn color="#226D4A" variant="flat" class="lp-btn-signin">Dashboard</v-btn>
                     </Link>
-                    <template v-else>
-                        <Link :href="route('login')">
-                            <v-btn color="#2E6B3B" variant="flat" class="lp-btn-signin">Sign In</v-btn>
-                        </Link>
-                    </template>
+                    <Link v-else :href="route('login')">
+                        <v-btn color="#226D4A" variant="flat" class="lp-btn-signin">Sign In</v-btn>
+                    </Link>
                 </div>
             </header>
 
-            <!-- ═══════════════════ HERO ═══════════════════ -->
-            <main class="lp-hero">
-                <div class="lp-hero-blob lp-blob-1"></div>
-                <div class="lp-hero-blob lp-blob-2"></div>
-
-                <div class="lp-hero-grid">
-                    <!-- Left: Text -->
-                    <div class="lp-hero-text" v-motion-slide-visible-left>
-                        <span class="lp-badge">Built for Small Grocery Stores</span>
-                        <h1 class="lp-hero-title">
-                            Fresh Approach to<br/>
-                            <span class="lp-accent">Inventory</span>
-                        </h1>
-                        <p class="lp-hero-sub">
-                            Streamline your grocery store operations with our intuitive inventory management system.
-                            From point-of-sale to analytics, everything you need in one place.
-                        </p>
-                        <div style="margin-top: 2rem;">
-                            <Link v-if="$page.props.auth.user" :href="route('dashboard')">
-                                <v-btn color="#D38865" variant="flat" class="lp-btn-cta">
-                                    Open Dashboard
-                                    <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
-                                </v-btn>
-                            </Link>
-                            <Link v-else-if="canLogin" :href="route('login')">
-                                <v-btn color="#D38865" variant="flat" class="lp-btn-cta">
-                                    Sign In
-                                    <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
-                                </v-btn>
-                            </Link>
-                        </div>
+            <main>
+                <section class="lp-hero">
+                    <div class="lp-hero-sky" :style="parallax(-0.08)"></div>
+                    <div class="lp-hero-gridline" :style="parallax(-0.05)"></div>
+                    <div class="lp-shelf lp-shelf-back" :style="parallax(0.04)">
+                        <span v-for="n in 18" :key="'back-' + n"></span>
+                    </div>
+                    <div class="lp-shelf lp-shelf-front" :style="parallax(0.09)">
+                        <span v-for="n in 14" :key="'front-' + n"></span>
                     </div>
 
-                    <!-- Right: Dashboard Mockup -->
-                    <div class="lp-hero-graphic" v-motion-slide-visible-right>
-                        <div class="lp-mockup-bg-rotate"></div>
-                        <div class="lp-blob-circle lp-bc-right"></div>
-                        <div class="lp-blob-circle lp-bc-left"></div>
+                    <div class="lp-hero-inner">
+                        <div class="lp-hero-copy" v-motion-slide-visible-left>
+                            <span class="lp-badge">
+                                <v-icon icon="mdi-storefront-outline" size="16"></v-icon>
+                                Built for grocery operations
+                            </span>
+                            <h1>GroceryPro</h1>
+                            <p class="lp-hero-lead">
+                                Kelola kasir, stok, dan laporan toko dalam tampilan yang cepat dibaca, terasa modern, dan siap dipakai setiap hari.
+                            </p>
 
-                        <div class="lp-mockup-card">
-                            <div class="lp-mockup-inner">
-                                <div class="lp-mockup-header-row">
-                                    <div>
-                                        <p class="lp-mockup-label">Today's Revenue</p>
-                                        <h3 class="lp-mockup-revenue">Rp 2,450,000</h3>
-                                        <p class="lp-mockup-growth">
-                                            <v-icon icon="mdi-arrow-up" size="x-small"></v-icon>
-                                            +12.5% <span class="lp-mockup-growth-sub">from yesterday</span>
-                                        </p>
-                                    </div>
-                                    <div class="lp-mockup-icon-box">
-                                        <v-icon icon="mdi-trending-up" color="#D38865"></v-icon>
-                                    </div>
-                                </div>
-                                <div class="lp-mockup-row lp-mockup-row-neutral">
-                                    <span>Transactions</span><span class="lp-mockup-val">158</span>
-                                </div>
-                                <div class="lp-mockup-row lp-mockup-row-warn">
-                                    <span>Low Stock Items</span><span class="lp-mockup-val lp-accent">8</span>
-                                </div>
+                            <div class="lp-hero-actions">
+                                <Link v-if="$page.props.auth.user" :href="route('dashboard')">
+                                    <v-btn color="#E76F51" variant="flat" class="lp-btn-cta">
+                                        Open Dashboard
+                                        <v-icon icon="mdi-arrow-right" size="small"></v-icon>
+                                    </v-btn>
+                                </Link>
+                                <Link v-else-if="canLogin" :href="route('login')">
+                                    <v-btn color="#E76F51" variant="flat" class="lp-btn-cta">
+                                        Sign In
+                                        <v-icon icon="mdi-arrow-right" size="small"></v-icon>
+                                    </v-btn>
+                                </Link>
+                                <a class="lp-link-btn" href="#features" @click.prevent="scrollToSection('features')">Lihat fitur</a>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
 
-            <!-- ═══════════════════ FEATURES ═══════════════════ -->
-            <section class="lp-features">
-                <div class="lp-container">
-                    <div class="lp-section-head" v-motion-slide-visible-bottom>
-                        <h2 class="lp-section-title">Everything You Need</h2>
-                        <p class="lp-section-sub">Powerful features designed for grocery store owners</p>
-                    </div>
-
-                    <div class="lp-grid-3">
-                        <div
-                            v-for="(f, i) in features"
-                            :key="i"
-                            class="lp-feature-card lp-fade-up"
-                            :style="{ animationDelay: (i * 100) + 'ms' }"
-                        >
-                            <div class="lp-feature-icon">
-                                <v-icon :icon="f.icon"></v-icon>
-                            </div>
-                            <h3 class="lp-feature-title">{{ f.title }}</h3>
-                            <p class="lp-feature-desc">{{ f.description }}</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══════════════════ STATS ═══════════════════ -->
-            <section class="lp-stats">
-                <div class="lp-stats-overlay"></div>
-                <div class="lp-container lp-stats-grid">
-                    <div class="lp-stat-item" v-motion-pop-visible>
-                        <span class="lp-stat-num">99.9%</span>
-                        <span class="lp-stat-label">Uptime</span>
-                    </div>
-                    <div class="lp-stat-item lp-stat-divider" v-motion-pop-visible :delay="200">
-                        <span class="lp-stat-num">500+</span>
-                        <span class="lp-stat-label">Stores Powered</span>
-                    </div>
-                    <div class="lp-stat-item lp-stat-divider" v-motion-pop-visible :delay="400">
-                        <span class="lp-stat-num">24/7</span>
-                        <span class="lp-stat-label">Support</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══════════════════ TESTIMONIALS ═══════════════════ -->
-            <section class="lp-testimonials">
-                <div class="lp-container">
-                    <div class="lp-section-head" v-motion-slide-visible-bottom>
-                        <h2 class="lp-section-title">What Our Users Say</h2>
-                        <p class="lp-section-sub">Join thousands of happy store owners</p>
-                    </div>
-
-                    <div class="lp-grid-3">
-                        <div
-                            v-for="(t, i) in testimonials"
-                            :key="i"
-                            class="lp-testimonial-card lp-fade-up"
-                            :style="{ animationDelay: (i * 150) + 'ms' }"
-                        >
-                            <div class="lp-testimonial-rating">
-                                <v-icon v-for="n in t.rating" :key="n" icon="mdi-star" color="#F59E0B" size="small"></v-icon>
-                                <v-icon v-for="n in 5 - t.rating" :key="'e'+n" icon="mdi-star-outline" color="#F59E0B" size="small"></v-icon>
-                            </div>
-                            <p class="lp-testimonial-text">{{ t.text }}</p>
-                            <div class="lp-testimonial-author">
-                                <div class="lp-author-avatar">
-                                    {{ t.name.charAt(0) }}
+                            <div class="lp-hero-metrics" aria-label="GroceryPro highlights">
+                                <div>
+                                    <strong>3x</strong>
+                                    <span>alur kerja lebih ringkas</span>
                                 </div>
                                 <div>
-                                    <h4 class="lp-author-name">{{ t.name }}</h4>
-                                    <span class="lp-author-store">{{ t.store }}</span>
+                                    <strong>24/7</strong>
+                                    <span>monitor stok toko</span>
+                                </div>
+                                <div>
+                                    <strong>QRIS</strong>
+                                    <span>pembayaran siap pakai</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lp-hero-stage" v-motion-slide-visible-right>
+                            <div class="lp-floating-note lp-note-a" :style="parallax(-0.03)">
+                                <v-icon icon="mdi-alert-circle-outline" size="18"></v-icon>
+                                <span>8 item low stock</span>
+                            </div>
+                            <div class="lp-floating-note lp-note-b" :style="parallax(0.05)">
+                                <v-icon icon="mdi-trending-up" size="18"></v-icon>
+                                <span>+12.5% revenue</span>
+                            </div>
+
+                            <div class="lp-dashboard-shell" :style="parallax(0.02)">
+                                <div class="lp-window-bar">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+
+                                <div class="lp-dashboard-top">
+                                    <div>
+                                        <p>Today's Revenue</p>
+                                        <h2>Rp 2.450.000</h2>
+                                    </div>
+                                    <div class="lp-dashboard-icon">
+                                        <v-icon icon="mdi-chart-areaspline" color="#E76F51"></v-icon>
+                                    </div>
+                                </div>
+
+                                <div class="lp-chart" aria-hidden="true">
+                                    <span style="height: 42%"></span>
+                                    <span style="height: 58%"></span>
+                                    <span style="height: 46%"></span>
+                                    <span style="height: 78%"></span>
+                                    <span style="height: 62%"></span>
+                                    <span style="height: 88%"></span>
+                                </div>
+
+                                <div class="lp-pos-strip">
+                                    <div>
+                                        <span>Transactions</span>
+                                        <strong>158</strong>
+                                    </div>
+                                    <div>
+                                        <span>Best seller</span>
+                                        <strong>Beras 5kg</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- ═══════════════════ FAQ ═══════════════════ -->
-            <section class="lp-faq">
-                <div class="lp-container">
-                    <div class="lp-section-head" v-motion-slide-visible-bottom>
-                        <h2 class="lp-section-title">Frequently Asked Questions</h2>
-                        <p class="lp-section-sub">Got questions? We've got answers.</p>
+                <section id="features" class="lp-features">
+                    <div class="lp-container">
+                        <div class="lp-section-head" v-motion-slide-visible-bottom>
+                            <span class="lp-kicker">Control center</span>
+                            <h2>Semua operasi toko dalam satu ritme.</h2>
+                            <p>Terinspirasi dari landing page modern yang punya kedalaman visual, setiap bagian dibuat seperti lapisan operasi toko yang bergerak saat pengguna scroll.</p>
+                        </div>
+
+                        <div class="lp-feature-grid">
+                            <article
+                                v-for="(feature, i) in features"
+                                :key="feature.title"
+                                class="lp-feature-card"
+                                v-motion-slide-visible-bottom
+                                :delay="i * 120"
+                            >
+                                <div class="lp-feature-icon">
+                                    <v-icon :icon="feature.icon" size="24"></v-icon>
+                                </div>
+                                <h3>{{ feature.title }}</h3>
+                                <p>{{ feature.description }}</p>
+                            </article>
+                        </div>
                     </div>
+                </section>
 
-                    <div class="lp-faq-list">
-                        <div
-                            v-for="(faq, i) in faqs"
-                            :key="i"
-                            class="lp-faq-item"
-                            :class="{ 'lp-faq-open': faq.open }"
-                            @click="toggleFaq(i)"
-                            v-motion-slide-visible-bottom
-                        >
-                            <div class="lp-faq-question">
-                                <h3>{{ faq.question }}</h3>
-                                <v-icon icon="mdi-chevron-down" class="lp-faq-icon"></v-icon>
+                <section class="lp-operations">
+                    <div class="lp-container lp-operations-grid">
+                        <div class="lp-operations-copy" v-motion-slide-visible-left>
+                            <span class="lp-kicker">Parallax view</span>
+                            <h2>Scroll seperti melihat toko dari depan sampai belakang.</h2>
+                            <p>
+                                Layer rak, panel kasir, dan kartu laporan bergerak dengan kecepatan berbeda supaya landing page terasa hidup tanpa mengorbankan keterbacaan.
+                            </p>
+                        </div>
+
+                        <div class="lp-stack-scene" aria-hidden="true">
+                            <div class="lp-stack-card lp-stack-1" :style="parallax(-0.04)">
+                                <span>Inventory</span>
+                                <strong>1.284 produk</strong>
                             </div>
-                            <div class="lp-faq-answer-wrapper">
-                                <div class="lp-faq-answer">
-                                    <div class="lp-faq-answer-inner">
+                            <div class="lp-stack-card lp-stack-2" :style="parallax(0.03)">
+                                <span>Cashier</span>
+                                <strong>Rp 860.000</strong>
+                            </div>
+                            <div class="lp-stack-card lp-stack-3" :style="parallax(0.07)">
+                                <span>Reports</span>
+                                <strong>32 transaksi</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="workflow" class="lp-workflow">
+                    <div class="lp-container">
+                        <div class="lp-section-head lp-section-head-left" v-motion-slide-visible-bottom>
+                            <span class="lp-kicker">Daily flow</span>
+                            <h2>Dibuat untuk ritme toko yang sibuk.</h2>
+                        </div>
+
+                        <div class="lp-workflow-grid">
+                            <article
+                                v-for="step in workflow"
+                                :key="step.stat"
+                                class="lp-workflow-card"
+                                v-motion-slide-visible-bottom
+                            >
+                                <span>{{ step.stat }}</span>
+                                <h3>{{ step.title }}</h3>
+                                <p>{{ step.text }}</p>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="lp-testimonials">
+                    <div class="lp-container">
+                        <div class="lp-section-head" v-motion-slide-visible-bottom>
+                            <span class="lp-kicker">Store stories</span>
+                            <h2>Dipakai untuk keputusan harian, bukan hanya pencatatan.</h2>
+                        </div>
+
+                        <div class="lp-testimonial-grid">
+                            <article
+                                v-for="(testimonial, i) in testimonials"
+                                :key="testimonial.name"
+                                class="lp-testimonial-card"
+                                v-motion-slide-visible-bottom
+                                :delay="i * 120"
+                            >
+                                <div class="lp-testimonial-rating">
+                                    <v-icon v-for="n in testimonial.rating" :key="n" icon="mdi-star" color="#F4A261" size="small"></v-icon>
+                                    <v-icon v-for="n in 5 - testimonial.rating" :key="'empty-' + n" icon="mdi-star-outline" color="#F4A261" size="small"></v-icon>
+                                </div>
+                                <p>"{{ testimonial.text }}"</p>
+                                <div class="lp-testimonial-author">
+                                    <span>{{ testimonial.name.charAt(0) }}</span>
+                                    <div>
+                                        <strong>{{ testimonial.name }}</strong>
+                                        <small>{{ testimonial.store }}</small>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="faq" class="lp-faq">
+                    <div class="lp-container">
+                        <div class="lp-section-head" v-motion-slide-visible-bottom>
+                            <span class="lp-kicker">FAQ</span>
+                            <h2>Pertanyaan yang sering muncul.</h2>
+                        </div>
+
+                        <div class="lp-faq-list">
+                            <article
+                                v-for="(faq, i) in faqs"
+                                :key="faq.question"
+                                class="lp-faq-item"
+                                :class="{ 'lp-faq-open': faq.open }"
+                                v-motion-slide-visible-bottom
+                            >
+                                <button type="button" class="lp-faq-question" @click="toggleFaq(i)">
+                                    <span>{{ faq.question }}</span>
+                                    <v-icon icon="mdi-chevron-down" class="lp-faq-icon"></v-icon>
+                                </button>
+                                <div class="lp-faq-answer-wrapper">
+                                    <div class="lp-faq-answer">
                                         <p>{{ faq.answer }}</p>
                                     </div>
                                 </div>
-                            </div>
+                            </article>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- ═══════════════════ CTA ═══════════════════ -->
-            <section class="lp-cta">
-                <div class="lp-container lp-cta-inner" v-motion-slide-visible-bottom>
-                    <h2 class="lp-cta-title">Ready to Transform Your Store?</h2>
-                    <p class="lp-cta-sub">Join hundreds of grocery stores already using GroceryPro to streamline their operations.</p>
-                    <Link v-if="$page.props.auth.user" :href="route('dashboard')">
-                        <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
-                            Open Dashboard
-                            <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
-                        </v-btn>
-                    </Link>
-                    <Link v-else-if="canLogin" :href="route('login')">
-                        <v-btn color="#D38865" variant="flat" class="lp-btn-cta" style="font-size:1rem; padding: 0 2.5rem; height:52px;">
-                            Sign In
-                            <v-icon icon="mdi-arrow-right" size="small" style="margin-left:6px;"></v-icon>
-                        </v-btn>
-                    </Link>
-                </div>
-            </section>
+                <section class="lp-cta">
+                    <div class="lp-container lp-cta-inner" v-motion-slide-visible-bottom>
+                        <span class="lp-kicker">Ready</span>
+                        <h2>Buat toko terasa lebih ringan dikelola.</h2>
+                        <p>Masuk ke GroceryPro dan mulai pantau transaksi, stok, serta laporan dari satu tempat.</p>
+                        <Link v-if="$page.props.auth.user" :href="route('dashboard')">
+                            <v-btn color="#E76F51" variant="flat" class="lp-btn-cta">
+                                Open Dashboard
+                                <v-icon icon="mdi-arrow-right" size="small"></v-icon>
+                            </v-btn>
+                        </Link>
+                        <Link v-else-if="canLogin" :href="route('login')">
+                            <v-btn color="#E76F51" variant="flat" class="lp-btn-cta">
+                                Sign In
+                                <v-icon icon="mdi-arrow-right" size="small"></v-icon>
+                            </v-btn>
+                        </Link>
+                    </div>
+                </section>
+            </main>
 
-            <!-- ═══════════════════ FOOTER ═══════════════════ -->
             <footer class="lp-footer">
                 <div class="lp-container lp-footer-inner">
                     <div class="lp-footer-brand">
-                        <v-icon icon="mdi-package-variant-closed" color="#D38865" size="20"></v-icon>
-                        <span class="lp-footer-name">GroceryPro</span>
+                        <v-icon icon="mdi-basket-outline" color="#E76F51" size="20"></v-icon>
+                        <span>GroceryPro</span>
                     </div>
-                    <p class="lp-footer-copy">&copy; 2026 GroceryPro. All rights reserved.</p>
+                    <p>&copy; 2026 GroceryPro. All rights reserved.</p>
                 </div>
             </footer>
-
         </div>
     </v-app>
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
-/* ── Root ─────────────────────────────────────────── */
 .lp-root {
     min-height: 100vh;
-    background: #FCFBF8;
-    color: #1a1a1a;
+    background: #f8f3ea;
+    color: #153027;
     font-family: 'Plus Jakarta Sans', sans-serif;
     overflow-x: hidden;
 }
 
-/* ── Container ────────────────────────────────────── */
 .lp-container {
-    max-width: 1200px;
+    width: min(1120px, calc(100% - 32px));
     margin: 0 auto;
-    padding: 0 2rem;
 }
 
-/* ── Header ───────────────────────────────────────── */
 .lp-header {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.5rem 2rem;
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    z-index: 30;
+    width: min(1120px, calc(100% - 32px));
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 18px;
+    padding: 10px 12px;
+    border: 1px solid rgba(34, 109, 74, 0.18);
+    border-radius: 8px;
+    background: rgba(255, 252, 246, 0.86);
+    box-shadow: 0 16px 40px rgba(21, 48, 39, 0.08);
+    backdrop-filter: blur(18px);
 }
 
 .lp-logo {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 10px;
+    color: inherit;
+    text-decoration: none;
 }
 
 .lp-logo-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #2E6B3B;
-    display: flex;
+    display: inline-flex;
+    width: 38px;
+    height: 38px;
     align-items: center;
     justify-content: center;
+    border-radius: 8px;
+    background: #226d4a;
 }
 
 .lp-logo-text {
-    font-size: 1.2rem;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.lp-nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.lp-nav a,
+.lp-link-btn {
+    color: #3c534a;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #1B5E20;
-    letter-spacing: -0.02em;
+    text-decoration: none;
+}
+
+.lp-link-btn {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    padding: 0 18px;
+    border-radius: 999px;
+}
+
+.lp-nav a:hover,
+.lp-link-btn:hover {
+    color: #e76f51;
+}
+
+.lp-btn-signin,
+.lp-btn-cta {
+    height: 46px !important;
+    border-radius: 999px !important;
+    color: white !important;
+    font-weight: 800 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
 }
 
 .lp-btn-signin {
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-    font-weight: 600;
-    padding: 0 1.5rem;
-    color: white !important;
-}
-
-/* ── Hero ─────────────────────────────────────────── */
-.lp-hero {
-    position: relative;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 4rem 2rem 6rem;
-}
-
-.lp-hero-blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.5;
-    pointer-events: none;
-}
-.lp-blob-1 {
-    width: 300px; height: 300px;
-    background: #E8F5E9;
-    top: 0; left: -80px;
-}
-.lp-blob-2 {
-    width: 250px; height: 250px;
-    background: #FFF3E0;
-    top: 40px; right: 60px;
-}
-
-.lp-hero-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-}
-@media (max-width: 768px) {
-    .lp-hero-grid { grid-template-columns: 1fr; gap: 3rem; }
-    .lp-grid-3 { grid-template-columns: 1fr; }
-    .lp-stats-grid { grid-template-columns: 1fr; }
-    .lp-stat-divider { border-left: none; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 2rem; margin-top: 2rem; }
-}
-
-.lp-badge {
-    display: inline-block;
-    background: #E8F5E9;
-    color: #2E6B3B;
-    border: 1px solid #C8E6C9;
-    border-radius: 999px;
-    padding: 0.4rem 1rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-}
-
-.lp-hero-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    font-weight: 700;
-    color: #1B5E20;
-    line-height: 1.15;
-    margin: 0 0 1.25rem;
-}
-
-.lp-accent {
-    color: #D38865;
-}
-
-.lp-hero-sub {
-    font-size: 1.05rem;
-    color: #555;
-    line-height: 1.7;
-    max-width: 480px;
-    margin: 0;
+    padding: 0 20px !important;
 }
 
 .lp-btn-cta {
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-    font-weight: 700;
-    padding: 0 2rem;
-    height: 48px;
-    color: white !important;
-    border-radius: 10px !important;
+    padding: 0 24px !important;
 }
 
-/* ── Hero Mockup ──────────────────────────────────── */
-.lp-hero-graphic {
+.lp-btn-cta :deep(.v-btn__content) {
+    gap: 8px;
+}
+
+.lp-hero {
     position: relative;
+    min-height: 760px;
+    padding: 126px 0 70px;
+    overflow: hidden;
+    background:
+        linear-gradient(180deg, rgba(255, 252, 246, 0.94), rgba(248, 243, 234, 0.72) 62%, #f8f3ea),
+        linear-gradient(120deg, #e9f6ed 0%, #fff8ed 45%, #e8f0ff 100%);
 }
 
-.lp-mockup-bg-rotate {
+.lp-hero-sky,
+.lp-hero-gridline,
+.lp-shelf {
     position: absolute;
-    inset: -16px;
-    background: #E8F5E9;
-    border-radius: 24px;
-    transform: rotate(3deg) scale(1.05);
-    z-index: 0;
-    transition: transform 0.5s ease;
-}
-.lp-hero-graphic:hover .lp-mockup-bg-rotate {
-    transform: rotate(6deg) scale(1.05);
-}
-
-.lp-blob-circle {
-    position: absolute;
-    border-radius: 50%;
-    z-index: 0;
     pointer-events: none;
 }
-.lp-bc-right {
-    width: 80px; height: 80px;
-    background: #EED8C9;
-    top: -24px; right: -24px;
-    opacity: 0.9;
-}
-.lp-bc-left {
-    width: 100px; height: 100px;
-    background: #E8F5E9;
-    bottom: -30px; left: -30px;
-    opacity: 0.8;
+
+.lp-hero-sky {
+    inset: -70px -8% auto;
+    height: 440px;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(34, 109, 74, 0.14), transparent 30%),
+        radial-gradient(circle at 74% 18%, rgba(231, 111, 81, 0.18), transparent 28%),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
 }
 
-.lp-mockup-card {
+.lp-hero-gridline {
+    inset: 0;
+    opacity: 0.45;
+    background-image:
+        linear-gradient(rgba(34, 109, 74, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 109, 74, 0.09) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(180deg, #000, transparent 76%);
+}
+
+.lp-shelf {
+    left: 50%;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    width: 1180px;
+    transform: translateX(-50%);
+    opacity: 0.72;
+}
+
+.lp-shelf span {
+    display: block;
+    width: 46px;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(180deg, #f4a261, #e76f51);
+    box-shadow: inset 0 10px 0 rgba(255, 255, 255, 0.24);
+}
+
+.lp-shelf span:nth-child(2n) {
+    height: 74px;
+    background: linear-gradient(180deg, #86c7a3, #226d4a);
+}
+
+.lp-shelf span:nth-child(3n) {
+    height: 54px;
+    background: linear-gradient(180deg, #90a8d6, #4169a8);
+}
+
+.lp-shelf-back {
+    top: 160px;
+}
+
+.lp-shelf-back span {
+    height: 42px;
+    opacity: 0.32;
+}
+
+.lp-shelf-front {
+    right: -250px;
+    bottom: 18px;
+    left: auto;
+    width: 800px;
+    justify-content: flex-end;
+}
+
+.lp-shelf-front span {
+    height: 84px;
+    opacity: 0.2;
+}
+
+.lp-hero-inner {
     position: relative;
-    background: #427A45;
-    border-radius: 24px;
-    padding: 1rem;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-    z-index: 1;
-    border: 1px solid #2d5e30;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 0.95fr 1.05fr;
+    align-items: center;
+    gap: 62px;
+    width: min(1120px, calc(100% - 32px));
+    margin: 0 auto;
 }
 
-.lp-mockup-inner {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
+.lp-hero-copy {
+    padding-top: 20px;
 }
 
-.lp-mockup-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.25rem;
+.lp-badge,
+.lp-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #226d4a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
 }
 
-.lp-mockup-label {
-    font-size: 0.8rem;
-    color: #888;
-    font-weight: 500;
-    margin: 0 0 0.25rem;
+.lp-badge {
+    margin-bottom: 24px;
+    padding: 9px 12px;
+    border: 1px solid rgba(34, 109, 74, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
 }
 
-.lp-mockup-revenue {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #1B5E20;
-    margin: 0 0 0.35rem;
-}
-
-.lp-mockup-growth {
-    font-size: 0.75rem;
-    color: #4CAF50;
-    font-weight: 600;
+.lp-hero h1,
+.lp-section-head h2,
+.lp-operations-copy h2,
+.lp-cta h2 {
     margin: 0;
+    color: #123629;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    line-height: 1.04;
+}
+
+.lp-hero h1 {
+    max-width: 540px;
+    font-size: 4.55rem;
+}
+
+.lp-hero-lead {
+    max-width: 560px;
+    margin: 22px 0 0;
+    color: #52655d;
+    font-size: 1.08rem;
+    line-height: 1.8;
+}
+
+.lp-hero-actions {
     display: flex;
     align-items: center;
-    gap: 2px;
-}
-.lp-mockup-growth-sub {
-    color: #aaa;
-    font-weight: 400;
-    margin-left: 4px;
+    gap: 20px;
+    margin-top: 32px;
+    flex-wrap: wrap;
 }
 
-.lp-mockup-icon-box {
-    background: #FFF5F0;
-    padding: 8px;
-    border-radius: 10px;
+.lp-hero-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 44px;
 }
 
-.lp-mockup-row {
+.lp-hero-metrics div {
+    min-height: 92px;
+    padding: 16px;
+    border: 1px solid rgba(34, 109, 74, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.62);
+}
+
+.lp-hero-metrics strong {
+    display: block;
+    color: #e76f51;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.lp-hero-metrics span {
+    display: block;
+    margin-top: 6px;
+    color: #607169;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.lp-hero-stage {
+    position: relative;
+    min-height: 560px;
+}
+
+.lp-dashboard-shell {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: min(100%, 560px);
+    min-height: 430px;
+    padding: 18px;
+    border: 1px solid rgba(18, 54, 41, 0.16);
+    border-radius: 8px;
+    background: #fffdf8;
+    box-shadow: 0 34px 90px rgba(21, 48, 39, 0.2);
+}
+
+.lp-window-bar {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #edf0e9;
+}
+
+.lp-window-bar span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e76f51;
+}
+
+.lp-window-bar span:nth-child(2) {
+    background: #f4a261;
+}
+
+.lp-window-bar span:nth-child(3) {
+    background: #226d4a;
+}
+
+.lp-dashboard-top,
+.lp-pos-strip {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
+    gap: 18px;
 }
-.lp-mockup-row-neutral {
-    background: #F5F7F5;
-    border: 1px solid #f0f0f0;
-    color: #444;
+
+.lp-dashboard-top {
+    align-items: flex-start;
+    padding: 24px 4px 10px;
 }
-.lp-mockup-row-warn {
-    background: #FFF5F2;
-    border: 1px solid #ffe4da;
-    color: #444;
+
+.lp-dashboard-top p,
+.lp-dashboard-top h2 {
+    margin: 0;
 }
-.lp-mockup-val {
+
+.lp-dashboard-top p {
+    color: #708078;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #333;
 }
 
-/* ── Fade-up animation ────────────────────────────── */
-@keyframes lp-fade-up-in {
-    from { opacity: 0; transform: translateY(32px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.lp-fade-up {
-    animation: lp-fade-up-in 0.6s ease both;
+.lp-dashboard-top h2 {
+    margin-top: 8px;
+    color: #123629;
+    font-size: 2rem;
+    font-weight: 800;
 }
 
-/* ── Features ─────────────────────────────────────── */
-.lp-features {
-    background: #FCFBF8;
-    padding: 6rem 0;
+.lp-dashboard-icon {
+    display: inline-flex;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #fff2ec;
+}
+
+.lp-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 190px;
+    margin: 18px 0;
+    padding: 16px;
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(34, 109, 74, 0.08), rgba(34, 109, 74, 0)),
+        repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(34, 109, 74, 0.1) 39px);
+}
+
+.lp-chart span {
+    flex: 1;
+    min-width: 24px;
+    border-radius: 6px 6px 0 0;
+    background: linear-gradient(180deg, #86c7a3, #226d4a);
+    animation: lp-bar-pulse 3.4s ease-in-out infinite;
+}
+
+.lp-chart span:nth-child(2n) {
+    background: linear-gradient(180deg, #f4a261, #e76f51);
+    animation-delay: 0.4s;
+}
+
+.lp-pos-strip div {
+    flex: 1;
+    padding: 16px;
+    border: 1px solid #edf0e9;
+    border-radius: 8px;
+    background: #fbfaf5;
+}
+
+.lp-pos-strip span {
+    display: block;
+    color: #77867e;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.lp-pos-strip strong {
+    display: block;
+    margin-top: 8px;
+    color: #123629;
+    font-size: 1rem;
+}
+
+.lp-floating-note {
+    position: absolute;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid rgba(18, 54, 41, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 253, 248, 0.92);
+    box-shadow: 0 16px 50px rgba(21, 48, 39, 0.12);
+    color: #123629;
+    font-size: 0.86rem;
+    font-weight: 800;
+    backdrop-filter: blur(14px);
+}
+
+.lp-note-a {
+    top: 24px;
+    left: 8px;
+}
+
+.lp-note-b {
+    top: 112px;
+    right: -18px;
+}
+
+.lp-features,
+.lp-workflow,
+.lp-faq,
+.lp-cta {
+    padding: 92px 0;
 }
 
 .lp-section-head {
+    max-width: 700px;
+    margin: 0 auto 42px;
     text-align: center;
-    max-width: 640px;
-    margin: 0 auto 3.5rem;
 }
 
-.lp-section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(1.8rem, 3vw, 2.5rem);
-    font-weight: 700;
-    color: #1B5E20;
-    margin: 0 0 0.75rem;
+.lp-section-head-left {
+    margin-left: 0;
+    text-align: left;
 }
 
-.lp-section-sub {
+.lp-section-head h2,
+.lp-operations-copy h2,
+.lp-cta h2 {
+    margin-top: 12px;
+    font-size: 2.75rem;
+}
+
+.lp-section-head p,
+.lp-operations-copy p,
+.lp-cta p {
+    margin: 16px 0 0;
+    color: #607169;
     font-size: 1rem;
-    color: #888;
-    margin: 0;
+    line-height: 1.75;
 }
 
-.lp-grid-3 {
+.lp-feature-grid,
+.lp-testimonial-grid,
+.lp-workflow-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
 }
 
-.lp-feature-card {
-    background: white;
-    border-radius: 18px;
-    padding: 2rem;
-    border: 1px solid #f0f0f0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-    cursor: default;
+.lp-feature-card,
+.lp-testimonial-card,
+.lp-workflow-card,
+.lp-stack-card,
+.lp-faq-item {
+    border: 1px solid rgba(18, 54, 41, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 253, 248, 0.8);
+    box-shadow: 0 10px 34px rgba(21, 48, 39, 0.06);
 }
-.lp-feature-card:hover {
-    box-shadow: 0 8px 30px rgba(0,0,0,0.10);
-    transform: translateY(-4px);
+
+.lp-feature-card,
+.lp-testimonial-card,
+.lp-workflow-card {
+    padding: 24px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
-.lp-feature-card:hover .lp-feature-icon {
-    background: #2E6B3B;
-    color: white;
+
+.lp-feature-card:hover,
+.lp-testimonial-card:hover,
+.lp-workflow-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(231, 111, 81, 0.3);
+    box-shadow: 0 18px 44px rgba(21, 48, 39, 0.1);
 }
 
 .lp-feature-icon {
+    display: inline-flex;
     width: 48px;
     height: 48px;
-    border-radius: 12px;
-    background: #E8F5E9;
-    color: #2E6B3B;
-    display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.25rem;
-    transition: background 0.3s, color 0.3s;
+    margin-bottom: 22px;
+    border-radius: 8px;
+    background: #e7f3eb;
+    color: #226d4a;
 }
 
-.lp-feature-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #111;
-    margin: 0 0 0.5rem;
-}
-
-.lp-feature-desc {
-    font-size: 0.875rem;
-    color: #666;
-    line-height: 1.65;
+.lp-feature-card h3,
+.lp-workflow-card h3 {
     margin: 0;
+    color: #123629;
+    font-size: 1.05rem;
+    font-weight: 800;
 }
 
-/* ── Stats ────────────────────────────────────────── */
-.lp-stats {
+.lp-feature-card p,
+.lp-workflow-card p,
+.lp-testimonial-card p {
+    margin: 12px 0 0;
+    color: #607169;
+    font-size: 0.9rem;
+    line-height: 1.68;
+}
+
+.lp-operations {
     position: relative;
-    background: linear-gradient(135deg, #2E6B3B, #1B5E20);
-    padding: 5rem 0;
+    padding: 105px 0;
     overflow: hidden;
+    background: #123629;
+    color: #fffdf8;
 }
 
-.lp-stats-overlay {
+.lp-operations::before {
+    content: '';
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.08);
-    pointer-events: none;
+    opacity: 0.18;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px);
+    background-size: 64px 64px;
 }
 
-.lp-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    text-align: center;
+.lp-operations-grid {
     position: relative;
     z-index: 1;
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    align-items: center;
+    gap: 58px;
 }
 
-.lp-stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem 0;
+.lp-operations .lp-kicker {
+    color: #91d8ad;
 }
 
-.lp-stat-divider {
-    border-left: 1px solid rgba(255,255,255,0.2);
+.lp-operations-copy h2,
+.lp-operations-copy p {
+    color: #fffdf8;
 }
 
-.lp-stat-num {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2.5rem, 5vw, 3.75rem);
-    font-weight: 700;
-    color: white;
-    line-height: 1;
+.lp-operations-copy p {
+    color: rgba(255, 253, 248, 0.74);
 }
 
-.lp-stat-label {
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.7);
-    font-weight: 500;
-    letter-spacing: 0.05em;
+.lp-stack-scene {
+    position: relative;
+    min-height: 390px;
 }
 
-/* ── Testimonials ─────────────────────────────────── */
+.lp-stack-card {
+    position: absolute;
+    width: 58%;
+    padding: 24px;
+    background: rgba(255, 253, 248, 0.92);
+}
+
+.lp-stack-card span {
+    display: block;
+    color: #607169;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.lp-stack-card strong {
+    display: block;
+    margin-top: 12px;
+    color: #123629;
+    font-size: 1.8rem;
+}
+
+.lp-stack-1 {
+    top: 0;
+    left: 8%;
+}
+
+.lp-stack-2 {
+    top: 118px;
+    right: 0;
+    background: #fcebdc;
+}
+
+.lp-stack-3 {
+    left: 0;
+    bottom: 0;
+    background: #e8f0ff;
+}
+
+.lp-workflow {
+    background: #fffdf8;
+}
+
+.lp-workflow-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.lp-workflow-card span {
+    color: #e76f51;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
 .lp-testimonials {
-    padding: 6rem 0;
-    background: #FFF;
+    padding: 92px 0;
+    background: #eef6f0;
 }
-.lp-testimonial-card {
-    background: #FCFBF8;
-    border-radius: 16px;
-    padding: 2rem;
-    border: 1px solid #f0f0f0;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+
+.lp-testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
 }
-.lp-testimonial-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-}
+
 .lp-testimonial-rating {
-    margin-bottom: 1rem;
+    display: flex;
+    gap: 3px;
+    margin-bottom: 16px;
 }
-.lp-testimonial-text {
-    font-size: 1rem;
-    color: #444;
-    font-style: italic;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    flex-grow: 1;
-}
+
 .lp-testimonial-author {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-.lp-author-avatar {
-    width: 40px; height: 40px;
-    background: #E8F5E9;
-    color: #2E6B3B;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.2rem;
-}
-.lp-author-name {
-    font-weight: 700;
-    color: #111;
-    margin: 0 0 0.1rem;
-    font-size: 0.95rem;
-}
-.lp-author-store {
-    font-size: 0.8rem;
-    color: #777;
+    gap: 12px;
+    margin-top: 22px;
 }
 
-/* ── FAQ ──────────────────────────────────────────── */
-.lp-faq {
-    padding: 6rem 0;
-    background: #FCFBF8;
+.lp-testimonial-author > span {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #226d4a;
+    color: white;
+    font-weight: 800;
 }
+
+.lp-testimonial-author strong,
+.lp-testimonial-author small {
+    display: block;
+}
+
+.lp-testimonial-author strong {
+    color: #123629;
+}
+
+.lp-testimonial-author small {
+    margin-top: 2px;
+    color: #77867e;
+}
+
 .lp-faq-list {
-    max-width: 800px;
+    display: grid;
+    gap: 12px;
+    max-width: 820px;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
 }
-.lp-faq-item {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.lp-faq-item:hover {
-    border-color: #C8E6C9;
-}
-.lp-faq-open {
-    border-color: #2E6B3B;
-    box-shadow: 0 4px 15px rgba(46,107,59,0.08);
-}
+
 .lp-faq-question {
     display: flex;
-    justify-content: space-between;
+    width: 100%;
     align-items: center;
-    padding: 1.25rem 1.5rem;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 20px 22px;
+    border: 0;
+    background: transparent;
+    color: #123629;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+    text-align: left;
 }
-.lp-faq-question h3 {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #111;
-    margin: 0;
-}
+
 .lp-faq-icon {
-    transition: transform 0.3s ease;
+    flex: 0 0 auto;
+    transition: transform 0.25s ease;
 }
+
 .lp-faq-open .lp-faq-icon {
     transform: rotate(180deg);
 }
+
 .lp-faq-answer-wrapper {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s ease-in-out;
+    transition: grid-template-rows 0.25s ease;
 }
+
 .lp-faq-open .lp-faq-answer-wrapper {
     grid-template-rows: 1fr;
 }
+
 .lp-faq-answer {
     overflow: hidden;
 }
-.lp-faq-answer-inner {
-    padding: 0 1.5rem 1.25rem;
-    font-size: 0.95rem;
-    color: #555;
-    line-height: 1.6;
-}
-.lp-faq-answer-inner p { margin: 0; }
 
-/* ── CTA ──────────────────────────────────────────── */
+.lp-faq-answer p {
+    margin: 0;
+    padding: 0 22px 20px;
+    color: #607169;
+    line-height: 1.72;
+}
+
 .lp-cta {
-    padding: 6rem 0;
-    background: #FCFBF8;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(34, 109, 74, 0.1), rgba(231, 111, 81, 0.12)),
+        #fffdf8;
 }
 
 .lp-cta-inner {
+    max-width: 760px;
     text-align: center;
 }
 
-.lp-cta-title {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-    font-weight: 700;
-    color: #1B5E20;
-    margin: 0 0 1rem;
+.lp-cta .lp-btn-cta {
+    margin-top: 30px;
 }
 
-.lp-cta-sub {
-    font-size: 1rem;
-    color: #777;
-    margin: 0 0 2.5rem;
-    max-width: 520px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-/* ── Footer ───────────────────────────────────────── */
 .lp-footer {
-    background: #0F3511;
-    padding: 3rem 0;
-    border-top: 1px solid #1a4a1c;
+    padding: 32px 0;
+    background: #123629;
 }
 
 .lp-footer-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 18px;
+    color: rgba(255, 253, 248, 0.68);
     flex-wrap: wrap;
-    gap: 1rem;
 }
 
 .lp-footer-brand {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
+    color: #fffdf8;
+    font-weight: 800;
 }
 
-.lp-footer-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: white;
-}
-
-.lp-footer-copy {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.4);
+.lp-footer p {
     margin: 0;
+    font-size: 0.86rem;
+}
+
+@keyframes lp-bar-pulse {
+    0%,
+    100% {
+        transform: scaleY(1);
+    }
+    50% {
+        transform: scaleY(0.86);
+    }
+}
+
+@media (max-width: 960px) {
+    .lp-nav {
+        display: none;
+    }
+
+    .lp-hero {
+        min-height: auto;
+    }
+
+    .lp-hero-inner,
+    .lp-operations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-hero h1 {
+        font-size: 3.4rem;
+    }
+
+    .lp-hero-stage {
+        min-height: 620px;
+    }
+
+    .lp-dashboard-shell {
+        left: 0;
+        width: 100%;
+    }
+
+    .lp-feature-grid,
+    .lp-testimonial-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .lp-header {
+        top: 10px;
+        width: calc(100% - 20px);
+    }
+
+    .lp-logo-text {
+        display: none;
+    }
+
+    .lp-hero {
+        padding-top: 104px;
+    }
+
+    .lp-hero h1 {
+        font-size: 2.7rem;
+    }
+
+    .lp-hero-lead {
+        font-size: 1rem;
+    }
+
+    .lp-hero-metrics,
+    .lp-feature-grid,
+    .lp-testimonial-grid,
+    .lp-workflow-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lp-hero-stage {
+        min-height: 740px;
+    }
+
+    .lp-dashboard-top,
+    .lp-pos-strip {
+        flex-direction: column;
+    }
+
+    .lp-dashboard-top h2 {
+        font-size: 1.55rem;
+    }
+
+    .lp-chart {
+        gap: 8px;
+    }
+
+    .lp-floating-note {
+        position: relative;
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+        margin: 0 0 10px;
+    }
+
+    .lp-section-head h2,
+    .lp-operations-copy h2,
+    .lp-cta h2 {
+        font-size: 2.15rem;
+    }
+
+    .lp-features,
+    .lp-workflow,
+    .lp-faq,
+    .lp-cta,
+    .lp-testimonials {
+        padding: 70px 0;
+    }
+
+    .lp-stack-scene {
+        min-height: 500px;
+    }
+
+    .lp-stack-card {
+        width: 86%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>

@@ -30,6 +30,8 @@ const snackbarMessage = ref('');
 const snackbarColor = ref('success');
 const editingProduct = ref(null);
 const deletingProduct = ref(null);
+const productImagePreview = ref(null);
+const editImagePreview = ref(null);
 
 // Form for adding new product
 const productForm = useForm({
@@ -41,6 +43,7 @@ const productForm = useForm({
     buy_price: 0,
     sell_price: 0,
     supplier: '',
+    image: null,
 });
 
 // Form for adding incoming stock
@@ -61,6 +64,8 @@ const editForm = useForm({
     sell_price: 0,
     min_stock: 0,
     stock_qty: 0,
+    image: null,
+    _method: 'put',
 });
 
 // Display values for edit form
@@ -105,6 +110,63 @@ const showSnackbar = (message, color = 'success') => {
     snackbarMessage.value = message;
     snackbarColor.value = color;
     snackbar.value = true;
+};
+
+const normalizeFile = (file) => {
+    if (Array.isArray(file)) {
+        return file[0] || null;
+    }
+
+    return file || null;
+};
+
+const revokePreview = (preview) => {
+    if (preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(preview);
+    }
+};
+
+const setProductImage = (file) => {
+    revokePreview(productImagePreview.value);
+
+    const image = normalizeFile(file);
+    productForm.image = image;
+    productImagePreview.value = image ? URL.createObjectURL(image) : null;
+};
+
+const setEditImage = (file) => {
+    revokePreview(editImagePreview.value?.startsWith('blob:') ? editImagePreview.value : null);
+
+    const image = normalizeFile(file);
+    editForm.image = image;
+    editImagePreview.value = image ? URL.createObjectURL(image) : (editingProduct.value?.image_url || null);
+};
+
+const resetProductImage = () => {
+    revokePreview(productImagePreview.value);
+    productForm.image = null;
+    productImagePreview.value = null;
+};
+
+const resetEditImage = () => {
+    revokePreview(editImagePreview.value?.startsWith('blob:') ? editImagePreview.value : null);
+    editForm.image = null;
+    editImagePreview.value = null;
+};
+
+const openAddProductDialog = () => {
+    resetProductImage();
+    addProductDialog.value = true;
+};
+
+const closeAddProductDialog = () => {
+    addProductDialog.value = false;
+    resetProductImage();
+};
+
+const closeEditProductDialog = () => {
+    editProductDialog.value = false;
+    resetEditImage();
 };
 
 const sortProducts = (field) => {
@@ -554,6 +616,8 @@ const openEditDialog = (product) => {
     editSellPriceDisplay.value = formatNumber(product.sell_price);
     editMinStockDisplay.value = formatNumberDecimal(product.min_stock);
     editStockQtyDisplay.value = formatNumberDecimal(product.stock_qty);
+    editForm.image = null;
+    editImagePreview.value = product.image_url || null;
     validationErrors.value.editName = '';
     editProductDialog.value = true;
 };
@@ -681,6 +745,7 @@ const submitProduct = () => {
     const productName = productForm.name;
     productForm.post(route('products.store'), {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
             addProductDialog.value = false;
             productForm.reset();
@@ -688,6 +753,7 @@ const submitProduct = () => {
             sellPriceDisplay.value = '0';
             stockQtyDisplay.value = '0';
             minStockDisplay.value = '0';
+            resetProductImage();
             validationErrors.value.productName = '';
             validationErrors.value.productSupplier = '';
             showSnackbar(`${productName} added successfully.`);
@@ -754,8 +820,9 @@ const submitEditProduct = () => {
         return;
     }
     const editedProductName = editForm.name;
-    editForm.put(route('products.update', editingProduct.value.id), {
+    editForm.post(route('products.update', editingProduct.value.id), {
         preserveScroll: true,
+        forceFormData: true,
         onSuccess: () => {
             editProductDialog.value = false;
             editForm.reset();
@@ -763,6 +830,7 @@ const submitEditProduct = () => {
             editSellPriceDisplay.value = '0';
             editMinStockDisplay.value = '0';
             editStockQtyDisplay.value = '0';
+            resetEditImage();
             editingProduct.value = null;
             validationErrors.value.editName = '';
             showSnackbar(`${editedProductName} updated successfully.`);
@@ -852,7 +920,7 @@ const deleteProduct = () => {
                         color="primary" 
                         rounded="lg" 
                         class="text-none"
-                        @click="addProductDialog = true"
+                        @click="openAddProductDialog"
                     >
                         <v-icon start size="small">mdi-plus</v-icon>
                         Add Product
@@ -897,6 +965,7 @@ const deleteProduct = () => {
                     <thead>
                         <tr>
                             <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('sku')">Product ID <v-icon size="14">{{ getSortIcon('sku') }}</v-icon></th>
+                            <th class="text-left font-weight-bold text-grey-darken-2">Image</th>
                             <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('name')">Name <v-icon size="14">{{ getSortIcon('name') }}</v-icon></th>
                             <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('category')">Category <v-icon size="14">{{ getSortIcon('category') }}</v-icon></th>
                             <th class="text-left font-weight-bold text-grey-darken-2 sortable-heading" @click="sortProducts('stock_qty')">Stock <v-icon size="14">{{ getSortIcon('stock_qty') }}</v-icon></th>
@@ -910,6 +979,18 @@ const deleteProduct = () => {
                     <tbody>
                         <tr v-for="product in paginatedProducts" :key="product.id">
                             <td class="font-weight-medium">{{ product.sku }}</td>
+                            <td>
+                                <div class="product-table-thumb">
+                                    <v-img
+                                        v-if="product.image_url"
+                                        :src="product.image_url"
+                                        cover
+                                        width="100%"
+                                        height="100%"
+                                    ></v-img>
+                                    <v-icon v-else size="20" color="grey">mdi-image-outline</v-icon>
+                                </div>
+                            </td>
                             <td>
                                 <div class="d-flex align-center">
                                     <v-icon size="small" color="primary" class="mr-2">mdi-package-variant</v-icon>
@@ -943,7 +1024,7 @@ const deleteProduct = () => {
                             </td>
                         </tr>
                         <tr v-if="filteredProducts.length === 0">
-                            <td colspan="9" class="text-center py-8 text-grey">
+                            <td colspan="10" class="text-center py-8 text-grey">
                                 No products found.
                             </td>
                         </tr>
@@ -1041,7 +1122,7 @@ const deleteProduct = () => {
             <v-card class="rounded-xl">
                 <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
                     Add New Product
-                    <v-btn icon="mdi-close" variant="text" size="small" @click="addProductDialog = false"></v-btn>
+                    <v-btn icon="mdi-close" variant="text" size="small" @click="closeAddProductDialog"></v-btn>
                 </v-card-title>
                 
                 <v-card-text class="pa-4">
@@ -1075,6 +1156,50 @@ const deleteProduct = () => {
                                 :error-messages="productForm.errors.category_id"
                                 rounded="lg"
                             ></v-select>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Product Image Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-image-outline</v-icon>
+                        Product Image
+                    </div>
+                    <v-row class="mb-2" align="center">
+                        <v-col cols="12" sm="4">
+                            <div class="product-image-preview">
+                                <v-img
+                                    v-if="productImagePreview"
+                                    :src="productImagePreview"
+                                    cover
+                                    width="100%"
+                                    height="100%"
+                                ></v-img>
+                                <div v-else class="product-image-placeholder">
+                                    <v-icon size="32" color="grey">mdi-image-plus-outline</v-icon>
+                                    <span>No image</span>
+                                </div>
+                            </div>
+                        </v-col>
+                        <v-col cols="12" sm="8">
+                            <v-file-input
+                                :model-value="productForm.image"
+                                @update:model-value="setProductImage"
+                                accept="image/png,image/jpeg,image/jpg,image/webp"
+                                variant="outlined"
+                                density="comfortable"
+                                label="Upload product image"
+                                prepend-icon=""
+                                prepend-inner-icon="mdi-upload"
+                                :error-messages="productForm.errors.image"
+                                rounded="lg"
+                                show-size
+                                clearable
+                            ></v-file-input>
+                            <div class="text-caption text-grey-darken-1">
+                                PNG, JPG, JPEG, or WEBP. Max 2 MB.
+                            </div>
                         </v-col>
                     </v-row>
 
@@ -1189,7 +1314,7 @@ const deleteProduct = () => {
                     <v-spacer></v-spacer>
                     <v-btn
                         variant="tonal"
-                        @click="addProductDialog = false"
+                        @click="closeAddProductDialog"
                         rounded="lg"
                         class="px-4 text-none"
                     >
@@ -1215,7 +1340,7 @@ const deleteProduct = () => {
             <v-card class="rounded-xl">
                 <v-card-title class="pa-4 font-weight-bold d-flex justify-space-between align-center border-b">
                     Edit Product
-                    <v-btn icon="mdi-close" variant="text" size="small" @click="editProductDialog = false"></v-btn>
+                    <v-btn icon="mdi-close" variant="text" size="small" @click="closeEditProductDialog"></v-btn>
                 </v-card-title>
                 
                 <v-card-text class="pa-4">
@@ -1249,6 +1374,50 @@ const deleteProduct = () => {
                                 :error-messages="editForm.errors.category_id"
                                 rounded="lg"
                             ></v-select>
+                        </v-col>
+                    </v-row>
+
+                    <v-divider class="my-4"></v-divider>
+
+                    <!-- Product Image Section -->
+                    <div class="text-subtitle-2 font-weight-bold text-grey-darken-2 mb-3">
+                        <v-icon size="small" class="mr-1">mdi-image-outline</v-icon>
+                        Product Image
+                    </div>
+                    <v-row class="mb-2" align="center">
+                        <v-col cols="12" sm="4">
+                            <div class="product-image-preview">
+                                <v-img
+                                    v-if="editImagePreview"
+                                    :src="editImagePreview"
+                                    cover
+                                    width="100%"
+                                    height="100%"
+                                ></v-img>
+                                <div v-else class="product-image-placeholder">
+                                    <v-icon size="32" color="grey">mdi-image-plus-outline</v-icon>
+                                    <span>No image</span>
+                                </div>
+                            </div>
+                        </v-col>
+                        <v-col cols="12" sm="8">
+                            <v-file-input
+                                :model-value="editForm.image"
+                                @update:model-value="setEditImage"
+                                accept="image/png,image/jpeg,image/jpg,image/webp"
+                                variant="outlined"
+                                density="comfortable"
+                                label="Replace product image"
+                                prepend-icon=""
+                                prepend-inner-icon="mdi-upload"
+                                :error-messages="editForm.errors.image"
+                                rounded="lg"
+                                show-size
+                                clearable
+                            ></v-file-input>
+                            <div class="text-caption text-grey-darken-1">
+                                Leave empty to keep the current image.
+                            </div>
                         </v-col>
                     </v-row>
 
@@ -1343,7 +1512,7 @@ const deleteProduct = () => {
                     <v-spacer></v-spacer>
                     <v-btn
                         variant="tonal"
-                        @click="editProductDialog = false"
+                        @click="closeEditProductDialog"
                         rounded="lg"
                         class="px-4 text-none"
                     >
@@ -1579,5 +1748,38 @@ const deleteProduct = () => {
 
 .category-chip-scroller :deep(.v-chip) {
     flex: 0 0 auto;
+}
+
+.product-image-preview {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid rgba(var(--v-border-color), 0.2);
+    border-radius: 16px;
+    background: rgba(var(--v-theme-primary), 0.045);
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: rgba(var(--v-theme-on-surface), 0.56);
+    font-size: 0.78rem;
+}
+
+.product-table-thumb {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid rgba(var(--v-border-color), 0.18);
+    border-radius: 12px;
+    background: rgba(var(--v-theme-primary), 0.045);
 }
 </style>

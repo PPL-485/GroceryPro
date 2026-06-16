@@ -50,7 +50,7 @@ class DatabaseSeeder extends Seeder
 
         // Products — seed only if table is empty
         if (Product::count() === 0 && Category::count() > 0) {
-            Product::factory(50)->recycle(Category::all())->create();
+            $this->call(ProductCatalogSeeder::class);
         }
 
         // Transactions — seed only if table is empty

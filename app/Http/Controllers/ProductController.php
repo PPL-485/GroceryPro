@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -52,6 +53,7 @@ class ProductController extends Controller
             'buy_price' => 'required|numeric|gt:0',
             'sell_price' => 'required|numeric|gt:0',
             'supplier' => ['nullable', 'string', 'max:100', 'regex:/[a-zA-Z]/'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ], [
             'name.regex' => 'Product name must contain at least one letter.',
             'supplier.regex' => 'Supplier name must contain at least one letter.',
@@ -61,12 +63,18 @@ class ProductController extends Controller
         $lastProduct = Product::orderBy('id', 'desc')->first();
         $nextId = $lastProduct ? $lastProduct->id + 1 : 1;
         $sku = 'PRD-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
+        $imageUrl = null;
+
+        if ($request->hasFile('image')) {
+            $imageUrl = '/storage/' . $request->file('image')->store('products', 'public');
+        }
 
         $product = Product::create([
             'sku' => $sku,
             'name' => $validated['name'],
             'category_id' => $validated['category_id'],
             'unit' => $validated['unit'] ?? 'pcs',
+            'image_url' => $imageUrl,
             'stock_qty' => $validated['stock_qty'],
             'buy_price' => $validated['buy_price'],
             'sell_price' => $validated['sell_price'],
@@ -137,11 +145,12 @@ class ProductController extends Controller
             'sell_price' => 'required|numeric|gt:0',
             'min_stock' => 'required|numeric|gt:0',
             'stock_qty' => 'required|numeric|gt:0',
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ], [
             'name.regex' => 'Product name must contain at least one letter.',
         ]);
 
-        $product->update([
+        $data = [
             'name' => $validated['name'],
             'category_id' => $validated['category_id'],
             'unit' => $validated['unit'] ?? 'pcs',
@@ -149,7 +158,17 @@ class ProductController extends Controller
             'sell_price' => $validated['sell_price'],
             'min_stock' => $validated['min_stock'],
             'stock_qty' => $validated['stock_qty'],
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            if ($product->image_url) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $product->image_url));
+            }
+
+            $data['image_url'] = '/storage/' . $request->file('image')->store('products', 'public');
+        }
+
+        $product->update($data);
 
         return redirect()->back()->with('success', 'Product updated successfully.');
     }
@@ -162,6 +181,10 @@ class ProductController extends Controller
 
         // Delete related stock movements
         $product->stockMovements()->delete();
+
+        if ($product->image_url) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $product->image_url));
+        }
         
         // Delete the product
         $product->delete();

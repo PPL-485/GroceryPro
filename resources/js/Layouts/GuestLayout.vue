@@ -1,21 +1,44 @@
-<script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import { Link } from '@inertiajs/vue3';
-</script>
-
 <template>
-    <v-app style="background-color: #FAF9F6; font-family: 'Inter', sans-serif;">
+    <v-app class="guest-app">
         <v-main>
-            <v-container class="fill-height d-flex align-center justify-center position-relative overflow-hidden pa-4" fluid>
-                <!-- Blurred Background Blobs -->
-                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 400px; height: 400px; background: #E8F5E9; top: -100px; left: -100px;"></div>
-                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 350px; height: 350px; background: #FFF3E0; bottom: -50px; right: -50px;"></div>
-                <div style="position: absolute; filter: blur(80px); border-radius: 50%; opacity: 0.4; z-index: 1; width: 300px; height: 300px; background: #F1F8E9; top: 20%; right: 10%;"></div>
-                
-                <div style="position: relative; z-index: 10; width: 100%; max-width: 380px;">
+            <v-container class="guest-shell" fluid>
+                <div class="guest-panel">
                     <slot />
                 </div>
             </v-container>
         </v-main>
     </v-app>
 </template>
+
+<style scoped>
+.guest-app {
+    background: rgb(var(--v-theme-surface));
+    font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
+.guest-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(var(--v-theme-primary), 0.08), transparent 32rem),
+        linear-gradient(135deg, rgba(var(--v-theme-primary), 0.04), rgba(var(--v-theme-surface), 0) 42%);
+}
+
+.guest-panel {
+    width: 100%;
+    max-width: 420px;
+}
+
+@media (max-width: 600px) {
+    .guest-shell {
+        padding: 16px;
+    }
+
+    .guest-panel {
+        max-width: 100%;
+    }
+}
+</style>
