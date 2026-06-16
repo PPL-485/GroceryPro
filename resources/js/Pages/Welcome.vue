@@ -282,7 +282,6 @@ onBeforeUnmount(() => {
                         <div class="lp-section-head" v-motion-slide-visible-bottom>
                             <span class="lp-kicker">Control center</span>
                             <h2>Semua operasi toko dalam satu ritme.</h2>
-                            <p>Terinspirasi dari landing page modern yang punya kedalaman visual, setiap bagian dibuat seperti lapisan operasi toko yang bergerak saat pengguna scroll.</p>
                         </div>
 
                         <div class="lp-feature-grid">
@@ -308,9 +307,6 @@ onBeforeUnmount(() => {
                         <div class="lp-operations-copy" v-motion-slide-visible-left>
                             <span class="lp-kicker">Parallax view</span>
                             <h2>Scroll seperti melihat toko dari depan sampai belakang.</h2>
-                            <p>
-                                Layer rak, panel kasir, dan kartu laporan bergerak dengan kecepatan berbeda supaya landing page terasa hidup tanpa mengorbankan keterbacaan.
-                            </p>
                         </div>
 
                         <div class="lp-stack-scene" aria-hidden="true">
