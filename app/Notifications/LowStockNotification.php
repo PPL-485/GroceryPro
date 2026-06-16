@@ -36,13 +36,15 @@ class LowStockNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $this->product->loadMissing('category');
+
         return (new MailMessage)
-                    ->subject('Alert: Low Stock for ' . $this->product->name)
-                    ->line('The stock for ' . $this->product->name . ' has fallen below the minimum threshold.')
-                    ->line('Current Stock: ' . $this->product->stock_qty)
-                    ->line('Minimum Required: ' . $this->product->min_stock)
-                    ->action('View Inventory', url('/goods'))
-                    ->line('Please restock this item as soon as possible.');
+                    ->subject('Low Stock Alert: ' . $this->product->name)
+                    ->view('emails.low-stock', [
+                        'user' => $notifiable,
+                        'product' => $this->product,
+                        'inventoryUrl' => route('products'),
+                    ]);
     }
 
     /**
