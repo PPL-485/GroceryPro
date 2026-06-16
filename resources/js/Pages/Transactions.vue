@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
                         <v-col
                             v-for="product in filteredProducts"
                             :key="product.id"
-                            cols="12" sm="6" md="4" lg="2"
+                            cols="12" sm="6" md="4" lg="3" xl="2"
                         >
                             <v-card
                                 :id="'product-card-' + product.id"
@@ -490,13 +490,13 @@ onBeforeUnmount(() => {
                                         <v-icon size="42" color="grey-lighten-1">mdi-image-outline</v-icon>
                                     </div>
                                 </div>
-                                <v-card-text class="flex-grow-1">
-                                    <div class="font-weight-bold text-title-medium">{{ product.name }}</div>
+                                <v-card-text class="product-card-body flex-grow-1">
+                                    <div class="product-name font-weight-bold text-title-medium">{{ product.name }}</div>
                                     <div class="text-caption text-grey-darken-1">{{ product.category?.name || 'Uncategorized' }}</div>
                                 </v-card-text>
-                                <v-card-actions class="d-flex justify-space-between align-center px-4 pb-4 pt-0">
-                                    <div class="font-weight-bold text-primary text-title-medium">{{ formatPrice(product.sell_price) }}</div>
-                                    <v-chip size="x-small" :color="getStockChipColor(product)">
+                                <v-card-actions class="product-card-actions px-4 pb-4 pt-0">
+                                    <div class="product-price font-weight-bold text-primary text-title-medium">{{ formatPrice(product.sell_price) }}</div>
+                                    <v-chip class="product-stock-chip" size="x-small" :color="getStockChipColor(product)">
                                         {{ product.stock_qty }} left
                                     </v-chip>
                                 </v-card-actions>
@@ -611,6 +611,41 @@ onBeforeUnmount(() => {
   justify-content: center;
   overflow: hidden;
   background: rgba(var(--v-theme-primary), 0.045);
+}
+
+.product-card-body {
+  min-width: 0;
+}
+
+.product-name {
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.product-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.product-price {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.product-stock-chip {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.product-stock-chip :deep(.v-chip__content) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cart-clear-btn {

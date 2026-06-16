@@ -96,17 +96,9 @@ const executeDelete = () => {
 
     router.delete(route('users.destroy', userToDelete.value.id), {
         preserveScroll: true,
-        onSuccess: (page) => {
+        onSuccess: () => {
             deleteDialog.value = false;
             userToDelete.value = null;
-            if (page.props.flash && page.props.flash.error) {
-                snackbarMessage.value = page.props.flash.error;
-                snackbarColor.value = 'error';
-            } else {
-                snackbarMessage.value = 'User deleted successfully.';
-                snackbarColor.value = 'success';
-            }
-            snackbar.value = true;
         },
         onError: () => {
             deleteDialog.value = false;
@@ -337,7 +329,7 @@ const executeDelete = () => {
                         <v-icon size="64" color="error" class="mb-4">mdi-alert-circle-outline</v-icon>
                         <div class="text-h6 font-weight-bold mb-2">Delete User?</div>
                         <div class="text-body-2 text-grey-darken-1">
-                            Are you sure you want to delete <strong>{{ userToDelete?.name }}</strong>? This action cannot be undone.
+                            Are you sure you want to delete <strong>{{ userToDelete?.name }}</strong>? The user will be archived and hidden from this list.
                         </div>
                     </v-card-text>
                     

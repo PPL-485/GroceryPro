@@ -8,6 +8,7 @@ use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -46,16 +47,9 @@ class TransactionController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate Trx Code
-            $datePrefix = date('Ymd');
-            $lastTrx = Transaction::whereDate('created_at', date('Y-m-d'))->orderBy('id', 'desc')->first();
-            $nextId = $lastTrx ? ((int) substr($lastTrx->trx_code, -4)) + 1 : 1;
-            $trxCode = 'TRX-' . $datePrefix . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
-
             // Create Transaction
-            $transaction = Transaction::create([
+            $transaction = $this->createTransactionWithUniqueCode([
                 'user_id' => auth()->id(),
-                'trx_code' => $trxCode,
                 'payment_method' => $validated['payment_method'],
                 'total_amount' => (int) round($validated['total_amount']),
                 'change' => (int) round($validated['change']),
@@ -140,6 +134,38 @@ class TransactionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
+    private function createTransactionWithUniqueCode(array $attributes): Transaction
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            try {
+                return Transaction::create([
+                    ...$attributes,
+                    'trx_code' => $this->generateTrxCode(),
+                ]);
+            } catch (QueryException $e) {
+                if (($e->errorInfo[1] ?? null) !== 1062) {
+                    throw $e;
+                }
+            }
+        }
+
+        throw new \Exception('Failed to generate a unique transaction code. Please try again.');
+    }
+
+    private function generateTrxCode(): string
+    {
+        $datePrefix = date('Ymd');
+        $lastTrx = Transaction::whereDate('created_at', date('Y-m-d'))
+            ->lockForUpdate()
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextId = $lastTrx ? ((int) substr($lastTrx->trx_code, -4)) + 1 : 1;
+
+        return 'TRX-' . $datePrefix . '-' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
+    }
+
     public function report()
     {
         return Inertia::render('Report');
